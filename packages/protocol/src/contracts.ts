@@ -1,6 +1,21 @@
 import { z } from 'zod';
 
 const FORBIDDEN_KEYS = new Set(['__proto__']);
+
+function hasForbiddenObjectKey(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some((item) => hasForbiddenObjectKey(item));
+  }
+
+  if (value === null || typeof value !== 'object') {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return Object.keys(record).some(
+    (key) => FORBIDDEN_KEYS.has(key) || hasForbiddenObjectKey(record[key])
+  );
+}
 const SafeRecordKeySchema = z.string().min(1).refine((key) => !FORBIDDEN_KEYS.has(key), {
   message: 'forbidden object key'
 });
@@ -71,11 +86,16 @@ export const DomainEventTypeSchema = z.enum([
   'checkpoint_committed'
 ]);
 
-export const EventEnvelopeSchema = z.object({
+const EventEnvelopeObjectSchema = z.object({
   eventId: z.string().regex(/^[a-z0-9_:-]{1,96}$/).refine((value) => value !== '__proto__'),
   tick: ProtocolTickSchema,
   runId: z.string().regex(/^[a-z0-9_:-]{1,96}$/).refine((value) => value !== '__proto__'),
   type: DomainEventTypeSchema,
   payload: z.record(SafeRecordKeySchema, ProtocolJsonValueSchema)
 }).strict();
+
+export const EventEnvelopeSchema = z.preprocess(
+  (value) => (hasForbiddenObjectKey(value) ? undefined : value),
+  EventEnvelopeObjectSchema
+);
 export type EventEnvelope = z.infer<typeof EventEnvelopeSchema>;
