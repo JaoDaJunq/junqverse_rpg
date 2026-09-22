@@ -200,9 +200,9 @@ export const RewardLedgerEntrySchema = z.object({
 
 export const SaveGameSchema = z.object({
   schemaVersion: z.literal(1),
-  contentVersion: IdSchema,
+  contentVersion: z.string(),
   profileId: IdSchema,
-  updatedAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string(),
   xp: NonNegativeIntegerSchema,
   fragments: NonNegativeIntegerSchema,
   unlockedHeroes: z.array(HeroIdSchema),
