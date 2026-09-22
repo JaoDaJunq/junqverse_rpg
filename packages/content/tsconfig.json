@@ -1,5 +1,5 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "composite": true, "noEmit": true, "lib": ["ES2022"] },
+  "compilerOptions": { "noEmit": true, "lib": ["ES2022"] },
   "include": ["src/**/*.ts"]
 }
