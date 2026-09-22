@@ -8,15 +8,14 @@ T001 revisada com resultado REQUEST_CHANGES. PR #1 permanece sem aprovação.
 - Phaser 3.90.0 está correto;
 - npm ci real funciona em Node 22.16.0;
 - typecheck, lint e build passam;
-- preview E2E do autor passa;
+- dev server e preview abrem em navegador via Playwright;
 - não há gameplay fora de escopo.
 
 ## O que falta corrigir
 1. alinhar o piso de Node com as dependências resolvidas;
 2. colocar o pacote oficial de planejamento no repositório para permitir T002 e demais tickets;
 3. substituir `tests/smoke.test.ts` tautológico por smoke real;
-4. reduzir a CI T001 para leitura depois do bootstrap do lockfile;
-5. confirmar o smoke do dev server na revisão independente.
+4. reduzir a CI T001 para leitura depois do bootstrap do lockfile.
 
 ## Arquivos importantes
 - package.json
