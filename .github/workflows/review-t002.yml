@@ -1,0 +1,52 @@
+name: T002 Independent Review
+
+on:
+  push:
+    branches:
+      - review/p0-T002
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main
+        run: git fetch origin main
+
+      - name: Diff whitespace check
+        run: git diff --check origin/main...HEAD
+
+      - name: No forbidden Phaser imports in contracts
+        run: |
+          ! grep -R --line-number --include='*.ts' "from ['\"]phaser['\"]" packages/content packages/protocol
+          ! grep -R --line-number --include='*.ts' "Date\|setTimeout\|setInterval\|Math.random" packages/content packages/protocol
+
+      - name: Use Node 22.13.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Clean install
+        run: npm_config_engine_strict=true npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Author tests
+        run: npm run test
+
+      - name: Reviewer compatibility tests
+        run: npx vitest run execucao/agentes/reviewer-t002/contracts.review.test.ts
+
+      - name: Build
+        run: npm run build
