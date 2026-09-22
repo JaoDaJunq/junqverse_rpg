@@ -3,8 +3,9 @@
 - Papel: contratos
 - Ticket: T002
 - Branch: agent/t002-contracts
-- Estado: IN_PROGRESS até CI e revisão
+- Estado: REVIEW
 - Dependência: T001 DONE
+- Pull Request: #2
 
 ## Escopo executado
 Materialização dos contratos normativos de docs/08_CONTRATOS_DE_DADOS.md em schemas Zod e tipos inferidos.
@@ -30,6 +31,7 @@ Materialização dos contratos normativos de docs/08_CONTRATOS_DE_DADOS.md em sc
 - Ability.target permanece um ID validado porque o contrato não enumera valores permitidos.
 - Validação de grafo, referências entre catálogos e reachability ficam para T003.
 - Monotonicidade de seq entre frames é invariável temporal e não pode ser comprovada por um único InputFrame isolado.
+- Registros por HeroId em save usam z.partialRecord: heróis bloqueados não precisam possuir entrada.
 
 ## Testes adicionados
 tests/contracts.test.ts cobre:
@@ -58,5 +60,19 @@ tests/contracts.test.ts cobre:
 - spawn/connectividade de mapas;
 - simulação, Phaser ou telas.
 
-## Evidência pendente
-Aguardar CI limpa com npm ci, typecheck, lint e npm run test.
+## Evidência real
+Workflow do PR #2, execução 35797709899, head 164bb861e2712dd52bf0875bcf0c163b827d2cea:
+- npm ci: PASS
+- typecheck: PASS
+- lint: PASS
+- npm run test: PASS
+- npm run test:content: PASS
+- build: PASS
+- preview Playwright: PASS
+
+Falhas anteriores foram mantidas como evidência:
+- TextEncoder indisponível no pacote puro: corrigido por contador UTF-8 sem DOM/Node.
+- z.record com enum exigia todos os HeroIds: corrigido para z.partialRecord.
+
+## Pedido ao reviewer
+Revisar contratos contra docs/08_CONTRATOS_DE_DADOS.md, procurar imports proibidos, tipos duplicados, validações fracas/falsas e alterações fora de T002.
