@@ -46,9 +46,9 @@ const validQuest = {
 
 const validSave = {
   schemaVersion: 1,
-  contentVersion: 'p0',
+  contentVersion: '0.1.0',
   profileId: 'profile_1',
-  updatedAt: '2026-09-22T20:00:00-03:00',
+  updatedAt: 'opaque_timestamp',
   xp: 50,
   fragments: 2,
   unlockedHeroes: ['jao'],
@@ -66,8 +66,8 @@ const validSave = {
 const validInput = {
   seq: 1,
   clientTick: 20,
-  moveX: 1,
-  moveY: 0,
+  moveX: 2,
+  moveY: -2,
   aimX: 320,
   aimY: 140,
   basicHeld: false,
