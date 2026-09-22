@@ -3,9 +3,9 @@
 Registro de T001. As versões são exatas para instalação reproduzível.
 
 ## Ambiente implementado
-- Node.js: 22.16.0
-- npm: 10.9.2
-- package-lock.json: lockfileVersion 3
+- Node.js: linha 22, mínimo 22.13.0 e menor que 23.
+- npm: lockfileVersion 3; instalação de aceite usa `npm ci`.
+- Motivo do piso 22.13: o lockfile atual resolve `@eslint/config-array@0.23.5`, que exige `^22.13.0` na linha Node 22.
 
 ## Dependências fixadas
 - Phaser: 3.90.0
@@ -18,20 +18,12 @@ Registro de T001. As versões são exatas para instalação reproduzível.
 - @typescript-eslint/parser: 8.70.0
 - @typescript-eslint/eslint-plugin: 8.70.0
 
-## Compatibilidade
-TypeScript 7.0.2 existe, mas @typescript-eslint 8.70.0 declara peer range TypeScript >=4.8.4 e <6.1.0. T001 fixa 6.0.3 para manter o lint dentro da faixa declarada.
-
-## Comandos validados em CI
-- npm ci --ignore-scripts
-- npm run build
-- npm run typecheck
-- npm run lint
-- npm run test
-- npm run test:content
-- npm run test:e2e
-
-## Comandos de desenvolvimento
+## Comandos
 - npm run dev: cliente Vite.
+- npm run build: build estático do cliente.
 - npm run preview: preview do build.
-
-O comando test:content informa explicitamente que os schemas e casos runtime serão implementados em T002/T003; T001 não mascara a ausência desses testes.
+- npm run typecheck: TypeScript estrito nos quatro workspaces.
+- npm run lint: ESLint.
+- npm run test: smoke real do contrato de workspace.
+- npm run test:content: informa explicitamente que os casos runtime pertencem a T002/T003.
+- npm run test:e2e: smoke real da página mínima via Playwright.

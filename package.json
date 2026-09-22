@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.12 <23" },
+  "engines": { "node": ">=22.13 <23" },
   "workspaces": ["apps/client","packages/sim","packages/content","packages/protocol"],
   "scripts": {
     "dev": "npm run dev --workspace @junqverse/client",
