@@ -3,12 +3,11 @@
 - Papel: contratos
 - Ticket: T002
 - Branch: agent/t002-contracts
-- Estado: REVIEW
-- Dependência: T001 DONE
+- Estado: DONE após revisão independente R3
 - Pull Request: #2
 
 ## Escopo executado
-Materialização dos contratos normativos de docs/08_CONTRATOS_DE_DADOS.md em schemas Zod e tipos inferidos.
+Schemas Zod e tipos inferidos para os contratos normativos de docs/08_CONTRATOS_DE_DADOS.md.
 
 ### packages/content
 - Id, HeroId, QuestId, Tick e Vec2
@@ -18,7 +17,7 @@ Materialização dos contratos normativos de docs/08_CONTRATOS_DE_DADOS.md em sc
 - QuestDefinition e QuestStage
 - QuestProgress
 - SaveGame
-- helper parseSaveGameJson com limite de 2 MiB
+- parseSaveGameJson com limite de 2 MiB
 
 ### packages/protocol
 - InputFrame
@@ -26,53 +25,48 @@ Materialização dos contratos normativos de docs/08_CONTRATOS_DE_DADOS.md em sc
 - EventEnvelope e tipos mínimos de evento
 
 ## Decisões
-- Tipos TypeScript são inferidos dos schemas Zod; não há interfaces paralelas.
-- Campos internos não especificados pelo contrato são tratados como JSON serializável e finito, sem inventar mecânica.
-- Ability.target permanece um ID validado porque o contrato não enumera valores permitidos.
-- Validação de grafo, referências entre catálogos e reachability ficam para T003.
-- Monotonicidade de seq entre frames é invariável temporal e não pode ser comprovada por um único InputFrame isolado.
-- Registros por HeroId em save usam z.partialRecord: heróis bloqueados não precisam possuir entrada.
+- Tipos TypeScript são inferidos dos schemas Zod.
+- Campos internos não especificados pelo contrato ficam como JSON serializável/finito, sem inventar mecânica.
+- Ability.target é ID validado porque o contrato não enumera valores.
+- Grafo/referências/reachability ficam para T003.
+- seq monotônico entre frames é invariável temporal e não cabe a um schema de frame isolado.
+- loadouts/mastery usam partialRecord por HeroId.
+- SaveGame e EventEnvelope inspecionam o input bruto recursivamente para rejeitar __proto__ antes da transformação.
 
-## Testes adicionados
-tests/contracts.test.ts cobre:
+## Falhas encontradas durante execução e revisão
+1. TextEncoder indisponível em pacote puro: substituído por contador UTF-8 independente de ambiente.
+2. z.record com HeroId enum exigia todos os heróis: substituído por z.partialRecord.
+3. contentVersion tratado como Id: corrigido para string conforme contrato.
+4. updatedAt tratado como datetime: corrigido para string conforme contrato.
+5. moveX/moveY limitados a [-1,1] sem base normativa: removida faixa inventada, mantendo finitude.
+6. __proto__ escapava pelo z.record em payload: corrigido com guarda no input bruto.
+
+## Testes permanentes
 - NaN e Infinity rejeitados;
 - HeroId desconhecido rejeitado;
 - loadout duplicado rejeitado;
 - save/input/quest válidos preservam propriedades;
 - ações duplicadas rejeitadas;
-- tipo de evento desconhecido rejeitado;
-- payload de save acima de 2 MiB rejeitado antes do parse.
+- evento desconhecido rejeitado;
+- payload >2 MiB rejeitado antes do parse;
+- __proto__ rejeitado em save e mensagem;
+- strings normativas pontuadas/opacas permanecem válidas;
+- movimento finito fora de [-1,1] permanece válido.
 
-## Arquivos alterados
-- packages/content/src/contracts.ts
-- packages/content/src/index.ts
-- packages/protocol/src/contracts.ts
-- packages/protocol/src/index.ts
-- packages/protocol/package.json
-- package.json
-- package-lock.json
-- tests/contracts.test.ts
-
-## Fora de escopo
-- validação de referências de catálogo;
-- prerequisites DAG;
-- stages alcançáveis;
-- spawn/connectividade de mapas;
-- simulação, Phaser ou telas.
-
-## Evidência real
-Workflow do PR #2, execução 35797709899, head 164bb861e2712dd52bf0875bcf0c163b827d2cea:
-- npm ci: PASS
+## Evidência
+- PR CI head 5f55850bc5643d51ccbdb00170c56ccce6bc4bf9: PASS
+- Reviewer R3 workflow 35798342343: PASS
+- git diff --check: PASS
+- npm ci engine-strict: PASS
 - typecheck: PASS
 - lint: PASS
-- npm run test: PASS
-- npm run test:content: PASS
+- testes do autor: PASS
+- testes adversariais: PASS
 - build: PASS
-- preview Playwright: PASS
 
-Falhas anteriores foram mantidas como evidência:
-- TextEncoder indisponível no pacote puro: corrigido por contador UTF-8 sem DOM/Node.
-- z.record com enum exigia todos os HeroIds: corrigido para z.partialRecord.
-
-## Pedido ao reviewer
-Revisar contratos contra docs/08_CONTRATOS_DE_DADOS.md, procurar imports proibidos, tipos duplicados, validações fracas/falsas e alterações fora de T002.
+## Fora de escopo
+- referências entre catálogos;
+- prerequisites DAG;
+- stages alcançáveis;
+- conectividade/spawn de mapas;
+- simulação/Phaser/telas.
