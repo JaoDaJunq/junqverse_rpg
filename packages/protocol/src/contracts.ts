@@ -26,8 +26,8 @@ function uniqueArray<T extends z.ZodTypeAny>(itemSchema: T, max: number) {
 export const InputFrameSchema = z.object({
   seq: SequenceSchema,
   clientTick: ProtocolTickSchema,
-  moveX: FiniteProtocolNumberSchema.min(-1).max(1),
-  moveY: FiniteProtocolNumberSchema.min(-1).max(1),
+  moveX: FiniteProtocolNumberSchema,
+  moveY: FiniteProtocolNumberSchema,
   aimX: FiniteProtocolNumberSchema,
   aimY: FiniteProtocolNumberSchema,
   basicHeld: z.boolean(),
