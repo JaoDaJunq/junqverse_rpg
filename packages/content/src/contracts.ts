@@ -3,6 +3,21 @@ import { z } from 'zod';
 const ID_PATTERN = /^[a-z0-9_:-]{1,96}$/;
 const FORBIDDEN_KEYS = new Set(['__proto__']);
 
+function hasForbiddenObjectKey(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some((item) => hasForbiddenObjectKey(item));
+  }
+
+  if (value === null || typeof value !== 'object') {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+  return Object.keys(record).some(
+    (key) => FORBIDDEN_KEYS.has(key) || hasForbiddenObjectKey(record[key])
+  );
+}
+
 export const IdSchema = z.string().regex(ID_PATTERN).refine((value) => !FORBIDDEN_KEYS.has(value), {
   message: 'forbidden id'
 });
@@ -198,7 +213,7 @@ export const RewardLedgerEntrySchema = z.object({
   fragments: NonNegativeIntegerSchema
 }).strict();
 
-export const SaveGameSchema = z.object({
+const SaveGameObjectSchema = z.object({
   schemaVersion: z.literal(1),
   contentVersion: z.string(),
   profileId: IdSchema,
@@ -216,6 +231,11 @@ export const SaveGameSchema = z.object({
   activeRun: CheckpointSaveSchema.nullable(),
   settings: SettingsSchema
 }).strict();
+
+export const SaveGameSchema = z.preprocess(
+  (value) => (hasForbiddenObjectKey(value) ? undefined : value),
+  SaveGameObjectSchema
+);
 export type SaveGame = z.infer<typeof SaveGameSchema>;
 
 function utf8ByteLength(value: string): number {
