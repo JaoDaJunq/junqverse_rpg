@@ -1,37 +1,31 @@
 # Handoff do agente de infraestrutura
 
 ## Estado atual
-T001 está em REVIEW na branch agent/t001-infra, PR #1.
+T001 voltou para REVIEW após correção dos achados do reviewer.
 
-## O que funciona
-- npm workspaces: client/sim/content/protocol;
-- apps/server reservado sem implementação;
-- Phaser 3.90.0 + Vite no cliente mínimo;
-- TypeScript strict;
-- scripts dev, build, preview, typecheck, lint, test, test:content e test:e2e;
-- package-lock.json reproduzível;
-- build estático;
-- smoke Vitest;
-- smoke Playwright abrindo o preview e encontrando o canvas Phaser;
-- CI de checkout limpo com npm ci.
+## Corrigido
+- Node mínimo: >=22.13 <23.
+- CI read-only com npm ci exato.
+- smoke Vitest real de infraestrutura.
+- núcleo operacional do planejamento presente no repo para T002/T003.
 
-## Arquivos importantes
+## Arquivos-chave
 - package.json
 - package-lock.json
-- apps/client/
-- packages/sim/
-- packages/content/
-- packages/protocol/
-- docs/VERSOES_IMPLEMENTADAS.md
+- AGENTS.md
+- 00_CONTEXTO.md
+- execucao/STATUS.md
+- execucao/HANDOFF.md
+- execucao/tarefas/T001.md
+- execucao/tarefas/T002.md
+- execucao/tarefas/T003.md
+- docs/07_ARQUITETURA.md
+- docs/08_CONTRATOS_DE_DADOS.md
+- docs/09_QUEST_ENGINE.md
+- docs/12_QUALIDADE_E_RELEASE.md
+- docs/15_DECISOES_E_FONTES.md
+- tests/smoke.test.ts
 - .github/workflows/t001-ci.yml
-- execucao/agentes/infraestrutura/RELATORIO.md
 
-## Pré-requisitos para avançar
-- revisão independente do PR #1;
-- coordenador marcar T001 como DONE somente depois da aprovação.
-
-## Próxima tarefa
-Após T001 aprovado, T002 pode iniciar. T003 somente depois de T002 realmente verificado.
-
-## Riscos conhecidos
-O ambiente local deste agente não acessou o registry npm; a evidência de instalação e testes foi produzida em GitHub Actions.
+## Próximo passo
+Reviewer deve repetir a validação no novo head. T002 só é liberada após aprovação e atualização do STATUS/HANDOFF globais pelo coordenador.
