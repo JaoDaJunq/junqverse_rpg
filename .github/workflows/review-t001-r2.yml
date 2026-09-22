@@ -1,0 +1,82 @@
+name: T001 Independent Review R2
+
+on:
+  push:
+    branches:
+      - review/p0-T001-r2
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout review branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main
+        run: git fetch origin main
+
+      - name: Diff whitespace check
+        run: git diff --check origin/main...HEAD
+
+      - name: Verify required planning files
+        run: |
+          test -f AGENTS.md
+          test -f 00_CONTEXTO.md
+          test -f execucao/STATUS.md
+          test -f execucao/HANDOFF.md
+          test -f execucao/tarefas/T001.md
+          test -f execucao/tarefas/T002.md
+          test -f execucao/tarefas/T003.md
+          test -f docs/07_ARQUITETURA.md
+          test -f docs/08_CONTRATOS_DE_DADOS.md
+          test -f docs/09_QUEST_ENGINE.md
+          test -f docs/12_QUALIDADE_E_RELEASE.md
+          test -f docs/15_DECISOES_E_FONTES.md
+
+      - name: Verify CI is read only
+        run: |
+          ! grep -q "contents: write" .github/workflows/t001-ci.yml
+          ! grep -q "git push" .github/workflows/t001-ci.yml
+
+      - name: Verify smoke is not tautological
+        run: |
+          ! grep -q "expect(true).toBe(true)" tests/smoke.test.ts
+          grep -q "workspaces" tests/smoke.test.ts
+          grep -q "scripts" tests/smoke.test.ts
+
+      - name: Use Node 22.13.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Engine strict clean install at declared floor
+        run: npm_config_engine_strict=true npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit smoke
+        run: npm run test
+
+      - name: Content command
+        run: npm run test:content
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Dev server browser smoke
+        run: npx playwright test -c execucao/agentes/reviewer-r2/playwright.dev.config.ts
+
+      - name: Preview browser smoke
+        run: npm run test:e2e
