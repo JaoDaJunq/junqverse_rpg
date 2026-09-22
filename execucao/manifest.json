@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "project": "junqverse",
+  "planningVersion": "1.0",
+  "tasks": [
+    {"id":"T001","phase":"P0","title":"Criar workspace e comandos reproduzíveis","deps":[],"refs":["docs/07_ARQUITETURA.md","docs/15_DECISOES_E_FONTES.md"]},
+    {"id":"T002","phase":"P0","title":"Materializar tipos e schemas públicos","deps":["T001"],"refs":["docs/08_CONTRATOS_DE_DADOS.md"]},
+    {"id":"T003","phase":"P0","title":"Validar referências e grafo de conteúdo","deps":["T002"],"refs":["docs/08_CONTRATOS_DE_DADOS.md","docs/09_QUEST_ENGINE.md"]}
+  ]
+}
