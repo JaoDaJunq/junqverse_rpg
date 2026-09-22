@@ -1,17 +1,15 @@
 # Estado de execução
-Somente planejamento entregue. Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. No máximo uma tarefa IN_PROGRESS no fluxo sequencial. Evidência é obrigatória para DONE.
-
-> Arquivo incorporado do pacote de planejamento durante a correção da T001. O coordenador é responsável por atualizar estados globais após a revisão.
+Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para DONE.
 
 | ID | Estado | Evidência / observação |
 | --- | --- | --- |
-| T001 | TODO | Estado inicial do pacote; aguarda atualização do coordenador após revisão |
-| T002 | TODO | Não iniciada |
-| T003 | TODO | Não iniciada |
-| T004 | TODO | Não iniciada |
-| T005 | TODO | Não iniciada |
-| T006 | TODO | Não iniciada |
-| T007 | TODO | Não iniciada |
+| T001 | DONE | Revisão independente R2 aprovada no head 73b0e3411ecf43ebf79f3fc2715b311cc5093868; workflow 35795120972 PASS com Node 22.13.0 engine-strict, npm ci, typecheck, lint, smoke real, build, dev server e preview |
+| T002 | TODO | Liberada por T001 DONE; ainda não iniciada |
+| T003 | TODO | Depende de T002 |
+| T004 | TODO | Depende de T002 |
+| T005 | TODO | Depende de T001 e T002 |
+| T006 | TODO | Depende de T004 |
+| T007 | TODO | Depende de T004, T005 e T006 |
 | T008 | TODO | Não iniciada |
 | T009 | TODO | Não iniciada |
 | T010 | TODO | Não iniciada |
