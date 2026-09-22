@@ -3,8 +3,8 @@
 - Papel: conteúdo
 - Ticket: T003
 - Branch: agent/t003-content-validation
-- Estado: IN_PROGRESS até CI e revisão
-- Dependência: T002 DONE
+- Estado: DONE após revisão independente
+- Pull Request: #3
 
 ## Escopo executado
 - validação de documentos asset/hero/map/quest;
@@ -13,33 +13,28 @@
 - DAG de prerequisites;
 - stages alcançáveis a partir do primeiro estágio;
 - detecção de ciclos de stages;
-- exigência de terminal alcançável com nextStageId null;
-- catálogo parcial permitido sem exigir todos os heróis/quests globais;
+- terminal alcançável com nextStageId null;
+- catálogo parcial permitido sem exigir catálogo global completo;
 - erros estruturados com file, id, code e message;
 - gate assertValidContent;
 - test:content convertido para Vitest real.
 
 ## Decisões
-- Apenas referências explicitamente definidas pelos contratos atuais são validadas.
-- Objetivos/actions continuam opacos além do discriminante porque seus campos internos ainda não são normativos.
-- Conectividade geométrica/spawn contra paredes não foi inventada porque MapDefinition ainda não estrutura esses campos.
-- O primeiro item de stages é tratado como entrada da quest, pois o contrato não define entryStageId separado.
+- Apenas referências definidas pelos contratos atuais são validadas.
+- Objetivos/actions permanecem opacos além do discriminante porque os campos internos ainda não são normativos.
+- Geometria de mapa não foi inventada.
+- stages[0] é a entrada da quest porque o contrato não define entryStageId.
 
-## Testes
-- catálogo parcial íntegro passa;
-- map ausente falha com file/id;
-- ciclo de prerequisites falha;
-- nextStageId ausente falha;
-- stage inalcançável falha;
-- ciclo de stages sem terminal falha;
-- assertValidContent lança em catálogo inválido.
+## Evidência
+PR CI 35798849854: PASS.
+Revisão independente 35798966861: PASS.
+O reviewer alterou temporariamente o catálogo de produção para incluir uma quest apontando a missing_map e comprovou que npm run test:content retorna código não zero. Em seguida restaurou o catálogo e o build passou.
+
+## Critérios de aceite
+- fixture com ciclo falha: PASS
+- referência inexistente falha: PASS
+- conteúdo parcial íntegro passa: PASS
+- test:content retorna não zero em erro: PASS
 
 ## Fora de escopo
-- motor de quest runtime;
-- simulação;
-- conteúdo narrativo real;
-- geometria de mapa;
-- implementação de objectives/actions.
-
-## Evidência pendente
-Aguardar CI em checkout limpo e revisão independente.
+Motor runtime de quest, simulação, conteúdo narrativo real e geometria ainda não especificada.
