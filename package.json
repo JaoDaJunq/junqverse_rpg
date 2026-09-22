@@ -1,0 +1,27 @@
+{
+  "name": "junqverse-rpg",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.13 <23" },
+  "workspaces": ["apps/client","packages/sim","packages/content","packages/protocol"],
+  "scripts": {
+    "dev": "npm run dev --workspace @junqverse/client",
+    "build": "npm run build --workspace @junqverse/client",
+    "preview": "npm run preview --workspace @junqverse/client",
+    "typecheck": "tsc --noEmit -p apps/client/tsconfig.json && tsc --noEmit -p packages/content/tsconfig.json && tsc --noEmit -p packages/protocol/tsconfig.json && tsc --noEmit -p packages/sim/tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run tests/smoke.test.ts",
+    "test:content": "node scripts/test-content.mjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@typescript-eslint/eslint-plugin": "8.70.0",
+    "@typescript-eslint/parser": "8.70.0",
+    "eslint": "10.11.0",
+    "typescript": "6.0.3",
+    "vite": "8.3.0",
+    "vitest": "5.0.1"
+  }
+}
