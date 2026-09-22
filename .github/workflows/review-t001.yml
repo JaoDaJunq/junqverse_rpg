@@ -1,0 +1,81 @@
+name: T001 Independent Review
+
+on:
+  push:
+    branches:
+      - review/p0-T001
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout review branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main
+        run: git fetch origin main
+
+      - name: Diff whitespace check
+        run: git diff --check origin/main...HEAD
+
+      - name: Use Node 22.16.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+
+      - name: Exact clean install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit command
+        run: npm run test
+
+      - name: Content command
+        run: npm run test:content
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Dev server browser smoke
+        run: npx playwright test -c execucao/agentes/reviewer/playwright.dev.config.ts
+
+      - name: Preview browser smoke
+        run: npm run test:e2e
+
+  node-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout review branch
+        uses: actions/checkout@v4
+
+      - name: Use Node 22.12.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+
+      - name: Check declared dependency engine compatibility
+        shell: bash
+        run: |
+          set +e
+          npm_config_engine_strict=true npm ci > node-floor.log 2>&1
+          code=$?
+          cat node-floor.log
+          if [ "$code" -eq 0 ]; then
+            echo "NODE_FLOOR_ENGINE_STRICT=PASS"
+          else
+            echo "NODE_FLOOR_ENGINE_STRICT=FAIL"
+          fi
+          exit 0
