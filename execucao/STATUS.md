@@ -4,10 +4,10 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 | ID | Estado | Evidência / observação |
 | --- | --- | --- |
 | T001 | DONE | Revisão independente R2 aprovada; infraestrutura integrada na main |
-| T002 | DONE | Revisão independente R3 aprovada no head 5f55850bc5643d51ccbdb00170c56ccce6bc4bf9; workflow 35798342343 PASS com npm ci engine-strict, typecheck, lint, testes do autor, adversariais e build |
-| T003 | TODO | Liberada por T002 DONE; próxima recomendada |
-| T004 | TODO | Liberada por T002 DONE |
-| T005 | TODO | Liberada por T001 + T002 DONE |
+| T002 | DONE | Revisão independente R3 aprovada; contratos integrados na main |
+| T003 | DONE | Revisão independente aprovada no head 1736a9f9a5fad56f19469df95895ed4b30cb67b5; workflow 35798966861 PASS, inclusive test:content retornando não zero sob catálogo quebrado |
+| T004 | TODO | Liberada por T002 DONE; próxima recomendada |
+| T005 | TODO | Liberada por T001 + T002 DONE; pode ser paralela a T004 |
 | T006 | TODO | Depende de T004 |
 | T007 | TODO | Depende de T004, T005 e T006 |
 | T008 | TODO | Não iniciada |
