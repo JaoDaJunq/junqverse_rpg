@@ -1,0 +1,95 @@
+name: T003 Independent Review
+
+on:
+  push:
+    branches:
+      - review/p0-T003
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main
+        run: git fetch origin main
+
+      - name: Diff whitespace check
+        run: git diff --check origin/main...HEAD
+
+      - name: No forbidden imports
+        run: |
+          ! grep -R --line-number --include='*.ts' "from ['\"]phaser['\"]" packages/content
+          ! grep -R --line-number --include='*.ts' "Date\|setTimeout\|setInterval\|Math.random" packages/content
+
+      - name: Use Node 22.13.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Clean install
+        run: npm_config_engine_strict=true npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Author tests
+        run: npm run test
+
+      - name: Reviewer tests
+        run: npx vitest run execucao/agentes/reviewer-t003/content.review.test.ts
+
+      - name: Prove test:content fails on broken production catalog
+        shell: bash
+        run: |
+          cp packages/content/src/catalog.ts /tmp/catalog.ts
+          cat > packages/content/src/catalog.ts <<'EOF'
+          import type { ContentDocument } from './validate-content.js';
+
+          export const CURRENT_CONTENT_DOCUMENTS: readonly ContentDocument[] = [
+            {
+              file: 'quests/broken.json',
+              kind: 'quest',
+              data: {
+                id: 'quest_m01',
+                kind: 'main',
+                titleKey: 'quest_m01_title',
+                mapId: 'missing_map',
+                prerequisites: [],
+                stages: [{
+                  id: 'stage_01',
+                  objective: { type: 'interact' },
+                  entryActions: [],
+                  completionActions: [],
+                  checkpointAfter: false,
+                  nextStageId: null
+                }],
+                rewards: {},
+                firstClearFlag: 'quest_m01_clear'
+              }
+            }
+          ];
+          EOF
+
+          set +e
+          npm run test:content
+          code=$?
+          set -e
+          cp /tmp/catalog.ts packages/content/src/catalog.ts
+
+          if [ "$code" -eq 0 ]; then
+            echo "test:content unexpectedly succeeded on broken catalog"
+            exit 1
+          fi
+
+      - name: Build after restoring catalog
+        run: npm run build
