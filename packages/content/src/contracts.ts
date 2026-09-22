@@ -11,9 +11,12 @@ export type Id = z.infer<typeof IdSchema>;
 export const HeroIdSchema = z.enum(['jao', 'alice', 'kauan', 'gui', 'thomas']);
 export type HeroId = z.infer<typeof HeroIdSchema>;
 
-const MAIN_QUEST_IDS = Array.from({ length: 8 }, (_, index) => `quest_m${String(index + 1).padStart(2, '0')}`);
-const SIDE_QUEST_IDS = Array.from({ length: 10 }, (_, index) => `quest_s${String(index + 1).padStart(2, '0')}`);
-export const QUEST_IDS = [...MAIN_QUEST_IDS, ...SIDE_QUEST_IDS] as const;
+export const QUEST_IDS = [
+  'quest_m01', 'quest_m02', 'quest_m03', 'quest_m04',
+  'quest_m05', 'quest_m06', 'quest_m07', 'quest_m08',
+  'quest_s01', 'quest_s02', 'quest_s03', 'quest_s04', 'quest_s05',
+  'quest_s06', 'quest_s07', 'quest_s08', 'quest_s09', 'quest_s10'
+] as const;
 export const QuestIdSchema = z.enum(QUEST_IDS);
 export type QuestId = z.infer<typeof QuestIdSchema>;
 
@@ -67,7 +70,7 @@ export const AbilityEffectSchema = z.object({
 }).catchall(JsonValueSchema);
 export type AbilityEffect = z.infer<typeof AbilityEffectSchema>;
 
-export const AbilityTargetSchema = z.enum(['self', 'point', 'direction', 'entity', 'area']);
+export const AbilityTargetSchema = IdSchema;
 
 export const AbilityDefinitionSchema = z.object({
   id: IdSchema,
