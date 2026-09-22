@@ -207,11 +207,11 @@ export const SaveGameSchema = z.object({
   fragments: NonNegativeIntegerSchema,
   unlockedHeroes: z.array(HeroIdSchema),
   unlockedRelics: z.array(IdSchema),
-  loadouts: z.record(HeroIdSchema, LoadoutSchema),
+  loadouts: z.partialRecord(HeroIdSchema, LoadoutSchema),
   completedQuests: z.array(QuestIdSchema),
   storyFlags: z.record(SafeRecordKeySchema, z.union([z.boolean(), z.string()])),
   cosmetics: z.array(IdSchema),
-  mastery: z.record(HeroIdSchema, NonNegativeIntegerSchema),
+  mastery: z.partialRecord(HeroIdSchema, NonNegativeIntegerSchema),
   rewardLedger: z.record(IdSchema, RewardLedgerEntrySchema),
   activeRun: CheckpointSaveSchema.nullable(),
   settings: SettingsSchema
