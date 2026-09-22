@@ -1,39 +1,28 @@
 # Passagem de contexto
 
 ## Estado atual
-T001 e T002 estão concluídas e aprovadas por revisão independente.
+T001, T002 e T003 estão concluídas e aprovadas por revisão independente.
 
-## Evidência T002
-- branch: agent/t002-contracts
-- head de código aprovado: 5f55850bc5643d51ccbdb00170c56ccce6bc4bf9
-- revisão independente R3: PASS
-- workflow: 35798342343
+## Evidência T003
+- branch: agent/t003-content-validation
+- head de código aprovado: 1736a9f9a5fad56f19469df95895ed4b30cb67b5
+- revisão independente: PASS
+- workflow: 35798966861
 - npm ci engine-strict: PASS
-- typecheck/lint: PASS
-- testes do autor: PASS
-- testes adversariais do reviewer: PASS
-- build: PASS
+- typecheck/lint/testes: PASS
+- referências inválidas e ciclos: rejeitados
+- catálogo parcial íntegro: aceito
+- test:content sob catálogo de produção quebrado: exit code não zero comprovado
+- build após restaurar catálogo: PASS
 
-## Contratos públicos disponíveis
-- packages/content: IDs, Vec2, AbilityDefinition, HeroDefinition, MapDefinition, QuestDefinition, QuestProgress, SaveGame
-- packages/protocol: InputFrame e EventEnvelope
-
-## Correções descobertas por revisão
-- removidas restrições não documentadas de contentVersion, updatedAt e moveX/moveY;
-- proteção recursiva contra __proto__ aplicada antes do parse de save/mensagem;
-- NaN/Infinity continuam rejeitados;
-- loadout duplicado e IDs conhecidos inválidos continuam rejeitados.
+## Camada disponível
+- T001: infraestrutura/workspaces
+- T002: schemas e tipos públicos
+- T003: validação de conteúdo, referências e grafo
 
 ## Próxima tarefa recomendada
-T003 - Validar referências e grafo de conteúdo.
+T004 - motor/simulação base.
 
-Ler:
-- AGENTS.md
-- 00_CONTEXTO.md
-- execucao/STATUS.md
-- execucao/HANDOFF.md
-- execucao/tarefas/T003.md
-- docs/08_CONTRATOS_DE_DADOS.md
-- docs/09_QUEST_ENGINE.md
+T005 - interface/input também está liberada e pode ser executada em paralelo, mas a sequência principal segue T004 e depois T006.
 
-T004 e T005 também estão liberadas pelo grafo, mas T003 é a sequência recomendada para fechar a camada de contratos/conteúdo antes de ampliar a execução paralela.
+Antes de T004, ler AGENTS.md, 00_CONTEXTO.md, STATUS/HANDOFF, ticket T004 e todas as referências indicadas nele.
