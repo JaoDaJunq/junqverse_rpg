@@ -23,7 +23,7 @@ Também foram verificadas as execuções de CI do autor e criada uma validação
 - Não há implementação de combate, quest ou simulação fora do escopo.
 - Em Node 22.16.0, a validação independente confirmou npm ci sem --ignore-scripts, typecheck, lint, test, test:content e build.
 - git diff --check passou na revisão independente.
-- O smoke de preview do autor passou após a correção do comando de workspace.
+- A página mínima abriu tanto pelo dev server quanto pelo preview no Playwright.
 
 ## Achados
 
@@ -77,12 +77,14 @@ Workflow: `.github/workflows/review-t001.yml` na branch `review/p0-T001`.
 - npm run test: PASS, mas o teste é considerado evidência fraca por ser tautológico.
 - npm run test:content: PASS e informa corretamente que casos runtime pertencem a T002/T003.
 - build: PASS.
+- dev server browser smoke: PASS.
+- preview browser smoke: PASS.
 - Node 22.12.0 + engine-strict npm ci: FAIL comprovado por EBADENGINE.
 
 ## Critérios de aceite
 - npm ci e build em checkout limpo: confirmado em Node 22.16.0.
-- página mínima no preview: confirmada pela CI do autor.
-- página mínima no dev server: validação independente adicionada; deve constar verde antes da aprovação final.
+- página mínima no dev server: confirmada pela revisão independente.
+- página mínima no preview: confirmada pela revisão independente e pela CI do autor.
 - lockfile e versões documentadas: existem, mas a faixa Node documentada precisa correção.
 
 ## Conclusão
