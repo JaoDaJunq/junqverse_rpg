@@ -113,6 +113,23 @@ describe('T002 runtime contracts', () => {
     }).success).toBe(false);
   });
 
+  it('rejects prototype-pollution keys from save and message inputs', () => {
+    const polluted = JSON.parse('{"__proto__":{"polluted":true}}') as unknown;
+
+    expect(SaveGameSchema.safeParse({
+      ...validSave,
+      settings: polluted
+    }).success).toBe(false);
+
+    expect(EventEnvelopeSchema.safeParse({
+      eventId: 'event_1',
+      tick: 1,
+      runId: 'run_1',
+      type: 'entity_moved',
+      payload: polluted
+    }).success).toBe(false);
+  });
+
   it('enforces the save payload size before parsing', () => {
     const oversized = JSON.stringify({
       ...validSave,
