@@ -1,22 +1,40 @@
 # Passagem de contexto
 
 ## Estado atual
-T001, T002, T003, T004 e T005 estão concluídas e aprovadas por revisão independente.
+T001, T002, T003, T004, T005 e T006 estão concluídas e aprovadas.
 
-## T005
-- InputMapper e bindings implementados no cliente.
-- WASD movimento; 1/2/3 slots Q/W/E; R ultimate; Espaço dodge; F interação.
-- pressed/released/held produzidos em InputFrame.
-- blur, scene change e detach limpam estado.
-- pointer sobre UI não inicia básico.
-- mira usa transformação tela → mundo.
-- remapeamento rejeita conflitos.
-- revisão independente: workflow 35895586750 PASS.
+## Camadas disponíveis
+- T001: infraestrutura/workspaces
+- T002: schemas e contratos
+- T003: validação de conteúdo
+- T004: relógio fixo, WorldState, RNG e eventos
+- T005: entrada/remapeamento e InputFrame
+- T006: movimento e colisão compartilhados
+
+## T006 confirmado
+- diagonal normalizada;
+- movimento por tick;
+- círculo vs AABB;
+- slide em parede;
+- dash/segmento não atravessa parede fina;
+- projétil/linha de visão usam swept segment;
+- spawn seguro;
+- contato tangente permite afastar/deslizar sem grudar;
+- sim continua sem Phaser/DOM/rede/timers reais.
+
+## Evidência
+- revisão independente T006: workflow 35896281913 PASS;
+- CI após rebase sobre T005: workflow 35896407686 PASS.
 
 ## Próxima tarefa
-T006 - movimento e colisão compartilhados.
+T007 - ligar Phaser à sessão local.
 
-Quando T006 estiver DONE, T007 fica liberada e será o primeiro ponto planejado com Phaser + input + simulação conectados visualmente.
+T007 é o primeiro ponto planejado em que:
+- input T005;
+- simulação T004/T006;
+- Phaser do cliente
+
+ficam conectados visualmente. Após T007, já deve ser possível abrir uma sala de teste e controlar uma entidade na tela, ainda sem o kit completo de combate.
 
 ## Pendência operacional
-Branch protection da main ainda exige configuração administrativa externa se a conexão continuar sem permissão de ruleset.
+Branch protection da main continua dependendo de configuração administrativa externa caso a conexão não exponha ruleset write.
