@@ -1,40 +1,34 @@
 # Passagem de contexto
 
 ## Estado atual
-T001, T002, T003, T004, T005 e T006 estão concluídas e aprovadas.
+T001-T007 estão concluídas e aprovadas por revisão independente.
 
-## Camadas disponíveis
-- T001: infraestrutura/workspaces
-- T002: schemas e contratos
-- T003: validação de conteúdo
-- T004: relógio fixo, WorldState, RNG e eventos
-- T005: entrada/remapeamento e InputFrame
-- T006: movimento e colisão compartilhados
+## Primeiro protótipo visual disponível
+T007 liga:
+- InputMapper da T005;
+- relógio/simulação da T004;
+- movimento/colisão da T006;
+- Phaser 3.90 no cliente.
 
-## T006 confirmado
-- diagonal normalizada;
-- movimento por tick;
-- círculo vs AABB;
-- slide em parede;
-- dash/segmento não atravessa parede fina;
-- projétil/linha de visão usam swept segment;
-- spawn seguro;
-- contato tangente permite afastar/deslizar sem grudar;
-- sim continua sem Phaser/DOM/rede/timers reais.
+A sala técnica atual permite:
+- WASD para mover;
+- colisão contra paredes;
+- câmera seguindo;
+- Esc para pausar/retomar;
+- blur pausa;
+- render interpolado por snapshots.
 
-## Evidência
-- revisão independente T006: workflow 35896281913 PASS;
-- CI após rebase sobre T005: workflow 35896407686 PASS.
+## Evidência T007
+- CI geral: 35897259074 PASS.
+- revisão independente: 35897491460 PASS.
+- 30/60/144 FPS de render chegam ao mesmo tick/posição.
+- Playwright confirmou canvas mudando ao mover, estático pausado e mudando novamente ao retomar.
+- cliente não contém regras de movimento; Phaser só apresenta snapshots.
 
 ## Próxima tarefa
-T007 - ligar Phaser à sessão local.
+T008 - ciclo de cast e recursos.
 
-T007 é o primeiro ponto planejado em que:
-- input T005;
-- simulação T004/T006;
-- Phaser do cliente
-
-ficam conectados visualmente. Após T007, já deve ser possível abrir uma sala de teste e controlar uma entidade na tela, ainda sem o kit completo de combate.
+A partir daqui já existe algo visual para testar, mas ainda é um protótipo técnico sem combate completo. T008-T010 constroem o combate genérico; T012-T013 implementam o kit específico do Jão; T017 é o gate integrado de combate.
 
 ## Pendência operacional
-Branch protection da main continua dependendo de configuração administrativa externa caso a conexão não exponha ruleset write.
+Branch protection da main ainda depende de configuração administrativa externa caso a conexão não exponha ruleset write.
