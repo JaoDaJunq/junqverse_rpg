@@ -1,32 +1,30 @@
 # Passagem de contexto
 
 ## Estado atual
-T001-T009 estão concluídas e aprovadas por revisão independente.
+T001-T010 estão concluídas e aprovadas por revisão independente.
 
-## Protótipo visual atual
-T007 já permite movimentação visual, colisão, câmera e pausa.
+## Protótipo visual
+T007 mantém movimentação visual, colisão, câmera e pausa.
 
-## Combate já disponível na simulação
+## Combate genérico atual
 T008:
-- foco/cooldowns;
-- cast windup/active/recovery;
-- attackInstanceId;
-- esquiva e i-frames.
+- cast, foco, cooldown, dodge, attackInstanceId.
 
 T009:
-- fórmula de dano;
-- shields por fonte com cap de 50% da vida;
-- cura limitada à vida máxima e sem revive;
-- slow/root/stun/vulnerable/haste;
-- conversão de controles em bosses;
-- regras de controle de Arena;
-- sinalização de morte única por diedNow.
+- dano, shield, cura e estados.
 
-## Evidência T009
-- CI geral: 35900453564 PASS.
-- revisão independente: 35900589943 PASS.
+T010:
+- projétil swept contra alvos/parede;
+- cone com linha de visão;
+- zonas com pulsos por tick;
+- HitRegistry por ataque/pulso;
+- cleanup de transient effects por owner/sala.
+
+## Evidência T010
+- CI geral: 35901294567 PASS.
+- revisão independente: 35901430269 PASS.
 
 ## Próxima tarefa
-T010 - projéteis, cones e zonas.
+T011 - marcas e detonação de Ressonância.
 
-T011 fica liberada somente após T010 DONE.
+Após T011 DONE, T012 fica liberada para o básico/passiva/Q do Jão.
