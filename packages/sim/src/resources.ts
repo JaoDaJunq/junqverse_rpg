@@ -87,10 +87,11 @@ export function startCooldown(
   assertNonNegativeInteger(cooldownTicks, 'cooldownTicks');
 
   if (cooldownTicks === 0) {
-    const { [abilityId]: _removed, ...rest } = resources.cooldowns;
+    const cooldowns = { ...resources.cooldowns };
+    delete cooldowns[abilityId];
     return {
       ...resources,
-      cooldowns: rest
+      cooldowns
     };
   }
 
