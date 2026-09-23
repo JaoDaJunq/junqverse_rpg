@@ -1,14 +1,11 @@
 # Handoff T011
 
 ## Estado
-T011 implementada na branch agent/t011-resonance e aguardando CI/revisão.
+APPROVED / DONE.
 
-## APIs
-- createResonanceState
-- applyResonancePrimer
-- hasResonanceMark
-- pruneExpiredResonanceMarks
-- tryDetonateResonance
+## Evidência
+- CI geral 35902193336 PASS
+- revisão independente 35902273423 PASS
 
 ## Próximo passo
-Após aprovação da T011, T012 fica liberada para básico, passiva e Q do Jão.
+T012 - básico, passiva e Q do Jão.
