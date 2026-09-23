@@ -1,23 +1,11 @@
 # Handoff T009
 
 ## Estado
-T009 implementada e aguardando CI/revisão.
+APPROVED / DONE.
 
-## APIs novas
-- createHealthState
-- calculateDamage
-- applyDamage
-- applyHealing
-- applyShield
-- totalShield
-- createStatusState
-- applyStatus
-- stepStatuses
-- isRooted / isStunned
-- getSlowMagnitude / getHasteMagnitude
-- getIncomingStatusMultiplier
-- getStatusMovementMultiplier
-- canApplyDisplacement
+## Evidência
+- CI geral 35900453564 PASS
+- revisão independente 35900589943 PASS
 
 ## Próximo passo
-Após aprovação, T010 fica liberada.
+T010 - projéteis, cones e zonas.
