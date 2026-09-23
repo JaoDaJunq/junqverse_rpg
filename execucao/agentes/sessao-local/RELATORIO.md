@@ -3,59 +3,38 @@
 - Papel: integração cliente/sim
 - Ticket: T007
 - Branch: agent/t007-local-session
-- Estado: IN_PROGRESS até CI e revisão
-- Dependências: T004, T005 e T006 DONE
+- Estado: DONE após revisão independente
+- Pull Request: #8
 
-## Escopo executado
-Ligação do Phaser à simulação local por snapshots interpolados.
-
-### packages/sim
-- PrototypeWorldState como estado autoritativo mínimo da sala técnica;
-- player com previousPosition/current position;
-- blockers compartilhados da T006;
-- stepPrototypeWorld usando movimento da sim;
-- createPrototypeSnapshot com interpolação.
-
-### apps/client
+## Entregas
+- PrototypeWorldState autoritativo na sim;
 - LocalSession com acumulador fixo 60 Hz;
-- GameSession interface;
-- WorldView desenhando formas temporárias;
-- ExpeditionScene com sala técnica, câmera, input e pausa;
-- cleanup idempotente de listeners/view/session;
-- main inicializa diretamente a ExpeditionScene.
+- snapshots interpolados;
+- WorldView com formas temporárias;
+- ExpeditionScene visual controlável;
+- câmera e limites;
+- pausa por Esc/blur;
+- cleanup de sessão/listeners/view.
 
-## Decisões
-- Phaser nunca decide posição; só renderiza snapshot.
-- InputFrame é adaptado no cliente para um comando de movimento simples; packages/sim continua sem importar protocol.
-- Pausa limpa input e não acumula delta para catch-up.
-- blur pausa a sessão.
-- Esc alterna pausa.
-- câmera segue o objeto visual, mas limites e posição vêm do snapshot.
-- formas geométricas são placeholders permitidos pelo gate P0.
+## Evidência
+CI geral 35897259074: PASS.
 
-## Testes
-tests/local-session.test.ts cobre:
-- caminho equivalente em 30 vs 60 FPS de render;
-- pausa congela tick/posição;
-- stop é idempotente e ignora updates posteriores;
-- cinco reinícios criam uma única entidade por sessão;
-- colisão da posição permanece autoritativa na sim.
+Revisão independente 35897491460: PASS, incluindo:
+- equivalência em 30/60/144 FPS;
+- pausa sem catch-up;
+- interpolação entre estados;
+- snapshot anterior não mutado;
+- boundaries entre cliente e regras da sim;
+- teste Playwright real movendo o personagem;
+- canvas estável durante pausa;
+- movimento retomado após unpause.
 
-## Cenário visual planejado
-Ao abrir o cliente:
-- aparece sala técnica com grade;
-- círculo azul é o jogador;
-- WASD move;
-- paredes bloqueiam;
-- câmera acompanha;
-- Esc pausa/continua;
-- perder foco pausa.
+## Resultado visual
+A sala técnica é o primeiro protótipo jogável do JUNQVERSE:
+círculo azul controlável por WASD, paredes com colisão, câmera e pausa.
 
 ## Fora de escopo
-- combate T008+;
-- HUD funcional T016;
-- sprites/arte final;
-- quests/campanha.
-
-## Evidência pendente
-Aguardar CI completa e revisão independente.
+- casts/recursos T008;
+- dano/estados T009;
+- projéteis/cones/zonas T010;
+- kit do Jão T012/T013.
