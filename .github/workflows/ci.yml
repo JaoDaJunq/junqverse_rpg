@@ -1,10 +1,10 @@
-name: T001 CI
+name: P0 CI
 
 on:
-  push:
-    branches:
-      - agent/t001-infra
   pull_request:
+    branches:
+      - main
+  push:
     branches:
       - main
 
@@ -26,16 +26,22 @@ jobs:
       - name: Install from lockfile
         run: npm ci
 
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
       - name: Typecheck
         run: npm run typecheck
 
       - name: Lint
         run: npm run lint
 
-      - name: Unit smoke
+      - name: Tests
         run: npm run test
 
-      - name: Content command
+      - name: Planning integrity
+        run: npm run test:plan
+
+      - name: Content gate
         run: npm run test:content
 
       - name: Build

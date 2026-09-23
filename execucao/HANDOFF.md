@@ -3,17 +3,15 @@
 ## Estado atual
 T001, T002, T003 e T004 estão concluídas e aprovadas por revisão independente.
 
-## Evidência T004
-- branch: agent/t004-engine
-- head revisado: 24ecb1dbd151e44f2016891287c3a37ffd7c0af6
-- workflow independente: 35892125046
-- npm ci/typecheck/lint/test/build: PASS
-- 600 passos unitários = 10 s: PASS
-- determinismo mesma seed/operações: PASS
-- não mutação do WorldState anterior: PASS
-- entityId monotônico: PASS
-- eventId runId:tick:counter único/ordenado: PASS
-- sem Date.now, Math.random, timers, Phaser, protocol, DOM no sim: PASS
+O saneamento P0 restaurou no repositório:
+- tickets T005-T017;
+- docs/03_GAMEPLAY_E_COMBATE.md;
+- docs/06_UX_E_ACESSIBILIDADE.md;
+- docs/18_MAPAS_E_ENCONTROS.md;
+- personagens/jao.md;
+- manifesto P0 T001-T017;
+- CI global;
+- teste automático de integridade do planejamento.
 
 ## Camada disponível
 - T001: infraestrutura/workspaces
@@ -21,9 +19,19 @@ T001, T002, T003 e T004 estão concluídas e aprovadas por revisão independente
 - T003: validação de conteúdo e grafo
 - T004: relógio fixo, WorldState, RNG seeded e IDs/eventos determinísticos
 
-## Próxima tarefa principal
-T006 - Movimento e colisão compartilhados.
+## Próximas tarefas liberadas
+- T005 - entrada e remapeamento básico.
+- T006 - movimento e colisão compartilhados.
 
-T005 - Interface/input também está liberada em paralelo. A sequência principal segue T006; T007 depende de T004 + T005 + T006.
+T005 e T006 podem ser desenvolvidas em paralelo. T007 depende de T004 + T005 + T006.
 
-Antes de T006, ler AGENTS.md, 00_CONTEXTO.md, STATUS/HANDOFF, execucao/tarefas/T006.md e docs/03_GAMEPLAY_E_COMBATE.md.
+## Testabilidade
+- T005 permite testar teclado/mouse e estados de input.
+- T006 permite testar movimento/colisão em camada de simulação.
+- T007 é o primeiro ponto planejado em que input + simulação + Phaser ficam ligados numa sessão local visual.
+- T008-T010 adicionam combate genérico.
+- T012-T013 implementam o kit específico de Jão.
+- T017 é o gate integrado do protótipo de combate.
+
+## Pendência operacional
+A conexão GitHub disponível não expõe escrita administrativa para proteção/ruleset da main. A CI global está configurada, mas branch protection deve ser habilitada manualmente caso a permissão administrativa continue indisponível.

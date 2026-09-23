@@ -3,8 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.13 <23" },
-  "workspaces": ["apps/client","packages/sim","packages/content","packages/protocol"],
+  "engines": {
+    "node": ">=22.13 <23"
+  },
+  "workspaces": [
+    "apps/client",
+    "packages/sim",
+    "packages/content",
+    "packages/protocol"
+  ],
   "scripts": {
     "dev": "npm run dev --workspace @junqverse/client",
     "build": "npm run build --workspace @junqverse/client",
@@ -13,7 +20,8 @@
     "lint": "eslint .",
     "test": "vitest run tests/smoke.test.ts tests/contracts.test.ts tests/content-validation.test.ts tests/sim-core.test.ts",
     "test:content": "vitest run tests/content-validation.test.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:plan": "node scripts/check-p0-plan.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
