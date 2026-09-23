@@ -112,7 +112,7 @@ describe('T010 projectiles, cones and zones', () => {
     const first = resolveConeHits(
       cone,
       [target(2, 80, 0), target(3, 80, 30)],
-      [{ x: 40, y: 20, width: 8, height: 40 }],
+      [{ x: 40, y: 10, width: 8, height: 40 }],
       createHitRegistry()
     );
 
