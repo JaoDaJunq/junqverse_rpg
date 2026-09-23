@@ -3,8 +3,213 @@
   "project": "junqverse",
   "planningVersion": "1.0",
   "tasks": [
-    {"id":"T001","phase":"P0","title":"Criar workspace e comandos reproduzíveis","deps":[],"refs":["docs/07_ARQUITETURA.md","docs/15_DECISOES_E_FONTES.md"]},
-    {"id":"T002","phase":"P0","title":"Materializar tipos e schemas públicos","deps":["T001"],"refs":["docs/08_CONTRATOS_DE_DADOS.md"]},
-    {"id":"T003","phase":"P0","title":"Validar referências e grafo de conteúdo","deps":["T002"],"refs":["docs/08_CONTRATOS_DE_DADOS.md","docs/09_QUEST_ENGINE.md"]}
+    {
+      "id": "T001",
+      "phase": "P0",
+      "title": "Criar workspace e comandos reproduzíveis",
+      "deps": [],
+      "refs": [
+        "docs/07_ARQUITETURA.md",
+        "docs/15_DECISOES_E_FONTES.md"
+      ]
+    },
+    {
+      "id": "T002",
+      "phase": "P0",
+      "title": "Materializar tipos e schemas públicos",
+      "deps": [
+        "T001"
+      ],
+      "refs": [
+        "docs/08_CONTRATOS_DE_DADOS.md"
+      ]
+    },
+    {
+      "id": "T003",
+      "phase": "P0",
+      "title": "Validar referências e grafo de conteúdo",
+      "deps": [
+        "T002"
+      ],
+      "refs": [
+        "docs/08_CONTRATOS_DE_DADOS.md",
+        "docs/09_QUEST_ENGINE.md"
+      ]
+    },
+    {
+      "id": "T004",
+      "phase": "P0",
+      "title": "Construir relógio fixo e RNG",
+      "deps": [
+        "T002"
+      ],
+      "refs": [
+        "docs/07_ARQUITETURA.md"
+      ]
+    },
+    {
+      "id": "T005",
+      "phase": "P0",
+      "title": "Implementar entrada e remapeamento básico",
+      "deps": [
+        "T001",
+        "T002"
+      ],
+      "refs": [
+        "docs/03_GAMEPLAY_E_COMBATE.md",
+        "docs/06_UX_E_ACESSIBILIDADE.md"
+      ]
+    },
+    {
+      "id": "T006",
+      "phase": "P0",
+      "title": "Movimento e colisão compartilhados",
+      "deps": [
+        "T004"
+      ],
+      "refs": [
+        "docs/03_GAMEPLAY_E_COMBATE.md"
+      ]
+    },
+    {
+      "id": "T007",
+      "phase": "P0",
+      "title": "Ligar Phaser à sessão local",
+      "deps": [
+        "T004",
+        "T005",
+        "T006"
+      ],
+      "refs": [
+        "docs/07_ARQUITETURA.md",
+        "docs/06_UX_E_ACESSIBILIDADE.md"
+      ]
+    },
+    {
+      "id": "T008",
+      "phase": "P0",
+      "title": "Ciclo de cast e recursos",
+      "deps": [
+        "T004",
+        "T002"
+      ],
+      "refs": [
+        "docs/03_GAMEPLAY_E_COMBATE.md"
+      ]
+    },
+    {
+      "id": "T009",
+      "phase": "P0",
+      "title": "Dano escudo cura e estados",
+      "deps": [
+        "T008"
+      ],
+      "refs": [
+        "docs/03_GAMEPLAY_E_COMBATE.md"
+      ]
+    },
+    {
+      "id": "T010",
+      "phase": "P0",
+      "title": "Projéteis cones e zonas",
+      "deps": [
+        "T006",
+        "T009"
+      ],
+      "refs": [
+        "docs/03_GAMEPLAY_E_COMBATE.md"
+      ]
+    },
+    {
+      "id": "T011",
+      "phase": "P0",
+      "title": "Marcas e detonação de Ressonância",
+      "deps": [
+        "T009",
+        "T010"
+      ],
+      "refs": [
+        "docs/03_GAMEPLAY_E_COMBATE.md"
+      ]
+    },
+    {
+      "id": "T012",
+      "phase": "P0",
+      "title": "Jão básico passiva e Q",
+      "deps": [
+        "T008",
+        "T009",
+        "T010",
+        "T011"
+      ],
+      "refs": [
+        "personagens/jao.md"
+      ]
+    },
+    {
+      "id": "T013",
+      "phase": "P0",
+      "title": "Jão W E e ultimate",
+      "deps": [
+        "T012"
+      ],
+      "refs": [
+        "personagens/jao.md",
+        "docs/03_GAMEPLAY_E_COMBATE.md"
+      ]
+    },
+    {
+      "id": "T014",
+      "phase": "P0",
+      "title": "IA de rasteiro e atirador",
+      "deps": [
+        "T009",
+        "T010"
+      ],
+      "refs": [
+        "docs/03_GAMEPLAY_E_COMBATE.md",
+        "docs/18_MAPAS_E_ENCONTROS.md"
+      ]
+    },
+    {
+      "id": "T015",
+      "phase": "P0",
+      "title": "Derrota e reinício da sala de teste",
+      "deps": [
+        "T007",
+        "T013",
+        "T014"
+      ],
+      "refs": [
+        "docs/03_GAMEPLAY_E_COMBATE.md"
+      ]
+    },
+    {
+      "id": "T016",
+      "phase": "P0",
+      "title": "HUD funcional de combate",
+      "deps": [
+        "T007",
+        "T008",
+        "T013"
+      ],
+      "refs": [
+        "docs/06_UX_E_ACESSIBILIDADE.md"
+      ]
+    },
+    {
+      "id": "T017",
+      "phase": "P0",
+      "title": "Gate do protótipo de combate",
+      "deps": [
+        "T003",
+        "T015",
+        "T016"
+      ],
+      "refs": [
+        "docs/12_QUALIDADE_E_RELEASE.md",
+        "personagens/jao.md"
+      ]
+    }
   ]
 }
