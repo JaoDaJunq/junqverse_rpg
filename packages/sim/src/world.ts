@@ -1,5 +1,4 @@
 import type { JsonObject } from '@junqverse/content';
-import { FIXED_DT_SECONDS } from './clock.js';
 import { createRng, nextFloat01, type RngState } from './rng.js';
 
 export const WORLD_STEP_ORDER = [
@@ -17,8 +16,6 @@ export const WORLD_STEP_ORDER = [
 export interface WorldState {
   readonly runId: string;
   readonly tick: number;
-  readonly elapsedSeconds: number;
-  readonly fixedDtSeconds: number;
   readonly rng: RngState;
   readonly nextEntityId: number;
   readonly nextEventCounter: number;
@@ -56,8 +53,6 @@ export function createWorld(runId: string, seed: number): WorldState {
   return {
     runId,
     tick: 0,
-    elapsedSeconds: 0,
-    fixedDtSeconds: FIXED_DT_SECONDS,
     rng: createRng(seed),
     nextEntityId: 1,
     nextEventCounter: 0
@@ -132,7 +127,6 @@ export function stepWorld(
     next = {
       ...next,
       tick: next.tick + 1,
-      elapsedSeconds: (next.tick + 1) * next.fixedDtSeconds,
       nextEventCounter: 0
     };
   }
