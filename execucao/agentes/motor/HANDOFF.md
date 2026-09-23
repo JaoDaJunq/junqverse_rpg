@@ -1,7 +1,7 @@
 # Handoff do agente de motor
 
 ## Estado atual
-T004 implementada na branch agent/t004-engine e aguardando CI/revisão.
+T004 implementada e em REVIEW na branch agent/t004-engine, PR #4.
 
 ## O que existe
 - packages/sim/src/clock.ts
@@ -21,11 +21,11 @@ T004 implementada na branch agent/t004-engine e aguardando CI/revisão.
 - nextWorldRandom
 - WORLD_STEP_ORDER
 
+## Evidência
+Run 35891871360 passou integralmente no head de código 22e0d75718b79c85b577ff83a28ae63fc17147ae.
+
 ## Próximo passo
-1. validar T004 em CI;
-2. revisão independente;
-3. coordenador marca T004 DONE;
-4. somente então T006 fica liberada.
+Revisão independente da T004. T006 permanece bloqueada até T004 DONE.
 
 ## Riscos conhecidos
 Input de gameplay ainda não é aceito por stepWorld; isso é deliberado até T005. Movimento/colisão não existem até T006.
