@@ -38,6 +38,9 @@ jobs:
       - name: Tests
         run: npm run test
 
+      - name: Planning integrity
+        run: npm run test:plan
+
       - name: Content gate
         run: npm run test:content
 
