@@ -117,9 +117,23 @@ export function segmentAabbEntryFraction(
     }
   }
 
-  return enter >= -EPSILON && enter <= 1 + EPSILON
-    ? Math.max(0, Math.min(1, enter))
-    : null;
+  const intervalStart = Math.max(0, enter);
+  const intervalEnd = Math.min(1, exit);
+
+  if (intervalStart > 1 || intervalEnd < 0 || intervalEnd - intervalStart <= EPSILON) {
+    return null;
+  }
+
+  const probeFraction = intervalStart + (intervalEnd - intervalStart) * 0.5;
+  const probeX = start.x + deltaX * probeFraction;
+  const probeY = start.y + deltaY * probeFraction;
+  const strictlyInside =
+    probeX > aabb.x + EPSILON &&
+    probeX < aabb.x + aabb.width - EPSILON &&
+    probeY > aabb.y + EPSILON &&
+    probeY < aabb.y + aabb.height - EPSILON;
+
+  return strictlyInside ? intervalStart : null;
 }
 
 export function firstSegmentHit(
