@@ -6,3 +6,5 @@ export * from './movement.js';
 export * from './prototype-world.js';
 export * from './resources.js';
 export * from './abilities.js';
+export * from './damage.js';
+export * from './status.js';

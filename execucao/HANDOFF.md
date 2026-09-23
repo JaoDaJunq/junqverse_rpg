@@ -1,35 +1,32 @@
 # Passagem de contexto
 
 ## Estado atual
-T001-T008 estão concluídas e aprovadas por revisão independente.
+T001-T009 estão concluídas e aprovadas por revisão independente.
 
-## Protótipo visual
-T007 já permite:
-- WASD;
-- colisão;
-- câmera;
-- pausa;
-- render por snapshots no Phaser.
+## Protótipo visual atual
+T007 já permite movimentação visual, colisão, câmera e pausa.
 
-## T008 integrado
-A simulação agora possui:
-- foco 0-100;
-- regen de 10/s após 60 ticks sem gasto;
-- cooldowns em ticks;
-- cast windup → active → recovery;
-- custo/cooldown iniciados no aceite;
-- interrupção sem refund;
-- attackInstanceId monotônico;
-- duas cargas de esquiva com recarga sequencial de 240 ticks;
-- i-frames relativos ticks 2-8;
-- prioridade morte > stun > esquiva > habilidade > básico > movimento.
+## Combate já disponível na simulação
+T008:
+- foco/cooldowns;
+- cast windup/active/recovery;
+- attackInstanceId;
+- esquiva e i-frames.
 
-## Evidência T008
-- CI geral: 35899583961 PASS.
-- revisão independente: 35899785025 PASS.
-- limites de tick, imutabilidade e IDs testados adversarialmente.
+T009:
+- fórmula de dano;
+- shields por fonte com cap de 50% da vida;
+- cura limitada à vida máxima e sem revive;
+- slow/root/stun/vulnerable/haste;
+- conversão de controles em bosses;
+- regras de controle de Arena;
+- sinalização de morte única por diedNow.
+
+## Evidência T009
+- CI geral: 35900453564 PASS.
+- revisão independente: 35900589943 PASS.
 
 ## Próxima tarefa
-T009 - dano, escudo, cura e estados compartilhados.
+T010 - projéteis, cones e zonas.
 
-T010 continua dependendo de T006 + T009.
+T011 fica liberada somente após T010 DONE.

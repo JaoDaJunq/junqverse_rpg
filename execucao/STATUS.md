@@ -3,16 +3,16 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 
 | ID | Estado | Evidência / observação |
 | --- | --- | --- |
-| T001 | DONE | Revisão independente R2 aprovada; infraestrutura integrada na main |
-| T002 | DONE | Revisão independente R3 aprovada; contratos integrados na main |
-| T003 | DONE | Revisão independente aprovada; validação de conteúdo integrada na main |
-| T004 | DONE | Revisão independente aprovada; núcleo determinístico integrado |
-| T005 | DONE | Revisão independente aprovada; input integrado |
-| T006 | DONE | Revisão independente aprovada; movimento/colisão integrados |
-| T007 | DONE | Revisão independente aprovada; protótipo visual local integrado |
-| T008 | DONE | Revisão independente aprovada; workflow 35899785025 PASS |
-| T009 | TODO | Liberada por T008 DONE |
-| T010 | TODO | Depende de T006 + T009 |
+| T001 | DONE | Revisão independente aprovada |
+| T002 | DONE | Revisão independente aprovada |
+| T003 | DONE | Revisão independente aprovada |
+| T004 | DONE | Revisão independente aprovada |
+| T005 | DONE | Revisão independente aprovada |
+| T006 | DONE | Revisão independente aprovada |
+| T007 | DONE | Revisão independente aprovada |
+| T008 | DONE | Revisão independente aprovada |
+| T009 | DONE | Revisão independente aprovada; workflow 35900589943 PASS |
+| T010 | TODO | Liberada por T006 + T009 DONE |
 | T011 | TODO | Depende de T009 + T010 |
 | T012 | TODO | Depende de T008-T011 |
 | T013 | TODO | Depende de T012 |
