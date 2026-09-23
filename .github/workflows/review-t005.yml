@@ -1,0 +1,45 @@
+name: T005 Independent Review
+
+on:
+  push:
+    branches:
+      - review/p0-T005
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Existing tests
+        run: npm run test
+
+      - name: Independent input tests
+        run: npx vitest run tests/review-t005.test.ts
+
+      - name: Input layer must not import simulation or Phaser
+        shell: bash
+        run: |
+          ! grep -R -nE "from ['\"]@junqverse/sim['\"]|from ['\"]phaser['\"]" apps/client/src/input
+
+      - name: Planning integrity
+        run: npm run test:plan
+
+      - name: Build
+        run: npm run build
