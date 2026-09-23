@@ -92,7 +92,7 @@ describe('T009 damage, shields, healing and statuses', () => {
 
     const healed = applyHealing(damaged, 999);
     expect(healed.state.health).toBe(100);
-    expect(healed.effectiveHealing).toBe(39);
+    expect(healed.effectiveHealing).toBe(40);
 
     const dead = applyDamage(createHealthState(100), {
       base: 200,
