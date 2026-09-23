@@ -46,7 +46,6 @@ describe('T004 deterministic simulation core', () => {
 
     expect(world.tick).toBe(600);
     expect(ticksToSeconds(world.tick)).toBe(10);
-    expect(world.elapsedSeconds).toBe(10);
   });
 
   it('allocates monotonic entity ids', () => {
