@@ -3,52 +3,40 @@
 - Papel: motor/movimento
 - Ticket: T006
 - Branch: agent/t006-movement
-- Estado: IN_PROGRESS até CI e revisão
-- Dependência: T004 DONE
+- Estado: DONE após revisão independente
+- Pull Request: #7
 
-## Escopo executado
-Implementada geometria compartilhada e movimento determinístico na simulação.
+## Escopo
+Implementada geometria compartilhada e movimento determinístico em packages/sim.
 
-### geometry.ts
-- AABB
-- interseção círculo × AABB
-- expansão de AABB
-- swept segment contra AABB
-- primeiro hit estável
-- helper de linha de visão
-- helper de spawn seguro
-
-### movement.ts
-- normalização diagonal
-- delta por tick a partir de px/s
-- movimento círculo com resolução por eixo
-- deslizamento em parede
-- dash/segmento com swept collision
-- bloqueio explícito quando a posição inicial já está dentro de parede
-
-## Decisões
-- movimento depende somente de ticks da simulação, nunca FPS de render;
-- dash e projéteis compartilham a mesma base geométrica de segmento;
-- colisão contínua usa AABB expandida pelo raio do círculo para impedir tunneling;
-- movimento comum resolve X e Y separadamente para permitir slide;
-- nenhum Phaser/DOM/protocol foi adicionado ao sim.
-
-## Testes
-tests/movement.test.ts cobre:
-- diagonal igual a cardinal em velocidade;
-- distância fixa por tick;
-- parede fina bloqueando movimento;
-- slide em parede;
-- dash não atravessa parede;
-- segmento de projétil encontra parede fina;
+## Entregas
+- AABB e circle vs AABB;
+- normalização diagonal;
+- movimento por tick;
+- resolução por eixo para slide;
+- swept segment para dash/projétil;
 - linha de visão;
-- spawn seguro em fixture corredor/canto;
-- start overlap rejeitado.
+- spawn seguro;
+- tratamento correto de contato tangente.
+
+## Correção encontrada antes do merge
+O primeiro swept test tratava contato tangente no instante zero como colisão mesmo ao mover para fora/ao longo da parede. Foi corrigido para exigir entrada real no interior do AABB expandido.
+
+## Evidência
+CI geral após rebase sobre T005: 35896407686 PASS.
+
+Revisão independente T006: 35896281913 PASS, cobrindo:
+- parede mais fina que deslocamento;
+- tangente saindo da parede;
+- tangente deslizando na parede;
+- movimento para dentro bloqueado;
+- toque de canto sem entrada;
+- dash longo para no primeiro bloqueio;
+- 60 ticks determinísticos;
+- LOS/spawn seguro;
+- boundaries de sim.
 
 ## Fora de escopo
-- processamento de InputFrame em WorldState;
-- Phaser/session local T007;
-- projétil de combate real T010.
-
-## Evidência pendente
-Aguardar CI limpa e revisão independente.
+- ligação visual Phaser T007;
+- cast/combat T008+;
+- projéteis de gameplay T010.
