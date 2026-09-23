@@ -69,6 +69,28 @@ describe('T006 shared movement and collision', () => {
     expect(result.position.y).toBeCloseTo(70, 6);
   });
 
+  it('allows moving away from or along a tangent wall contact', () => {
+    const tangent = { x: 88, y: 80 };
+
+    const away = moveCircle(
+      tangent,
+      { x: -20, y: 0 },
+      12,
+      [THIN_WALL]
+    );
+    expect(away.collided).toBe(false);
+    expect(away.position.x).toBeCloseTo(68, 8);
+
+    const along = moveCircle(
+      tangent,
+      { x: 0, y: 20 },
+      12,
+      [THIN_WALL]
+    );
+    expect(along.collided).toBe(false);
+    expect(along.position.y).toBeCloseTo(100, 8);
+  });
+
   it('prevents a dash from crossing a thin wall', () => {
     const dash = moveCircleAlongSegment(
       { x: 20, y: 80 },
