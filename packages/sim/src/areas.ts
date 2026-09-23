@@ -65,6 +65,16 @@ function assertPositiveEntityId(entityId: number): void {
   }
 }
 
+function assertTarget(target: AttackTarget): void {
+  if (!Number.isSafeInteger(target.entityId) || target.entityId <= 0) {
+    throw new RangeError('target entityId must be a positive safe integer');
+  }
+  assertFiniteVec(target.position, 'target position');
+  if (!Number.isFinite(target.radius) || target.radius < 0) {
+    throw new RangeError('target radius must be non-negative and finite');
+  }
+}
+
 function normalizeDirection(direction: Vec2): Vec2 {
   assertFiniteVec(direction, 'cone direction');
   const length = Math.hypot(direction.x, direction.y);
@@ -106,6 +116,8 @@ export function resolveConeHits(
   const orderedTargets = [...targets].sort((a, b) => a.entityId - b.entityId);
 
   for (const target of orderedTargets) {
+    assertTarget(target);
+
     if (
       target.entityId === cone.ownerEntityId ||
       target.alive === false ||
@@ -209,6 +221,8 @@ function targetsInsideZone(
   const hits: number[] = [];
 
   for (const target of [...targets].sort((a, b) => a.entityId - b.entityId)) {
+    assertTarget(target);
+
     if (
       target.entityId === zone.ownerEntityId ||
       target.alive === false ||
