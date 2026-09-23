@@ -8,3 +8,6 @@ export * from './resources.js';
 export * from './abilities.js';
 export * from './damage.js';
 export * from './status.js';
+export * from './hit-registry.js';
+export * from './projectiles.js';
+export * from './areas.js';
