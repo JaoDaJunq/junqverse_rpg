@@ -1,0 +1,86 @@
+name: P0 Full Audit After T004
+
+on:
+  push:
+    branches:
+      - review/p0-total-after-t004
+
+permissions:
+  contents: read
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Engine-strict clean install
+        run: npm_config_engine_strict=true npm ci
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Existing tests
+        run: npm run test
+
+      - name: Adversarial audit tests
+        run: npx vitest run tests/full-audit-adversarial.test.ts
+
+      - name: Content gate
+        run: npm run test:content
+
+      - name: Architecture boundaries
+        shell: bash
+        run: |
+          ! grep -R -nE "Date\.now|Math\.random|setTimeout|setInterval|from ['\"]phaser['\"]|from ['\"]@junqverse/protocol['\"]|window\.|document\." packages/sim/src
+          ! grep -R -nE "from ['\"]@junqverse/sim['\"]|from ['\"]@junqverse/client['\"]|from ['\"]phaser['\"]" packages/content/src
+          ! grep -R -nE "from ['\"]@junqverse/sim['\"]|from ['\"]@junqverse/client['\"]|from ['\"]phaser['\"]" packages/protocol/src
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Preview browser smoke
+        run: npm run test:e2e
+
+  planning-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify currently actionable tickets exist
+        shell: bash
+        run: |
+          test -f execucao/tarefas/T005.md
+          test -f execucao/tarefas/T006.md
+
+      - name: Verify actionable ticket references exist
+        shell: bash
+        run: |
+          test -f docs/03_GAMEPLAY_E_COMBATE.md
+          test -f docs/06_UX_E_ACESSIBILIDADE.md
+
+      - name: Verify manifest reflects current P0 graph
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const manifest = JSON.parse(fs.readFileSync('execucao/manifest.json','utf8'));
+          const ids = new Set(manifest.tasks.map((task) => task.id));
+          for (const required of ['T001','T002','T003','T004','T005','T006','T007']) {
+            if (!ids.has(required)) {
+              throw new Error('manifest missing ' + required);
+            }
+          }
+          NODE
