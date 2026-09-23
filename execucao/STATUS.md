@@ -8,7 +8,7 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 | T003 | DONE | Revisão independente aprovada; validação de conteúdo integrada na main |
 | T004 | DONE | Revisão independente aprovada no head 24ecb1dbd151e44f2016891287c3a37ffd7c0af6; workflow 35892125046 PASS |
 | T005 | DONE | Revisão independente aprovada; workflow 35895586750 PASS |
-| T006 | TODO | Liberada por T004 DONE; próxima da sequência principal |
+| T006 | DONE | Revisão independente aprovada; workflow 35896281913 PASS; CI integrada 35896407686 PASS |
 | T007 | TODO | Depende de T004, T005 e T006 |
 | T008 | TODO | Não iniciada |
 | T009 | TODO | Não iniciada |
