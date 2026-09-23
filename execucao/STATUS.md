@@ -7,7 +7,7 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 | T002 | DONE | Revisão independente R3 aprovada; contratos integrados na main |
 | T003 | DONE | Revisão independente aprovada; validação de conteúdo integrada na main |
 | T004 | DONE | Revisão independente aprovada no head 24ecb1dbd151e44f2016891287c3a37ffd7c0af6; workflow 35892125046 PASS |
-| T005 | TODO | Liberada por T001 + T002 DONE; pode ser executada em paralelo |
+| T005 | DONE | Revisão independente aprovada; workflow 35895586750 PASS |
 | T006 | TODO | Liberada por T004 DONE; próxima da sequência principal |
 | T007 | TODO | Depende de T004, T005 e T006 |
 | T008 | TODO | Não iniciada |
