@@ -1,16 +1,11 @@
 # Handoff T010
 
 ## Estado
-T010 implementada e aguardando CI/revisão.
+APPROVED / DONE.
 
-## APIs novas
-- HitRegistry
-- createProjectile / stepProjectile
-- resolveConeHits
-- createZone / stepZone
-- removeTransientEffectsOwnedBy
-- clearTransientEffects
-- segmentCircleEntryFraction
+## Evidência
+- CI geral 35901294567 PASS
+- revisão independente 35901430269 PASS
 
 ## Próximo passo
-Após aprovação, T011 fica liberada.
+T011 - marcas e detonação de Ressonância.
