@@ -1,0 +1,30 @@
+name: T010 Independent Review
+
+on:
+  push:
+    branches:
+      - review/p0-T010
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - name: Independent projectile/area tests
+        run: npx vitest run tests/review-t010.test.ts
+      - name: Sim boundaries
+        shell: bash
+        run: |
+          ! grep -R -nE "Date\.now|Math\.random|setTimeout|setInterval|from ['\"]phaser['\"]|window\.|document\." packages/sim/src
+      - run: npm run test:plan
+      - run: npm run build
