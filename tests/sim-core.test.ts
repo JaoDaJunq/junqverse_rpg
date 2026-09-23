@@ -93,6 +93,6 @@ describe('T004 deterministic simulation core', () => {
 
   it('rejects non-empty input before T005 rather than silently ignoring it', () => {
     expect(() => stepWorld(createWorld('run_input', 1), [{ seq: 1 }], 1))
-      .toThrow('not implemented before T005');
+      .toThrow('does not process direct inputs');
   });
 });

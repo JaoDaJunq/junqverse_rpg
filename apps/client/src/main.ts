@@ -1,18 +1,5 @@
 import Phaser from 'phaser';
-
-class BootScene extends Phaser.Scene {
-  public constructor() {
-    super('boot');
-  }
-
-  public create(): void {
-    this.add.text(32, 32, 'JUNQVERSE: infraestrutura pronta', {
-      color: '#ffffff',
-      fontFamily: 'system-ui, sans-serif',
-      fontSize: '28px'
-    });
-  }
-}
+import { ExpeditionScene } from './scenes/ExpeditionScene.js';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -20,7 +7,11 @@ const config: Phaser.Types.Core.GameConfig = {
   width: 960,
   height: 540,
   backgroundColor: '#111827',
-  scene: [BootScene]
+  scene: [ExpeditionScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  }
 };
 
 new Phaser.Game(config);
