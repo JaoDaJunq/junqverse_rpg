@@ -1,19 +1,19 @@
 # Handoff do agente T007
 
-## Estado atual
-T007 implementada em agent/t007-local-session e aguardando CI/revisão.
+## Estado
+T007 DONE e aprovada.
 
-## Arquivos principais
-- packages/sim/src/prototype-world.ts
-- apps/client/src/adapters/LocalSession.ts
-- apps/client/src/presentation/WorldView.ts
-- apps/client/src/scenes/ExpeditionScene.ts
-- tests/local-session.test.ts
+## Teste disponível
+O cliente agora abre diretamente uma sala técnica Phaser:
+- WASD movimenta o jogador;
+- paredes bloqueiam;
+- câmera acompanha;
+- Esc pausa/retoma;
+- perder foco pausa.
 
-## Resultado esperado
-Primeiro protótipo visual controlável do JUNQVERSE:
-WASD + colisão + câmera + pausa.
+## Evidência
+- CI: 35897259074 PASS
+- revisão independente/browser: 35897491460 PASS
 
 ## Próximo passo
-CI, revisão independente e, se aprovada, T007 DONE.
-Depois T008 pode seguir para ciclo de cast/recursos, enquanto T014 depende do bloco de combate correspondente.
+T008 - ciclo de cast e recursos.
