@@ -1,0 +1,55 @@
+name: T004 Independent Review
+
+on:
+  push:
+    branches:
+      - review/p0-T004
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout reviewer branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main
+        run: git fetch origin main
+
+      - name: Diff whitespace check
+        run: git diff --check origin/main...HEAD
+
+      - name: Use Node 22.13.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Existing test suite
+        run: npm run test
+
+      - name: Independent deterministic tests
+        run: npx vitest run tests/review-t004.test.ts
+
+      - name: Forbidden simulation dependencies
+        shell: bash
+        run: |
+          if grep -R -nE "Date\.now|Math\.random|setTimeout|setInterval|from ['\"]phaser['\"]|from ['\"]@junqverse/protocol['\"]|window\.|document\." packages/sim/src; then
+            echo "Forbidden dependency found in packages/sim"
+            exit 1
+          fi
+
+      - name: Build
+        run: npm run build
