@@ -1,28 +1,29 @@
 # Passagem de contexto
 
 ## Estado atual
-T001, T002 e T003 estão concluídas e aprovadas por revisão independente.
+T001, T002, T003 e T004 estão concluídas e aprovadas por revisão independente.
 
-## Evidência T003
-- branch: agent/t003-content-validation
-- head de código aprovado: 1736a9f9a5fad56f19469df95895ed4b30cb67b5
-- revisão independente: PASS
-- workflow: 35798966861
-- npm ci engine-strict: PASS
-- typecheck/lint/testes: PASS
-- referências inválidas e ciclos: rejeitados
-- catálogo parcial íntegro: aceito
-- test:content sob catálogo de produção quebrado: exit code não zero comprovado
-- build após restaurar catálogo: PASS
+## Evidência T004
+- branch: agent/t004-engine
+- head revisado: 24ecb1dbd151e44f2016891287c3a37ffd7c0af6
+- workflow independente: 35892125046
+- npm ci/typecheck/lint/test/build: PASS
+- 600 passos unitários = 10 s: PASS
+- determinismo mesma seed/operações: PASS
+- não mutação do WorldState anterior: PASS
+- entityId monotônico: PASS
+- eventId runId:tick:counter único/ordenado: PASS
+- sem Date.now, Math.random, timers, Phaser, protocol, DOM no sim: PASS
 
 ## Camada disponível
 - T001: infraestrutura/workspaces
 - T002: schemas e tipos públicos
-- T003: validação de conteúdo, referências e grafo
+- T003: validação de conteúdo e grafo
+- T004: relógio fixo, WorldState, RNG seeded e IDs/eventos determinísticos
 
-## Próxima tarefa recomendada
-T004 - motor/simulação base.
+## Próxima tarefa principal
+T006 - Movimento e colisão compartilhados.
 
-T005 - interface/input também está liberada e pode ser executada em paralelo, mas a sequência principal segue T004 e depois T006.
+T005 - Interface/input também está liberada em paralelo. A sequência principal segue T006; T007 depende de T004 + T005 + T006.
 
-Antes de T004, ler AGENTS.md, 00_CONTEXTO.md, STATUS/HANDOFF, ticket T004 e todas as referências indicadas nele.
+Antes de T006, ler AGENTS.md, 00_CONTEXTO.md, STATUS/HANDOFF, execucao/tarefas/T006.md e docs/03_GAMEPLAY_E_COMBATE.md.
