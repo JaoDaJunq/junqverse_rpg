@@ -114,7 +114,7 @@ export function stepWorld(
   ticks = 1
 ): StepWorldResult {
   if (inputs.length > 0) {
-    throw new Error('world input processing is not implemented before T005');
+    throw new Error('base stepWorld does not process direct inputs; use a simulation adapter');
   }
 
   if (!Number.isInteger(ticks) || ticks < 0) {
