@@ -1,34 +1,35 @@
 # Passagem de contexto
 
 ## Estado atual
-T001-T007 estão concluídas e aprovadas por revisão independente.
+T001-T008 estão concluídas e aprovadas por revisão independente.
 
-## Primeiro protótipo visual disponível
-T007 liga:
-- InputMapper da T005;
-- relógio/simulação da T004;
-- movimento/colisão da T006;
-- Phaser 3.90 no cliente.
+## Protótipo visual
+T007 já permite:
+- WASD;
+- colisão;
+- câmera;
+- pausa;
+- render por snapshots no Phaser.
 
-A sala técnica atual permite:
-- WASD para mover;
-- colisão contra paredes;
-- câmera seguindo;
-- Esc para pausar/retomar;
-- blur pausa;
-- render interpolado por snapshots.
+## T008 integrado
+A simulação agora possui:
+- foco 0-100;
+- regen de 10/s após 60 ticks sem gasto;
+- cooldowns em ticks;
+- cast windup → active → recovery;
+- custo/cooldown iniciados no aceite;
+- interrupção sem refund;
+- attackInstanceId monotônico;
+- duas cargas de esquiva com recarga sequencial de 240 ticks;
+- i-frames relativos ticks 2-8;
+- prioridade morte > stun > esquiva > habilidade > básico > movimento.
 
-## Evidência T007
-- CI geral: 35897259074 PASS.
-- revisão independente: 35897491460 PASS.
-- 30/60/144 FPS de render chegam ao mesmo tick/posição.
-- Playwright confirmou canvas mudando ao mover, estático pausado e mudando novamente ao retomar.
-- cliente não contém regras de movimento; Phaser só apresenta snapshots.
+## Evidência T008
+- CI geral: 35899583961 PASS.
+- revisão independente: 35899785025 PASS.
+- limites de tick, imutabilidade e IDs testados adversarialmente.
 
 ## Próxima tarefa
-T008 - ciclo de cast e recursos.
+T009 - dano, escudo, cura e estados compartilhados.
 
-A partir daqui já existe algo visual para testar, mas ainda é um protótipo técnico sem combate completo. T008-T010 constroem o combate genérico; T012-T013 implementam o kit específico do Jão; T017 é o gate integrado de combate.
-
-## Pendência operacional
-Branch protection da main ainda depende de configuração administrativa externa caso a conexão não exponha ruleset write.
+T010 continua dependendo de T006 + T009.
