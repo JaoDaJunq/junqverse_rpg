@@ -196,3 +196,54 @@ export function hasLineOfSight(
 ): boolean {
   return !segmentIntersectsAnyAabb(start, end, blockers);
 }
+
+
+export function segmentCircleEntryFraction(
+  start: Vec2,
+  end: Vec2,
+  center: Vec2,
+  radius: number
+): number | null {
+  assertFiniteVec2(start, 'start');
+  assertFiniteVec2(end, 'end');
+  assertFiniteVec2(center, 'center');
+
+  if (!Number.isFinite(radius) || radius < 0) {
+    throw new RangeError('radius must be non-negative and finite');
+  }
+
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const fx = start.x - center.x;
+  const fy = start.y - center.y;
+  const a = dx * dx + dy * dy;
+  const c = fx * fx + fy * fy - radius * radius;
+
+  if (c <= EPSILON) {
+    return 0;
+  }
+
+  if (a <= EPSILON) {
+    return null;
+  }
+
+  const b = 2 * (fx * dx + fy * dy);
+  const discriminant = b * b - 4 * a * c;
+
+  if (discriminant < -EPSILON) {
+    return null;
+  }
+
+  const sqrt = Math.sqrt(Math.max(0, discriminant));
+  const denominator = 2 * a;
+  const first = (-b - sqrt) / denominator;
+  const second = (-b + sqrt) / denominator;
+
+  for (const candidate of [first, second]) {
+    if (candidate >= -EPSILON && candidate <= 1 + EPSILON) {
+      return Math.max(0, Math.min(1, candidate));
+    }
+  }
+
+  return null;
+}

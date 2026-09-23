@@ -11,9 +11,9 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 | T006 | DONE | Revisão independente aprovada |
 | T007 | DONE | Revisão independente aprovada |
 | T008 | DONE | Revisão independente aprovada |
-| T009 | DONE | Revisão independente aprovada; workflow 35900589943 PASS |
-| T010 | TODO | Liberada por T006 + T009 DONE |
-| T011 | TODO | Depende de T009 + T010 |
+| T009 | DONE | Revisão independente aprovada |
+| T010 | DONE | Revisão independente aprovada; workflow 35901430269 PASS |
+| T011 | TODO | Liberada por T009 + T010 DONE |
 | T012 | TODO | Depende de T008-T011 |
 | T013 | TODO | Depende de T012 |
 | T014 | TODO | Depende de T009 + T010 |
