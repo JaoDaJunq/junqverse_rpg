@@ -3,7 +3,9 @@
 - Papel: motor/simulação
 - Ticket: T004
 - Branch: agent/t004-engine
-- Estado: IN_PROGRESS até CI e revisão
+- Head de código validado: 22e0d75718b79c85b577ff83a28ae63fc17147ae
+- Estado: REVIEW
+- Pull Request: #4
 - Dependência: T002 DONE
 
 ## Escopo executado
@@ -22,9 +24,9 @@ Implementado o núcleo determinístico da simulação, sem movimento, combate ou
 
 ## Decisões
 - stepWorld ainda não processa InputFrame. Antes de T005, inputs não vazios geram erro explícito em vez de serem ignorados silenciosamente.
+- Tempo autoritativo fica somente em ticks inteiros; segundos são derivados por helper.
 - O estado guarda RNG como dado puro.
 - Sim depende apenas de @junqverse/content para JsonObject; não importa Phaser, DOM, rede nem protocol.
-- elapsedSeconds é derivado de tick * dt fixo, evitando acumulação por delta real.
 
 ## Testes adicionados
 tests/sim-core.test.ts cobre:
@@ -35,10 +37,21 @@ tests/sim-core.test.ts cobre:
 - ausência de Date.now, Math.random, timers, Phaser, window/document no sim;
 - input prematuro não é ignorado.
 
+## Evidência
+Workflow PR #4, run 35891871360:
+- npm ci: PASS
+- typecheck: PASS
+- lint: PASS
+- npm run test: PASS
+- test:content: PASS
+- build: PASS
+- Chromium install: PASS
+- preview smoke: PASS
+
 ## Fora de escopo
 - T005 InputMapper;
 - T006 movimento, círculo/AABB, dash e linha de visão;
 - combate, projéteis e dano.
 
-## Evidência pendente
-Aguardar CI em checkout limpo com npm ci, typecheck, lint, testes e build.
+## Pedido ao reviewer
+Validar determinismo, pureza/não mutação, 600 passos unitários, IDs monotônicos/estáveis e imports proibidos antes de aprovar T004.
