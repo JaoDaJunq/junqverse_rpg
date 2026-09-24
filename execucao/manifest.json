@@ -210,6 +210,19 @@
         "docs/12_QUALIDADE_E_RELEASE.md",
         "personagens/jao.md"
       ]
+    },
+    {
+      "id": "T018",
+      "phase": "P1",
+      "title": "Motor de objetivos básicos",
+      "deps": [
+        "T003",
+        "T017"
+      ],
+      "refs": [
+        "docs/09_QUEST_ENGINE.md",
+        "docs/08_CONTRATOS_DE_DADOS.md"
+      ]
     }
   ]
 }

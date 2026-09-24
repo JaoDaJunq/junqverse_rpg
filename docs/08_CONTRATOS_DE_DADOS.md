@@ -25,10 +25,22 @@ Hero: id, nameKey, roleKey, hp, speedPxPerSecond, basic, passive, abilities {q,w
 id, tileSize=32, widthTiles, heightTiles, rooms[], spawnPoints[], blockers[], interactables[], exits[]. Validator verifica referências, coordenadas, conectividade e ponto de saída.
 
 ## QuestDefinition
-id, kind ("main"|"side"), titleKey, mapId, prerequisites[], stages[], rewards, firstClearFlag. Stage: id, objective, entryActions[], completionActions[], checkpointAfter:boolean, nextStageId ou null. Objectives: enter_area, interact, collect, defeat, survive, escort, sequence, choose, all/any. Não há script string nem eval.
+id, kind ("main"|"side"), titleKey, mapId, prerequisites[], stages[], rewards, firstClearFlag. Stage: id, objective, entryActions[], completionActions[], checkpointAfter:boolean, nextStageId ou null. Ao entrar, ações têm IDs e semântica idempotente.
+
+Objective é union:
+- enter_area: areaId.
+- interact: targetIds[], requiredCount, holdTicks.
+- collect: itemIds[], requiredCount; IDs únicos, não contagem arbitrária.
+- defeat: encounterId; termina quando seus spawns previstos estão mortos, não quando mapa está vazio.
+- survive: durationTicks, encounterId; relógio corre só durante estágio ativo, pausa solo congela.
+- escort: actorId, pathId, destinationId; checkpoints por trecho.
+- sequence: targetIdsOrdered[], resetOnError:boolean.
+- choose: choiceId, optionIds[], defaultOptionId.
+- all/any: children[] dos tipos acima, máximo dois níveis de composição.
+Não há script string nem eval. Puzzles de tipo novo exigem ampliar union/testes, não burlar em scene.
 
 ## QuestProgress
-questId, runId, currentStageId, completedStageIds[], objectiveState, flags{}, collectedIds[], executedActionIds[], checkpointId, status. IDs duplicados não incrementam coleta.
+questId, runId, currentStageId, completedStageIds[], objectiveState, flags{}, collectedIds[], executedActionIds[], checkpointId, status. objectiveState guarda IDs vistos, ordem e ticks quando necessário. Eventos com eventId já aplicados não contam duas vezes. IDs duplicados não incrementam coleta. Estado no save corresponde ao último checkpoint confirmado.
 
 ## Eventos de domínio
 EventEnvelope: eventId, tick, runId, type, payload. Tipos mínimos: entity_spawned, entity_moved, attack_started, damage_applied, entity_died, status_applied, item_collected, interaction_completed, area_entered, choice_committed, stage_completed, quest_completed, reward_granted, checkpoint_committed.

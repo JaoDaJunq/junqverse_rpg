@@ -18,7 +18,7 @@
     "preview": "npm run preview --workspace @junqverse/client",
     "typecheck": "tsc --noEmit -p apps/client/tsconfig.json && tsc --noEmit -p packages/content/tsconfig.json && tsc --noEmit -p packages/protocol/tsconfig.json && tsc --noEmit -p packages/sim/tsconfig.json",
     "lint": "eslint .",
-    "test": "vitest run tests/smoke.test.ts tests/contracts.test.ts tests/content-validation.test.ts tests/sim-core.test.ts tests/input-mapper.test.ts tests/movement.test.ts tests/local-session.test.ts tests/cast-resources.test.ts tests/damage-status.test.ts tests/projectiles-areas.test.ts tests/resonance.test.ts tests/jao-core.test.ts tests/jao-advanced.test.ts tests/enemy-ai.test.ts tests/encounter-restart.test.ts tests/hud-model.test.ts tests/integration/combat.test.ts",
+    "test": "vitest run tests/smoke.test.ts tests/contracts.test.ts tests/content-validation.test.ts tests/sim-core.test.ts tests/input-mapper.test.ts tests/movement.test.ts tests/local-session.test.ts tests/cast-resources.test.ts tests/damage-status.test.ts tests/projectiles-areas.test.ts tests/resonance.test.ts tests/jao-core.test.ts tests/jao-advanced.test.ts tests/enemy-ai.test.ts tests/encounter-restart.test.ts tests/hud-model.test.ts tests/integration/combat.test.ts tests/quest-objectives.test.ts tests/quest-engine.test.ts",
     "test:content": "vitest run tests/content-validation.test.ts",
     "test:e2e": "playwright test",
     "test:plan": "node scripts/check-p0-plan.mjs"
