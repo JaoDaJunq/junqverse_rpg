@@ -17,7 +17,8 @@ function event(
   eventId: string,
   type:
     | 'item_collected'
-    | 'interaction_completed',
+    | 'interaction_completed'
+    | 'entity_died',
   payload: Record<string, string>,
   runId = 'run_m01_1'
 ): EventEnvelope {
@@ -331,4 +332,56 @@ describe('T020 quest objective progress', () => {
     expect(result.reason).toBe('invalid_event');
     expect(result.progress).toEqual(progress);
   });
+
+  it('requires multiple unique defeat events when defeat count is greater than one', () => {
+    const quest: QuestDefinition = {
+      ...collectQuest(),
+      stages: [{
+        id: 'stage_defeat',
+        objective: {
+          type: 'defeat',
+          encounterId: 'm01_clear',
+          count: 2
+        },
+        entryActions: [],
+        completionActions: [
+          { type: 'complete_quest' }
+        ],
+        checkpointAfter: false,
+        nextStageId: null
+      }]
+    };
+    let progress = activeProgress(quest);
+
+    const first = applyQuestObjectiveEvent(
+      progress,
+      quest,
+      event(
+        'enemy_died:1',
+        'entity_died',
+        { encounterId: 'm01_clear' }
+      )
+    );
+
+    expect(first.reason).toBe('progressed');
+    expect(first.progress.objectiveState.count).toBe(1);
+    progress = first.progress;
+
+    const second = applyQuestObjectiveEvent(
+      progress,
+      quest,
+      event(
+        'enemy_died:2',
+        'entity_died',
+        { encounterId: 'm01_clear' }
+      )
+    );
+
+    expect(second.reason).toBe('stage_completed');
+    expect(second.progress.status).toBe('completed');
+    expect(second.progress.completedStageIds).toEqual([
+      'stage_defeat'
+    ]);
+  });
+
 });
