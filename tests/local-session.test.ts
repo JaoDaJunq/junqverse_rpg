@@ -129,4 +129,32 @@ describe('T007 local session', () => {
 
     expect(session.getSnapshot().player.position.x).toBeLessThanOrEqual(88);
   });
+
+  it('restarts the same room ten times without duplicating the prototype entity', () => {
+    const input = new ConstantInput(1, 0);
+    const session = makeSession(input);
+
+    for (let restart = 0; restart < 10; restart += 1) {
+      session.advance(1000 / 60);
+      expect(session.getSnapshot().player.position.x).toBeGreaterThan(100);
+
+      const restarted = session.restart();
+      expect(restarted.tick).toBe(0);
+      expect(restarted.player.entityId).toBe(1);
+      expect(restarted.player.position).toEqual({ x: 100, y: 100 });
+      expect(session.isPaused()).toBe(false);
+    }
+
+    session.advance(1000 / 60);
+    expect(session.getSnapshot().player.position.x).toBeGreaterThan(100);
+    expect(input.clears).toBeGreaterThanOrEqual(10);
+  });
+
+  it('does not allow a stopped session to be resurrected by restart', () => {
+    const session = makeSession();
+    session.stop();
+
+    expect(() => session.restart()).toThrow('stopped session');
+  });
+
 });
