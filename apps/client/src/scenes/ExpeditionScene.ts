@@ -62,7 +62,14 @@ export class ExpeditionScene extends Phaser.Scene {
       20260923,
       { x: 160, y: 160 },
       TEST_BLOCKERS,
-      { radius: 12, speedPxPerSecond: 180 }
+      {
+        radius: 12,
+        speedPxPerSecond: 180,
+        enemySpawns: [{
+          archetype: 'eco_rasteiro',
+          position: { x: 400, y: 240 }
+        }]
+      }
     );
     const session = new LocalSession(world, mapper);
     const initial = session.getSnapshot();
@@ -87,7 +94,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.add.text(
       16,
       16,
-      `JUNQVERSE • Gate P0 T017\nWASD mover • 1/2 combate • Espaço esquiva • Esc pausar${debugHint}`,
+      `JUNQVERSE • Gate P0 T017\nWASD mover • 1 Q • alvo técnico vermelho • Espaço esquiva • Esc pausar${debugHint}`,
       {
         color: '#f9fafb',
         fontFamily: 'system-ui, sans-serif',

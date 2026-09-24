@@ -47,7 +47,22 @@ function clonePrototypeWorldState(
       ...state.player,
       previousPosition: { ...state.player.previousPosition },
       position: { ...state.player.position }
-    }
+    },
+    enemies: state.enemies.map((enemy) => ({
+      ...enemy,
+      previousPosition: { ...enemy.previousPosition },
+      position: { ...enemy.position },
+      health: {
+        ...enemy.health,
+        shields: {
+          bySource: { ...enemy.health.shields.bySource }
+        }
+      },
+      status: {
+        ...enemy.status,
+        effects: enemy.status.effects.map((effect) => ({ ...effect }))
+      }
+    }))
   };
 }
 

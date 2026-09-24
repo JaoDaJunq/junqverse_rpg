@@ -6,10 +6,16 @@ export interface WorldBounds {
   readonly height: number;
 }
 
+interface EnemyVisual {
+  readonly body: Phaser.GameObjects.Arc;
+  readonly health: Phaser.GameObjects.Text;
+}
+
 export class WorldView {
   public readonly player: Phaser.GameObjects.Arc;
   private readonly floor: Phaser.GameObjects.Graphics;
   private readonly blockers: Phaser.GameObjects.Graphics;
+  private readonly enemies = new Map<number, EnemyVisual>();
 
   public constructor(
     scene: Phaser.Scene,
@@ -48,6 +54,35 @@ export class WorldView {
       1
     );
     this.player.setStrokeStyle(2, 0xe5e7eb, 1);
+
+    for (const enemy of initial.enemies) {
+      const body = scene.add.circle(
+        enemy.position.x,
+        enemy.position.y,
+        enemy.radius,
+        0xef4444,
+        1
+      );
+      body.setStrokeStyle(2, 0xfef2f2, 1);
+
+      const health = scene.add.text(
+        enemy.position.x,
+        enemy.position.y - 24,
+        `${enemy.health}/${enemy.maxHealth}`,
+        {
+          color: '#ffffff',
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: '12px',
+          backgroundColor: '#111827cc',
+          padding: { x: 4, y: 2 }
+        }
+      ).setOrigin(0.5);
+
+      this.enemies.set(enemy.entityId, {
+        body,
+        health
+      });
+    }
   }
 
   public render(snapshot: PrototypeSnapshot): void {
@@ -55,9 +90,29 @@ export class WorldView {
       snapshot.player.position.x,
       snapshot.player.position.y
     );
+
+    for (const enemy of snapshot.enemies) {
+      const visual = this.enemies.get(enemy.entityId);
+      if (!visual) {
+        continue;
+      }
+
+      visual.body
+        .setPosition(enemy.position.x, enemy.position.y)
+        .setVisible(enemy.alive);
+      visual.health
+        .setPosition(enemy.position.x, enemy.position.y - 24)
+        .setText(`${enemy.health}/${enemy.maxHealth}`)
+        .setVisible(enemy.alive);
+    }
   }
 
   public destroy(): void {
+    for (const visual of this.enemies.values()) {
+      visual.body.destroy();
+      visual.health.destroy();
+    }
+    this.enemies.clear();
     this.player.destroy();
     this.blockers.destroy();
     this.floor.destroy();

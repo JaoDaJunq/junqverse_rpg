@@ -258,4 +258,37 @@ describe('T017 combat input bridge', () => {
     expect(snapshot.combat.resources.dodgeCharges).toBe(1);
     expect(snapshot.combat.dodgeActive).toBe(true);
   });
+
+  it('spawns a technical enemy with stable id and real health state', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'enemy_spawn_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        {
+          enemySpawns: [{
+            archetype: 'eco_rasteiro',
+            position: { x: 220, y: 100 }
+          }]
+        }
+      ),
+      new ConstantInput(0, 0)
+    );
+
+    const initial = session.getSnapshot();
+    expect(initial.enemies).toEqual([{
+      entityId: 2,
+      archetype: 'eco_rasteiro',
+      position: { x: 220, y: 100 },
+      radius: 12,
+      health: 70,
+      maxHealth: 70,
+      alive: true
+    }]);
+
+    const restarted = session.restart();
+    expect(restarted.enemies).toEqual(initial.enemies);
+  });
+
 });
