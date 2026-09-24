@@ -8,6 +8,9 @@ const config: Phaser.Types.Core.GameConfig = {
   width: 960,
   height: 540,
   backgroundColor: '#111827',
+  pixelArt: true,
+  antialias: false,
+  roundPixels: true,
   scene: [ExpeditionScene],
   scale: {
     mode: Phaser.Scale.FIT,

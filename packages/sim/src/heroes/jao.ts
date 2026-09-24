@@ -67,13 +67,16 @@ export interface JaoBasicState {
   readonly nextAllowedTick: number;
 }
 
-export interface JaoBasicResult {
-  readonly accepted: boolean;
-  readonly reason: 'accepted' | 'cadence';
-  readonly state: JaoBasicState;
+export interface JaoBasicHitResult {
   readonly registry: HitRegistry;
   readonly targets: readonly JaoCombatTarget[];
   readonly hitTargetIds: readonly number[];
+}
+
+export interface JaoBasicResult extends JaoBasicHitResult {
+  readonly accepted: boolean;
+  readonly reason: 'accepted' | 'cadence';
+  readonly state: JaoBasicState;
 }
 
 export interface JaoQResult {
@@ -316,9 +319,8 @@ export function applyJaoAttackDamage(
   };
 }
 
-export function resolveJaoBasicAttack(
+export function resolveJaoBasicHit(
   input: {
-    readonly state: JaoBasicState;
     readonly currentTick: number;
     readonly ownerEntityId: number;
     readonly attackInstanceId: string;
@@ -329,9 +331,8 @@ export function resolveJaoBasicAttack(
     readonly targets: readonly JaoCombatTarget[];
     readonly registry?: HitRegistry;
     readonly passive: JaoPassiveState;
-    readonly cadenceTicks?: number;
   }
-): JaoBasicResult {
+): JaoBasicHitResult {
   assertTick(input.currentTick, 'currentTick');
   assertEntityId(input.ownerEntityId, 'ownerEntityId');
   assertStableId(input.attackInstanceId, 'attackInstanceId');
@@ -340,23 +341,6 @@ export function resolveJaoBasicAttack(
   assertRank(input.rank);
 
   const registry = input.registry ?? createHitRegistry();
-  const cadenceTicks =
-    input.cadenceTicks ?? JAO_BASIC_DEFINITION.cadenceTicks;
-  if (!Number.isInteger(cadenceTicks) || cadenceTicks <= 0) {
-    throw new RangeError('cadenceTicks must be a positive integer');
-  }
-
-  if (input.currentTick < input.state.nextAllowedTick) {
-    return {
-      accepted: false,
-      reason: 'cadence',
-      state: input.state,
-      registry,
-      targets: input.targets,
-      hitTargetIds: []
-    };
-  }
-
   const cone = resolveConeHits({
     attackInstanceId: input.attackInstanceId,
     ownerEntityId: input.ownerEntityId,
@@ -381,15 +365,56 @@ export function resolveJaoBasicAttack(
   );
 
   return {
-    accepted: true,
-    reason: 'accepted',
-    state: {
-      nextAllowedTick:
-        input.currentTick + cadenceTicks
-    },
     registry: cone.registry,
     targets,
     hitTargetIds: cone.targetEntityIds
+  };
+}
+
+export function resolveJaoBasicAttack(
+  input: {
+    readonly state: JaoBasicState;
+    readonly currentTick: number;
+    readonly ownerEntityId: number;
+    readonly attackInstanceId: string;
+    readonly origin: Vec2;
+    readonly direction: Vec2;
+    readonly rank: number;
+    readonly blockers: readonly Aabb[];
+    readonly targets: readonly JaoCombatTarget[];
+    readonly registry?: HitRegistry;
+    readonly passive: JaoPassiveState;
+    readonly cadenceTicks?: number;
+  }
+): JaoBasicResult {
+  assertTick(input.currentTick, 'currentTick');
+
+  const cadenceTicks =
+    input.cadenceTicks ?? JAO_BASIC_DEFINITION.cadenceTicks;
+  if (!Number.isInteger(cadenceTicks) || cadenceTicks <= 0) {
+    throw new RangeError('cadenceTicks must be a positive integer');
+  }
+
+  if (input.currentTick < input.state.nextAllowedTick) {
+    return {
+      accepted: false,
+      reason: 'cadence',
+      state: input.state,
+      registry: input.registry ?? createHitRegistry(),
+      targets: input.targets,
+      hitTargetIds: []
+    };
+  }
+
+  const hit = resolveJaoBasicHit(input);
+
+  return {
+    accepted: true,
+    reason: 'accepted',
+    state: {
+      nextAllowedTick: input.currentTick + cadenceTicks
+    },
+    ...hit
   };
 }
 

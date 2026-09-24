@@ -107,6 +107,17 @@ export class Hud {
         `FOCO ${Math.round(snapshot.focus)} • ULT ${Math.round(snapshot.ultimateCharge)}%`
       );
 
+    const slotsWidth =
+      l.slotSize * 4 + l.slotGap * 3;
+    this.graphics.fillStyle(0x020617, 0.72);
+    this.graphics.fillRoundedRect(
+      l.slotsStartX - 10,
+      l.slotsY - 8,
+      slotsWidth + 20,
+      l.slotSize + 16,
+      10
+    );
+
     snapshot.slots.forEach((slot, index) => {
       const x = l.slotsStartX + index * (l.slotSize + l.slotGap);
       this.drawIcon(slot, x, l.slotsY, l.slotSize);
@@ -184,8 +195,21 @@ export class Hud {
     size: number
   ): void {
     const cooling = slot.cooldownTicks > 0;
-    this.graphics.fillStyle(cooling ? 0x334155 : 0x1e3a8a, 0.95);
-    this.graphics.lineStyle(2, 0xe5e7eb, 0.85);
+    const slotColor =
+      slot.id === 'q'
+        ? 0x38bdf8
+        : slot.id === 'w'
+          ? 0xa78bfa
+          : slot.id === 'e'
+            ? 0xfacc15
+            : 0x60a5fa;
+
+    this.graphics.fillStyle(cooling ? 0x1e293b : 0x0f172a, 0.96);
+    this.graphics.lineStyle(
+      cooling ? 1 : 2,
+      cooling ? 0x64748b : slotColor,
+      cooling ? 0.7 : 0.95
+    );
 
     if (slot.id === 'q') {
       this.graphics.fillCircle(x + size / 2, y + size / 2, size * 0.44);

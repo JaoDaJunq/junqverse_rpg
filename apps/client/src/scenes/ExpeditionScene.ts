@@ -1,18 +1,32 @@
 import Phaser from 'phaser';
 import {
-  createCombatResources,
   createHealthState,
-  createJaoUltimateState,
   createPrototypeWorld,
   type Aabb
 } from '@junqverse/sim';
-import { JAO_BASE_STATS } from '@junqverse/content';
-import { LocalSession } from '../adapters/LocalSession.js';
+import {
+  LocalSession,
+  type LocalSessionSnapshot
+} from '../adapters/LocalSession.js';
 import { InputMapper } from '../input/InputMapper.js';
 import { WorldView } from '../presentation/WorldView.js';
+import { CombatFxView } from '../presentation/CombatFxView.js';
 import { Hud } from '../presentation/Hud.js';
-import { createJaoHudSnapshot } from '../presentation/hud-model.js';
+import {
+  createJaoHudSnapshot,
+  createTestHudSnapshot
+} from '../presentation/hud-model.js';
 import { DefeatPanel } from '../ui/DefeatPanel.js';
+import {
+  LabPanel,
+  loadLabLoadout,
+  loadPrototypeHeroId,
+  savePrototypeHeroId
+} from '../ui/LabPanel.js';
+import type {
+  LabLoadout,
+  PrototypeHeroId
+} from '../ui/LabCatalog.js';
 
 const WORLD_WIDTH = 1200;
 const WORLD_HEIGHT = 720;
@@ -27,10 +41,6 @@ const TEST_BLOCKERS: readonly Aabb[] = [
   { x: 320, y: 520, width: 320, height: 32 }
 ];
 
-const HUD_HEALTH = createHealthState(JAO_BASE_STATS.maxHealth);
-const HUD_RESOURCES = createCombatResources();
-const HUD_ULTIMATE = createJaoUltimateState();
-
 function technicalDefeatEnabled(): boolean {
   return (
     import.meta.env.DEV ||
@@ -42,7 +52,11 @@ export class ExpeditionScene extends Phaser.Scene {
   private mapper: InputMapper | null = null;
   private session: LocalSession | null = null;
   private view: WorldView | null = null;
+  private fx: CombatFxView | null = null;
   private hud: Hud | null = null;
+  private labPanel: LabPanel | null = null;
+  private heroId: PrototypeHeroId = 'jao';
+  private labLoadout: LabLoadout = loadLabLoadout();
   private detachInput: (() => void) | null = null;
   private pauseLabel: Phaser.GameObjects.Text | null = null;
   private defeatPanel: DefeatPanel | null = null;
@@ -53,9 +67,86 @@ export class ExpeditionScene extends Phaser.Scene {
     super('expedition');
   }
 
+  public preload(): void {
+    this.load.spritesheet(
+      'pixel-floor',
+      'assets/pixel-crawler/Floors_Tiles.png',
+      { frameWidth: 16, frameHeight: 16 }
+    );
+    this.load.spritesheet(
+      'pixel-wall',
+      'assets/pixel-crawler/Wall_Tiles.png',
+      { frameWidth: 16, frameHeight: 16 }
+    );
+    this.load.spritesheet(
+      'pixel-dungeon-props',
+      'assets/pixel-crawler/Dungeon_Props.png',
+      { frameWidth: 16, frameHeight: 16 }
+    );
+    this.load.spritesheet(
+      'pixel-esoteric',
+      'assets/pixel-crawler/Esoteric.png',
+      { frameWidth: 16, frameHeight: 16 }
+    );
+    this.load.spritesheet(
+      'pixel-rocks',
+      'assets/pixel-crawler/Rocks.png',
+      { frameWidth: 16, frameHeight: 16 }
+    );
+
+    this.load.spritesheet(
+      'jao-idle-down-sheet',
+      'assets/pixel-crawler/player_idle_down.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'jao-idle-side-sheet',
+      'assets/pixel-crawler/player_idle_side.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'jao-idle-up-sheet',
+      'assets/pixel-crawler/player_idle_up.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'jao-walk-down-sheet',
+      'assets/pixel-crawler/player_walk_down.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'jao-walk-side-sheet',
+      'assets/pixel-crawler/player_walk_side.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'jao-walk-up-sheet',
+      'assets/pixel-crawler/player_walk_up.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'eco-skeleton-idle-sheet',
+      'assets/pixel-crawler/enemy_skeleton_idle.png',
+      { frameWidth: 32, frameHeight: 32 }
+    );
+    this.load.spritesheet(
+      'test-rogue-idle-sheet',
+      'assets/pixel-crawler/test_rogue_idle.png',
+      { frameWidth: 32, frameHeight: 32 }
+    );
+
+    this.load.image('vfx-slash', 'assets/vfx/slash_02_a.png');
+    this.load.image('vfx-magic', 'assets/vfx/magic_01_a.png');
+    this.load.image('vfx-spark', 'assets/vfx/spark_03_a.png');
+    this.load.image('vfx-circle', 'assets/vfx/circle_03_a.png');
+    this.load.image('vfx-impact', 'assets/vfx/effect_02_a.png');
+  }
+
   public create(): void {
     this.cleanedUp = false;
     this.defeatTestEnabled = technicalDefeatEnabled();
+    this.heroId = loadPrototypeHeroId();
+    this.labLoadout = loadLabLoadout();
 
     const mapper = new InputMapper();
     const world = createPrototypeWorld(
@@ -63,32 +154,60 @@ export class ExpeditionScene extends Phaser.Scene {
       20260923,
       { x: 160, y: 160 },
       TEST_BLOCKERS,
-      { radius: 12, speedPxPerSecond: 180 }
+      {
+        radius: 12,
+        speedPxPerSecond: 180,
+        enemySpawns: [{
+          archetype: 'eco_rasteiro',
+          position: { x: 360, y: 240 }
+        }]
+      }
     );
-    const session = new LocalSession(world, mapper);
-    const initial = session.getSnapshot();
-    const view = new WorldView(this, initial, {
-      width: WORLD_WIDTH,
-      height: WORLD_HEIGHT
+    const session = new LocalSession(world, mapper, {
+      initialUltimateCharge: 100,
+      enemyAiEnabled: true,
+      enemyAttacksEnabled: true
     });
+    const initial = session.getSnapshot();
+    const view = new WorldView(
+      this,
+      initial,
+      {
+        width: WORLD_WIDTH,
+        height: WORLD_HEIGHT
+      },
+      this.heroId
+    );
 
     this.mapper = mapper;
     this.session = session;
     this.view = view;
+    this.fx = new CombatFxView(
+      this,
+      initial,
+      view.player,
+      this.heroId,
+      this.labLoadout
+    );
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     camera.startFollow(view.player, true, 0.12, 0.12);
     camera.setDeadzone(120, 80);
+    camera.roundPixels = true;
 
     const debugHint = this.defeatTestEnabled
       ? '\nK testar derrota'
       : '';
 
+    const controlHint = this.heroId === 'test'
+      ? 'LAB TESTE • Mouse Corte • 1 Dash • 2 Nova • 3 Corte Energético • R Sobrecarga'
+      : 'WASD mover • Mouse ataque básico • 1 Passo Relâmpago • 2 Dedução • 3 Corte da Aurora • R Campo Absoluto';
+
     this.add.text(
       16,
       16,
-      `JUNQVERSE • Sala técnica T016\nWASD mover • Esc pausar${debugHint}`,
+      `JUNQVERSE • Gate P0 T017\n${controlHint} • Espaço esquiva • Esc pausar${debugHint}`,
       {
         color: '#f9fafb',
         fontFamily: 'system-ui, sans-serif',
@@ -102,7 +221,7 @@ export class ExpeditionScene extends Phaser.Scene {
       this,
       this.scale.gameSize.width,
       this.scale.gameSize.height,
-      this.createHudSnapshot()
+      this.createHudSnapshot(initial)
     );
 
     this.pauseLabel = this.add.text(
@@ -127,6 +246,22 @@ export class ExpeditionScene extends Phaser.Scene {
     if (!app) {
       throw new Error('app root is required for defeat UI');
     }
+
+    this.labPanel = new LabPanel(app, {
+      heroId: this.heroId,
+      loadout: this.labLoadout,
+      onHeroChange: (heroId) => {
+        savePrototypeHeroId(heroId);
+        this.scene.restart();
+      },
+      onLoadoutChange: (loadout) => {
+        this.labLoadout = loadout;
+        this.fx?.setLabLoadout(loadout);
+      },
+      onPreview: (_slot, effectId) => {
+        this.fx?.previewEffect(effectId);
+      }
+    });
 
     this.defeatPanel = new DefeatPanel(app, {
       onTryAgain: this.onTryAgain,
@@ -164,18 +299,36 @@ export class ExpeditionScene extends Phaser.Scene {
 
     const snapshot = this.session.advance(delta);
     this.view.render(snapshot);
-    this.hud?.render(this.createHudSnapshot());
+    this.view.setUltimateActive(snapshot.combat.ultimateActive);
+    this.fx?.render(snapshot);
+    this.hud?.render(this.createHudSnapshot(snapshot));
+
+    if (
+      !snapshot.player.alive &&
+      !this.defeatPanel?.isVisible()
+    ) {
+      this.pauseLabel?.setVisible(false);
+      this.defeatPanel?.show();
+    }
   }
 
-  private createHudSnapshot() {
+  private createHudSnapshot(snapshot: LocalSessionSnapshot) {
     if (!this.mapper) {
       throw new Error('input mapper is required for HUD snapshot');
     }
 
-    return createJaoHudSnapshot({
-      health: HUD_HEALTH,
-      resources: HUD_RESOURCES,
-      ultimate: HUD_ULTIMATE,
+    const createSnapshot = this.heroId === 'test'
+      ? createTestHudSnapshot
+      : createJaoHudSnapshot;
+
+    return createSnapshot({
+      health: createHealthState(
+        snapshot.player.maxHealth,
+        0,
+        snapshot.player.health
+      ),
+      resources: snapshot.combat.resources,
+      ultimate: snapshot.combat.ultimate,
       bindings: this.mapper.getBindings()
     });
   }
@@ -214,7 +367,17 @@ export class ExpeditionScene extends Phaser.Scene {
 
     const snapshot = this.session.restart();
     this.view.render(snapshot);
-    this.hud?.render(this.createHudSnapshot());
+    this.view.setUltimateActive(snapshot.combat.ultimateActive);
+    this.fx?.destroy();
+    this.fx = new CombatFxView(
+      this,
+      snapshot,
+      this.view.player,
+      this.heroId,
+      this.labLoadout
+    );
+    this.fx.render(snapshot);
+    this.hud?.render(this.createHudSnapshot(snapshot));
     this.cameras.main.centerOn(
       snapshot.player.position.x,
       snapshot.player.position.y
@@ -244,8 +407,12 @@ export class ExpeditionScene extends Phaser.Scene {
     this.mapper = null;
     this.view?.destroy();
     this.view = null;
+    this.fx?.destroy();
+    this.fx = null;
     this.hud?.destroy();
     this.hud = null;
+    this.labPanel?.destroy();
+    this.labPanel = null;
     this.pauseLabel = null;
     this.defeatPanel?.destroy();
     this.defeatPanel = null;
