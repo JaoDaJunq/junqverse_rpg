@@ -1,7 +1,10 @@
 import type { Vec2 } from '@junqverse/content';
 import { allocateEntityId, createWorld, stepWorld, type WorldState } from './world.js';
 import { isCirclePositionFree, type Aabb } from './geometry.js';
-import { moveCircleForTick } from './movement.js';
+import {
+  moveCircleAlongSegment,
+  moveCircleForTick
+} from './movement.js';
 
 export interface PrototypePlayerState {
   readonly entityId: number;
@@ -29,6 +32,11 @@ export interface PrototypeSnapshot {
 export interface PrototypeWorldOptions {
   readonly radius?: number;
   readonly speedPxPerSecond?: number;
+}
+
+export interface PrototypePlayerDeltaResult {
+  readonly state: PrototypeWorldState;
+  readonly collided: boolean;
 }
 
 export function createPrototypeWorld(
@@ -88,6 +96,38 @@ export function stepPrototypeWorld(
       previousPosition: state.player.position,
       position: moved.position
     }
+  };
+}
+
+export function applyPrototypePlayerDelta(
+  state: PrototypeWorldState,
+  delta: Vec2
+): PrototypePlayerDeltaResult {
+  if (!Number.isFinite(delta.x) || !Number.isFinite(delta.y)) {
+    throw new RangeError('prototype player delta must be finite');
+  }
+
+  const start = state.player.position;
+  const moved = moveCircleAlongSegment(
+    start,
+    {
+      x: start.x + delta.x,
+      y: start.y + delta.y
+    },
+    state.player.radius,
+    state.blockers
+  );
+
+  return {
+    state: {
+      ...state,
+      player: {
+        ...state.player,
+        previousPosition: start,
+        position: moved.position
+      }
+    },
+    collided: moved.collided
   };
 }
 

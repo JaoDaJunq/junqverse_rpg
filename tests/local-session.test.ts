@@ -38,7 +38,8 @@ class OneShotActionInput implements SessionInputSource {
   public clears = 0;
 
   public constructor(
-    private readonly action: InputFrame['pressed'][number]
+    private readonly action: InputFrame['pressed'][number],
+    private readonly aim = { x: 200, y: 100 }
   ) {}
 
   public nextFrame(clientTick: number): InputFrame {
@@ -47,8 +48,8 @@ class OneShotActionInput implements SessionInputSource {
       clientTick,
       moveX: 0,
       moveY: 0,
-      aimX: 200,
-      aimY: 100,
+      aimX: this.aim.x,
+      aimY: this.aim.y,
       basicHeld: false,
       pressed: clientTick === 0 ? [this.action] : [],
       released: [],
@@ -190,14 +191,53 @@ describe('T007 local session', () => {
 });
 
 describe('T017 combat input bridge', () => {
-  it('bridges Q acceptance into real focus and cooldown state', () => {
+  it('bridges Q acceptance into real focus cooldown and dash movement', () => {
     const session = makeSession(new OneShotActionInput('q'));
 
-    const snapshot = session.advance(1000 / 60);
+    const accepted = session.advance(1000 / 60);
 
-    expect(snapshot.combat.resources.focus).toBe(80);
-    expect(snapshot.combat.resources.cooldowns.jao_q).toBe(360);
-    expect(snapshot.combat.activeAbilityId).toBe('jao_q');
+    expect(accepted.combat.resources.focus).toBe(80);
+    expect(accepted.combat.resources.cooldowns.jao_q).toBe(360);
+    expect(accepted.combat.activeAbilityId).toBe('jao_q');
+    expect(accepted.combat.qDashActive).toBe(true);
+
+    session.advance((1000 / 60) * 11);
+    const finished = session.getSnapshot();
+
+    expect(finished.player.position.x).toBeCloseTo(260, 6);
+    expect(finished.player.position.y).toBeCloseTo(100, 6);
+    expect(finished.combat.qDashActive).toBe(false);
+  });
+
+  it('rejects Q with zero aim without spending focus or cooldown', () => {
+    const session = makeSession(
+      new OneShotActionInput('q', { x: 100, y: 100 })
+    );
+
+    session.advance(1000 / 60);
+    const snapshot = session.getSnapshot();
+
+    expect(snapshot.combat.resources.focus).toBe(100);
+    expect(snapshot.combat.resources.cooldowns.jao_q).toBeUndefined();
+    expect(snapshot.combat.qDashActive).toBe(false);
+  });
+
+  it('stops Q dash at a wall', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'q_wall_test',
+        1,
+        { x: 60, y: 100 },
+        [{ x: 100, y: 0, width: 8, height: 200 }],
+        { radius: 12, speedPxPerSecond: 180 }
+      ),
+      new OneShotActionInput('q', { x: 200, y: 100 })
+    );
+
+    session.advance((1000 / 60) * 12);
+    const snapshot = session.getSnapshot();
+
+    expect(snapshot.player.position.x).toBeLessThanOrEqual(88);
   });
 
   it('bridges W acceptance into real focus and cooldown state', () => {

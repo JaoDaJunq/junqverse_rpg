@@ -1,11 +1,13 @@
 import type { InputFrame } from '@junqverse/protocol';
 import {
   TICKS_PER_SECOND,
+  applyPrototypePlayerDelta,
   createPrototypeCombatSnapshot,
   createPrototypeCombatState,
   createPrototypeSnapshot,
   stepPrototypeCombat,
   stepPrototypeWorld,
+  type PrototypeCombatCommand,
   type PrototypeCombatSnapshot,
   type PrototypeCombatState,
   type PrototypeSnapshot,
@@ -14,6 +16,7 @@ import {
 
 const TICK_MS = 1000 / TICKS_PER_SECOND;
 const LOOP_EPSILON_MS = 1e-7;
+const AIM_EPSILON = 1e-9;
 
 export interface SessionInputSource {
   nextFrame(clientTick: number): InputFrame;
@@ -48,9 +51,24 @@ function clonePrototypeWorldState(
   };
 }
 
-function combatCommandFromFrame(frame: InputFrame) {
+function combatCommandFromFrame(
+  frame: InputFrame,
+  state: PrototypeWorldState
+): PrototypeCombatCommand {
+  const aimDelta = {
+    x: frame.aimX - state.player.position.x,
+    y: frame.aimY - state.player.position.y
+  };
+  const aimLength = Math.hypot(aimDelta.x, aimDelta.y);
+
   return {
     qPressed: frame.pressed.includes('q'),
+    qDirection: aimLength > AIM_EPSILON
+      ? {
+          x: aimDelta.x / aimLength,
+          y: aimDelta.y / aimLength
+        }
+      : null,
     wPressed: frame.pressed.includes('w'),
     dodgePressed: frame.pressed.includes('dodge')
   };
@@ -90,14 +108,33 @@ export class LocalSession implements GameSession {
 
     while (this.accumulatorMs + LOOP_EPSILON_MS >= TICK_MS) {
       const frame = this.input.nextFrame(this.state.tick);
-      this.state = stepPrototypeWorld(this.state, {
-        x: frame.moveX,
-        y: frame.moveY
-      });
-      this.combat = stepPrototypeCombat(
+      const combatStep = stepPrototypeCombat(
         this.combat,
-        combatCommandFromFrame(frame)
+        combatCommandFromFrame(frame, this.state)
       );
+      this.combat = combatStep.state;
+
+      const normalMovement = combatStep.movement.kind === 'normal'
+        ? { x: frame.moveX, y: frame.moveY }
+        : { x: 0, y: 0 };
+
+      this.state = stepPrototypeWorld(
+        this.state,
+        normalMovement
+      );
+
+      if (combatStep.movement.kind === 'q_dash') {
+        const movement = combatStep.movement;
+        const moved = applyPrototypePlayerDelta(
+          this.state,
+          {
+            x: movement.direction.x * movement.distancePx,
+            y: movement.direction.y * movement.distancePx
+          }
+        );
+        this.state = moved.state;
+      }
+
       this.accumulatorMs = Math.max(0, this.accumulatorMs - TICK_MS);
     }
 
