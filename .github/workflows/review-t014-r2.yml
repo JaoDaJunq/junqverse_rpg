@@ -1,0 +1,45 @@
+name: T014 Independent Review R2
+
+on:
+  push:
+    branches:
+      - review/p0-T014-r2
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Existing tests
+        run: npm run test
+
+      - name: Independent AI tests
+        run: npx vitest run tests/review-t014.test.ts
+
+      - name: Sim boundaries
+        shell: bash
+        run: |
+          ! grep -R -nE "Date\.now|Math\.random|setTimeout|setInterval|from ['\"]phaser['\"]|window\.|document\." packages/sim/src
+
+      - name: Planning integrity
+        run: npm run test:plan
+
+      - name: Build
+        run: npm run build
