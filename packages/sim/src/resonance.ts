@@ -177,6 +177,7 @@ export function tryDetonateResonance(
     readonly detonatorEntityId: number;
     readonly detonatorRank: number;
     readonly currentTick: number;
+    readonly primaryHitConfirmed?: boolean;
   },
   targets: readonly ResonanceTarget[]
 ): ResonanceDetonationResult {
@@ -219,7 +220,13 @@ export function tryDetonateResonance(
   }
 
   const primary = findTarget(targets, input.primaryTargetEntityId);
-  if (!primary || !primary.health.alive) {
+  if (
+    !primary ||
+    (
+      !primary.health.alive &&
+      input.primaryHitConfirmed !== true
+    )
+  ) {
     return {
       state: pruned,
       targets,

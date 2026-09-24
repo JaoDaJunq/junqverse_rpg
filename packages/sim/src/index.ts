@@ -13,3 +13,4 @@ export * from './projectiles.js';
 export * from './areas.js';
 export * from './resonance.js';
 export * from './heroes/jao.js';
+export * from './heroes/jao-advanced.js';

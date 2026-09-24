@@ -60,6 +60,7 @@ export interface JaoCombatTarget {
   readonly health: HealthState;
   readonly status: StatusState;
   readonly invulnerable?: boolean;
+  readonly isBoss?: boolean;
 }
 
 export interface JaoBasicState {
@@ -284,7 +285,7 @@ export function createJaoBasicState(): JaoBasicState {
   return { nextAllowedTick: 0 };
 }
 
-function applyJaoDamage(
+export function applyJaoAttackDamage(
   target: JaoCombatTarget,
   baseDamage: number,
   rank: number,
@@ -328,6 +329,7 @@ export function resolveJaoBasicAttack(
     readonly targets: readonly JaoCombatTarget[];
     readonly registry?: HitRegistry;
     readonly passive: JaoPassiveState;
+    readonly cadenceTicks?: number;
   }
 ): JaoBasicResult {
   assertTick(input.currentTick, 'currentTick');
@@ -338,6 +340,11 @@ export function resolveJaoBasicAttack(
   assertRank(input.rank);
 
   const registry = input.registry ?? createHitRegistry();
+  const cadenceTicks =
+    input.cadenceTicks ?? JAO_BASIC_DEFINITION.cadenceTicks;
+  if (!Number.isInteger(cadenceTicks) || cadenceTicks <= 0) {
+    throw new RangeError('cadenceTicks must be a positive integer');
+  }
 
   if (input.currentTick < input.state.nextAllowedTick) {
     return {
@@ -363,7 +370,7 @@ export function resolveJaoBasicAttack(
   const hitSet = new Set(cone.targetEntityIds);
   const targets = input.targets.map((target) =>
     hitSet.has(target.entityId)
-      ? applyJaoDamage(
+      ? applyJaoAttackDamage(
           target,
           JAO_BASIC_DEFINITION.baseDamage,
           input.rank,
@@ -378,7 +385,7 @@ export function resolveJaoBasicAttack(
     reason: 'accepted',
     state: {
       nextAllowedTick:
-        input.currentTick + JAO_BASIC_DEFINITION.cadenceTicks
+        input.currentTick + cadenceTicks
     },
     registry: cone.registry,
     targets,
@@ -490,7 +497,7 @@ export function resolveJaoQDash(
       return target;
     }
 
-    const damaged = applyJaoDamage(
+    const damaged = applyJaoAttackDamage(
       target,
       JAO_Q_DEFINITION.baseDamage,
       input.rank,

@@ -1,36 +1,52 @@
 # Passagem de contexto
 
 ## Estado atual
-T001-T012 estão concluídas e aprovadas por revisão independente.
+T001-T013 estão concluídas e aprovadas por revisão independente.
 
-## Protótipo visual atual
-T007 permite movimentação, colisão, câmera e pausa no Phaser.
+## Protótipo visual
+T007 já permite movimentação, colisão, câmera e pausa no Phaser.
 
-## Combate genérico disponível
-- T008: cast, foco, cooldown, dodge e attackInstanceId.
-- T009: dano, shield, cura e estados.
-- T010: projéteis, cones, zonas e HitRegistry.
-- T011: Ressonância com primer/detonator e cap global por vítima.
+## Combate e Jão
+- T008-T010: cast, recursos, dano, estados, projéteis, cones e zonas.
+- T011: Ressonância.
+- T012: Jão básico, Leitura de Campo e Q.
+- T013: W Dedução, E Corte da Aurora e R Campo Absoluto.
 
-## Jão disponível após T012
-- stats base: 320 HP / 180 px/s / raio 12;
-- passiva Leitura de Campo: segunda ação distinta da mesma família em até 360 ticks aplica analyzed por 300 ticks;
-- projéteis do mesmo enemyActionId não contam como repetições;
-- analyzed concede outgoing x1.10 contra o alvo;
-- básico Corte curto: 26 dano, cone 80°, alcance 60, cadência 33 ticks;
-- Q Passo Relâmpago: dash 160 px, para em parede, 32 dano uma vez por alvo cruzado e aplica primer de Ressonância;
-- fixture de sala de teste para inimigo repetindo ataque.
+## T013
+### W
+- raio 240;
+- reveal 300 ticks;
+- vulnerable 180 ticks;
+- reveal de inimigos/pistas/armadilhas.
 
-## Evidência T012
-- CI geral final do código: 35951218964 PASS.
-- revisão independente: 35951276420 PASS.
-- limites 300 px e 360 ticks testados.
-- refresh de analyzed sem stack confirmado.
-- básico não atravessa parede.
-- analyzed afeta também dano do Q.
-- Q ordena hits pela trajetória e mantém determinismo sem localeCompare.
+### E
+- carga 12-60 ticks;
+- dano 40-80 linear;
+- direção fixada na aceitação;
+- movimento x0,5 na carga;
+- detonator de Ressonância;
+- durante Campo Absoluto, carga máxima em 12 ticks.
 
-## Próxima tarefa
-T013 - Jão W, E e ultimate Campo Absoluto.
+### R
+- consome 100 de ultimate;
+- windup 12 ticks;
+- duração 360 ticks após o windup;
+- recovery 12 ticks via cast spec T008;
+- haste local 20%;
+- básico em 27 ticks de cadência;
+- reset único do Q no aceite;
+- sem slow global, worldTimeScale=1 e enemyTimeScale=1.
 
-T014 (IA) já tem suas dependências genéricas satisfeitas e pode ser executada em paralelo, mas a sequência do herói segue T013.
+## Correções descobertas na T013
+- Campo Absoluto inicialmente ativava o buff antes do windup; corrigido.
+- E letal inicialmente não consumia/detonava Ressonância; corrigido com confirmação explícita do hit detonador.
+- teste confirmou vizinho fora do cone mas dentro da explosão.
+
+## Evidência
+- CI geral final: 35952850650 PASS.
+- revisão independente: 35952969118 PASS.
+
+## Próxima tarefa recomendada
+T014 - IA de rasteiro e atirador.
+
+T016 também está liberada e pode ser executada em paralelo. T015 aguarda T014; depois T017 fecha o gate integrado.
