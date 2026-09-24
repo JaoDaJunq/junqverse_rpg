@@ -32,6 +32,7 @@ import {
   resolveJaoERelease,
   resolveJaoW,
   startCooldown,
+  tryAcceptAbility,
   tryActivateJaoUltimate,
   type JaoCombatTarget
 } from '../packages/sim/src/index.js';
@@ -443,6 +444,76 @@ describe('T013 Jão W E and Campo Absoluto', () => {
 
     expect(cleared.ultimate.activeUntilTick).toBeNull();
     expect(cleared.eCharge).toBeNull();
+  });
+
+
+  it('W and E use the generic focus and cooldown acceptance rules', () => {
+    const combatant = (await import('../packages/sim/src/index.js')).createCombatantState(1);
+
+    const w = tryAcceptAbility(combatant, {
+      ability: JAO_W_DEFINITION
+    }, {
+      targetValid: true,
+      stunned: false
+    });
+
+    expect(w.accepted).toBe(true);
+    expect(w.state.resources.focus).toBe(85);
+    expect(w.state.resources.cooldowns.jao_w).toBe(600);
+
+    const e = tryAcceptAbility(
+      (await import('../packages/sim/src/index.js')).createCombatantState(2),
+      {
+        ability: JAO_E_DEFINITION
+      },
+      {
+        targetValid: true,
+        stunned: false
+      }
+    );
+
+    expect(e.accepted).toBe(true);
+    expect(e.state.resources.focus).toBe(75);
+    expect(e.state.resources.cooldowns.jao_e).toBe(420);
+  });
+
+  it('a lethal E hit still consumes the mark and explodes around the primary target', () => {
+    let resonance = createResonanceState();
+    resonance = applyResonancePrimer(resonance, 2, 0).state;
+
+    const lowHealthPrimary: JaoCombatTarget = {
+      ...target(2, 80, 0),
+      health: createHealthState(100, 0, 30)
+    };
+
+    const charge = createJaoECharge({
+      ownerEntityId: 1,
+      attackInstanceId: 'attack:e:lethal',
+      startedAtTick: 0,
+      direction: { x: 1, y: 0 },
+      ultimate: createJaoUltimateState()
+    });
+
+    const result = resolveJaoERelease({
+      plan: planJaoERelease({
+        charge,
+        requestedReleaseTick: 12
+      }),
+      currentTick: 12,
+      origin: { x: 0, y: 0 },
+      rank: 1,
+      blockers: [],
+      targets: [
+        lowHealthPrimary,
+        target(3, 100, 0)
+      ],
+      passive: createJaoPassiveState(),
+      resonance
+    });
+
+    expect(result.targets.find((item) => item.entityId === 2)?.health.alive).toBe(false);
+    expect(hasResonanceMark(result.resonance, 2, 12)).toBe(false);
+    expect(result.targets.find((item) => item.entityId === 3)?.health.health).toBe(75);
   });
 
   it('charging E uses half movement speed', () => {
