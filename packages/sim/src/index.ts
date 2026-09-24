@@ -14,3 +14,5 @@ export * from './areas.js';
 export * from './resonance.js';
 export * from './heroes/jao.js';
 export * from './heroes/jao-advanced.js';
+export * from './ai/pathfinding.js';
+export * from './ai/fsm.js';
