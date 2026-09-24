@@ -29,6 +29,7 @@ export interface SessionInputSource {
 
 export interface LocalSessionOptions {
   readonly initialUltimateCharge?: number;
+  readonly enemyAiEnabled?: boolean;
 }
 
 export interface LocalSessionSnapshot extends PrototypeSnapshot {
@@ -123,6 +124,7 @@ export class LocalSession implements GameSession {
   private readonly initialState: PrototypeWorldState;
   private readonly input: SessionInputSource;
   private readonly initialUltimateCharge: number;
+  private readonly enemyAiEnabled: boolean;
   private accumulatorMs = 0;
   private paused = false;
   private stopped = false;
@@ -135,6 +137,7 @@ export class LocalSession implements GameSession {
     this.initialState = clonePrototypeWorldState(initialState);
     this.state = clonePrototypeWorldState(initialState);
     this.initialUltimateCharge = options.initialUltimateCharge ?? 0;
+    this.enemyAiEnabled = options.enemyAiEnabled ?? false;
     this.combat = createPrototypeCombatState(
       this.state.player.entityId,
       this.initialUltimateCharge
@@ -223,10 +226,12 @@ export class LocalSession implements GameSession {
         this.state = moved.state;
       }
 
-      this.state = stepPrototypeEnemyAi(
-        this.state,
-        false
-      );
+      if (this.enemyAiEnabled) {
+        this.state = stepPrototypeEnemyAi(
+          this.state,
+          false
+        );
+      }
 
       this.accumulatorMs = Math.max(0, this.accumulatorMs - TICK_MS);
     }
