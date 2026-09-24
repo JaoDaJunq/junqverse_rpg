@@ -18,6 +18,8 @@ export class DefeatPanel {
   private readonly root: HTMLDivElement;
   private readonly tryAgainButton: HTMLButtonElement;
   private readonly returnButton: HTMLButtonElement;
+  private readonly onTryAgain: () => void;
+  private readonly onReturn: () => void;
   private destroyed = false;
 
   public constructor(
@@ -29,13 +31,13 @@ export class DefeatPanel {
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-modal', 'true');
     root.setAttribute('aria-label', 'Derrota');
-    root.hidden = true;
+    root.setAttribute('aria-hidden', 'true');
 
     Object.assign(root.style, {
       position: 'fixed',
       inset: '0',
       zIndex: '10000',
-      display: 'flex',
+      display: 'none',
       alignItems: 'center',
       justifyContent: 'center',
       background: 'rgba(3, 7, 18, 0.78)',
@@ -100,19 +102,17 @@ export class DefeatPanel {
     this.root = root;
     this.tryAgainButton = tryAgainButton;
     this.returnButton = returnButton;
-
     this.onTryAgain = callbacks.onTryAgain;
     this.onReturn = callbacks.onReturn;
   }
-
-  private readonly onTryAgain: () => void;
-  private readonly onReturn: () => void;
 
   public show(): void {
     if (this.destroyed) {
       return;
     }
-    this.root.hidden = false;
+
+    this.root.style.display = 'flex';
+    this.root.setAttribute('aria-hidden', 'false');
     this.tryAgainButton.focus();
   }
 
@@ -120,11 +120,13 @@ export class DefeatPanel {
     if (this.destroyed) {
       return;
     }
-    this.root.hidden = true;
+
+    this.root.style.display = 'none';
+    this.root.setAttribute('aria-hidden', 'true');
   }
 
   public isVisible(): boolean {
-    return !this.destroyed && !this.root.hidden;
+    return !this.destroyed && this.root.style.display !== 'none';
   }
 
   public destroy(): void {
