@@ -47,6 +47,8 @@ export class CombatFxView {
   private previousQDash = false;
   private previousECharging = false;
   private previousUltimate = false;
+  private previousPlayerHealth: number;
+  private lastEDirection: Vec2 = { x: 1, y: 0 };
   private previousAbility: string | null = null;
   private previousAbilityPhase:
     | 'windup'
@@ -61,6 +63,8 @@ export class CombatFxView {
     this.scene = scene;
     this.telegraphs = scene.add.graphics().setDepth(10);
 
+    this.previousPlayerHealth = initial.player.health;
+
     for (const enemy of initial.enemies) {
       this.previousHealth.set(enemy.entityId, enemy.health);
     }
@@ -68,6 +72,10 @@ export class CombatFxView {
 
   public render(snapshot: LocalSessionSnapshot): void {
     this.telegraphs.clear();
+
+    if (snapshot.combat.eDirection !== null) {
+      this.lastEDirection = snapshot.combat.eDirection;
+    }
 
     this.drawPlayerAreas(snapshot);
     this.drawEnemyTelegraphs(snapshot);
@@ -242,7 +250,7 @@ export class CombatFxView {
       this.spawnDirectionalBurst(
         'vfx-slash',
         player,
-        combat.eDirection ?? { x: 1, y: 0 },
+        this.lastEDirection,
         0xfacc15
       );
     }
@@ -285,6 +293,18 @@ export class CombatFxView {
   }
 
   private spawnDamageImpacts(snapshot: LocalSessionSnapshot): void {
+    if (snapshot.player.health < this.previousPlayerHealth) {
+      this.spawnBurst(
+        'vfx-impact',
+        snapshot.player.position.x,
+        snapshot.player.position.y,
+        0xf87171,
+        0.07,
+        170
+      );
+    }
+    this.previousPlayerHealth = snapshot.player.health;
+
     for (const enemy of snapshot.enemies) {
       const previous = this.previousHealth.get(enemy.entityId);
 

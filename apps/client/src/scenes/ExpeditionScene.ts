@@ -153,7 +153,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.add.text(
       16,
       16,
-      `JUNQVERSE • Gate P0 T017\nWASD mover • Mouse básico • 1 Q • 2 W • 3 E • R Campo • Espaço esquiva • Esc pausar${debugHint}`,
+      `JUNQVERSE • Gate P0 T017\nWASD mover • Mouse ataque básico • 1 Passo Relâmpago • 2 Dedução • 3 Corte da Aurora • R Campo Absoluto • Espaço esquiva • Esc pausar${debugHint}`,
       {
         color: '#f9fafb',
         fontFamily: 'system-ui, sans-serif',
