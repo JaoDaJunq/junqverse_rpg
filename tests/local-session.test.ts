@@ -34,6 +34,33 @@ class ConstantInput implements SessionInputSource {
   }
 }
 
+class OneShotActionInput implements SessionInputSource {
+  public clears = 0;
+
+  public constructor(
+    private readonly action: InputFrame['pressed'][number]
+  ) {}
+
+  public nextFrame(clientTick: number): InputFrame {
+    return {
+      seq: clientTick,
+      clientTick,
+      moveX: 0,
+      moveY: 0,
+      aimX: 200,
+      aimY: 100,
+      basicHeld: false,
+      pressed: clientTick === 0 ? [this.action] : [],
+      released: [],
+      interactHeld: false
+    };
+  }
+
+  public clear(): void {
+    this.clears += 1;
+  }
+}
+
 function makeSession(input = new ConstantInput(1, 0)): LocalSession {
   return new LocalSession(
     createPrototypeWorld(
@@ -82,6 +109,7 @@ describe('T007 local session', () => {
 
     expect(paused.tick).toBe(before.tick);
     expect(paused.player.position).toEqual(before.player.position);
+    expect(paused.combat).toEqual(before.combat);
     expect(input.clears).toBeGreaterThanOrEqual(1);
   });
 
@@ -142,6 +170,9 @@ describe('T007 local session', () => {
       expect(restarted.tick).toBe(0);
       expect(restarted.player.entityId).toBe(1);
       expect(restarted.player.position).toEqual({ x: 100, y: 100 });
+      expect(restarted.combat.resources.focus).toBe(100);
+      expect(restarted.combat.resources.dodgeCharges).toBe(2);
+      expect(restarted.combat.resources.cooldowns).toEqual({});
       expect(session.isPaused()).toBe(false);
     }
 
@@ -156,5 +187,35 @@ describe('T007 local session', () => {
 
     expect(() => session.restart()).toThrow('stopped session');
   });
+});
 
+describe('T017 combat input bridge', () => {
+  it('bridges Q acceptance into real focus and cooldown state', () => {
+    const session = makeSession(new OneShotActionInput('q'));
+
+    const snapshot = session.advance(1000 / 60);
+
+    expect(snapshot.combat.resources.focus).toBe(80);
+    expect(snapshot.combat.resources.cooldowns.jao_q).toBe(360);
+    expect(snapshot.combat.activeAbilityId).toBe('jao_q');
+  });
+
+  it('bridges W acceptance into real focus and cooldown state', () => {
+    const session = makeSession(new OneShotActionInput('w'));
+
+    const snapshot = session.advance(1000 / 60);
+
+    expect(snapshot.combat.resources.focus).toBe(85);
+    expect(snapshot.combat.resources.cooldowns.jao_w).toBe(600);
+    expect(snapshot.combat.activeAbilityId).toBe('jao_w');
+  });
+
+  it('bridges dodge into the authoritative combat resource state', () => {
+    const session = makeSession(new OneShotActionInput('dodge'));
+
+    const snapshot = session.advance(1000 / 60);
+
+    expect(snapshot.combat.resources.dodgeCharges).toBe(1);
+    expect(snapshot.combat.dodgeActive).toBe(true);
+  });
 });

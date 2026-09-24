@@ -1,8 +1,13 @@
 import type { InputFrame } from '@junqverse/protocol';
 import {
   TICKS_PER_SECOND,
+  createPrototypeCombatSnapshot,
+  createPrototypeCombatState,
   createPrototypeSnapshot,
+  stepPrototypeCombat,
   stepPrototypeWorld,
+  type PrototypeCombatSnapshot,
+  type PrototypeCombatState,
   type PrototypeSnapshot,
   type PrototypeWorldState
 } from '@junqverse/sim';
@@ -15,10 +20,14 @@ export interface SessionInputSource {
   clear(): void;
 }
 
+export interface LocalSessionSnapshot extends PrototypeSnapshot {
+  readonly combat: PrototypeCombatSnapshot;
+}
+
 export interface GameSession {
-  advance(renderDeltaMs: number): PrototypeSnapshot;
-  getSnapshot(): PrototypeSnapshot;
-  restart(): PrototypeSnapshot;
+  advance(renderDeltaMs: number): LocalSessionSnapshot;
+  getSnapshot(): LocalSessionSnapshot;
+  restart(): LocalSessionSnapshot;
   setPaused(paused: boolean): void;
   isPaused(): boolean;
   stop(): void;
@@ -39,8 +48,17 @@ function clonePrototypeWorldState(
   };
 }
 
+function combatCommandFromFrame(frame: InputFrame) {
+  return {
+    qPressed: frame.pressed.includes('q'),
+    wPressed: frame.pressed.includes('w'),
+    dodgePressed: frame.pressed.includes('dodge')
+  };
+}
+
 export class LocalSession implements GameSession {
   private state: PrototypeWorldState;
+  private combat: PrototypeCombatState;
   private readonly initialState: PrototypeWorldState;
   private readonly input: SessionInputSource;
   private accumulatorMs = 0;
@@ -53,10 +71,13 @@ export class LocalSession implements GameSession {
   ) {
     this.initialState = clonePrototypeWorldState(initialState);
     this.state = clonePrototypeWorldState(initialState);
+    this.combat = createPrototypeCombatState(
+      this.state.player.entityId
+    );
     this.input = input;
   }
 
-  public advance(renderDeltaMs: number): PrototypeSnapshot {
+  public advance(renderDeltaMs: number): LocalSessionSnapshot {
     if (!Number.isFinite(renderDeltaMs) || renderDeltaMs < 0) {
       throw new RangeError('render delta must be non-negative and finite');
     }
@@ -73,25 +94,35 @@ export class LocalSession implements GameSession {
         x: frame.moveX,
         y: frame.moveY
       });
+      this.combat = stepPrototypeCombat(
+        this.combat,
+        combatCommandFromFrame(frame)
+      );
       this.accumulatorMs = Math.max(0, this.accumulatorMs - TICK_MS);
     }
 
     return this.getSnapshot();
   }
 
-  public getSnapshot(): PrototypeSnapshot {
-    return createPrototypeSnapshot(
-      this.state,
-      this.accumulatorMs / TICK_MS
-    );
+  public getSnapshot(): LocalSessionSnapshot {
+    return {
+      ...createPrototypeSnapshot(
+        this.state,
+        this.accumulatorMs / TICK_MS
+      ),
+      combat: createPrototypeCombatSnapshot(this.combat)
+    };
   }
 
-  public restart(): PrototypeSnapshot {
+  public restart(): LocalSessionSnapshot {
     if (this.stopped) {
       throw new Error('cannot restart a stopped session');
     }
 
     this.state = clonePrototypeWorldState(this.initialState);
+    this.combat = createPrototypeCombatState(
+      this.state.player.entityId
+    );
     this.accumulatorMs = 0;
     this.paused = false;
     this.input.clear();

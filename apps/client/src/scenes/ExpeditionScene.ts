@@ -1,13 +1,14 @@
 import Phaser from 'phaser';
 import {
-  createCombatResources,
   createHealthState,
-  createJaoUltimateState,
   createPrototypeWorld,
   type Aabb
 } from '@junqverse/sim';
 import { JAO_BASE_STATS } from '@junqverse/content';
-import { LocalSession } from '../adapters/LocalSession.js';
+import {
+  LocalSession,
+  type LocalSessionSnapshot
+} from '../adapters/LocalSession.js';
 import { InputMapper } from '../input/InputMapper.js';
 import { WorldView } from '../presentation/WorldView.js';
 import { Hud } from '../presentation/Hud.js';
@@ -28,8 +29,6 @@ const TEST_BLOCKERS: readonly Aabb[] = [
 ];
 
 const HUD_HEALTH = createHealthState(JAO_BASE_STATS.maxHealth);
-const HUD_RESOURCES = createCombatResources();
-const HUD_ULTIMATE = createJaoUltimateState();
 
 function technicalDefeatEnabled(): boolean {
   return (
@@ -88,7 +87,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.add.text(
       16,
       16,
-      `JUNQVERSE • Sala técnica T016\nWASD mover • Esc pausar${debugHint}`,
+      `JUNQVERSE • Gate P0 T017\nWASD mover • 1/2 combate • Espaço esquiva • Esc pausar${debugHint}`,
       {
         color: '#f9fafb',
         fontFamily: 'system-ui, sans-serif',
@@ -102,7 +101,7 @@ export class ExpeditionScene extends Phaser.Scene {
       this,
       this.scale.gameSize.width,
       this.scale.gameSize.height,
-      this.createHudSnapshot()
+      this.createHudSnapshot(initial)
     );
 
     this.pauseLabel = this.add.text(
@@ -164,18 +163,18 @@ export class ExpeditionScene extends Phaser.Scene {
 
     const snapshot = this.session.advance(delta);
     this.view.render(snapshot);
-    this.hud?.render(this.createHudSnapshot());
+    this.hud?.render(this.createHudSnapshot(snapshot));
   }
 
-  private createHudSnapshot() {
+  private createHudSnapshot(snapshot: LocalSessionSnapshot) {
     if (!this.mapper) {
       throw new Error('input mapper is required for HUD snapshot');
     }
 
     return createJaoHudSnapshot({
       health: HUD_HEALTH,
-      resources: HUD_RESOURCES,
-      ultimate: HUD_ULTIMATE,
+      resources: snapshot.combat.resources,
+      ultimate: snapshot.combat.ultimate,
       bindings: this.mapper.getBindings()
     });
   }
@@ -214,7 +213,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
     const snapshot = this.session.restart();
     this.view.render(snapshot);
-    this.hud?.render(this.createHudSnapshot());
+    this.hud?.render(this.createHudSnapshot(snapshot));
     this.cameras.main.centerOn(
       snapshot.player.position.x,
       snapshot.player.position.y
