@@ -447,6 +447,10 @@ describe('T017 combat input bridge', () => {
       new HeldBasicInput({ x: 150, y: 100 })
     );
 
+    session.advance((1000 / 60) * 8);
+    expect(session.getSnapshot().enemies[0]?.health).toBe(70);
+    expect(session.getSnapshot().combat.activeAbilityId).toBe('jao_basic');
+
     session.advance(1000 / 60);
     expect(session.getSnapshot().enemies[0]?.health).toBe(44);
 
@@ -474,7 +478,7 @@ describe('T017 combat input bridge', () => {
       new HeldBasicInput({ x: 220, y: 100 })
     );
 
-    session.advance(1000 / 60);
+    session.advance((1000 / 60) * 9);
     expect(session.getSnapshot().enemies[0]?.health).toBe(70);
   });
 

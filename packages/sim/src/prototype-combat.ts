@@ -1,4 +1,5 @@
 import {
+  JAO_BASIC_DEFINITION,
   JAO_E_DEFINITION,
   JAO_Q_DEFINITION,
   JAO_R_DEFINITION,
@@ -16,7 +17,7 @@ import {
 import {
   createJaoBasicState,
   createJaoPassiveState,
-  resolveJaoBasicAttack,
+  resolveJaoBasicHit,
   resolveJaoQDash,
   type JaoBasicState,
   type JaoCombatTarget,
@@ -79,6 +80,7 @@ export interface PrototypeCombatState {
   readonly qDash: PrototypeQDashState | null;
   readonly dodgeDash: PrototypeDodgeDashState | null;
   readonly basic: JaoBasicState;
+  readonly basicCastDirection: Vec2 | null;
   readonly passive: JaoPassiveState;
   readonly reveal: JaoRevealState;
   readonly resonance: ResonanceState;
@@ -260,6 +262,7 @@ export function createPrototypeCombatState(
     qDash: null,
     dodgeDash: null,
     basic: createJaoBasicState(),
+    basicCastDirection: null,
     passive: createJaoPassiveState(),
     reveal: createJaoRevealState(),
     resonance: createResonanceState(),
@@ -279,6 +282,11 @@ export function stepPrototypeCombat(
 
   const previousCast = state.combatant.activeCast;
   let combatant = stepCombatant(state.combatant);
+  const basicActivated =
+    previousCast?.abilityId === JAO_BASIC_DEFINITION.id &&
+    previousCast.phase === 'windup' &&
+    combatant.activeCast?.abilityId === JAO_BASIC_DEFINITION.id &&
+    combatant.activeCast.phase === 'active';
   const wActivated =
     previousCast?.abilityId === JAO_W_DEFINITION.id &&
     previousCast.phase === 'windup' &&
@@ -440,7 +448,8 @@ export function stepPrototypeCombat(
           dodgeDash: {
             direction,
             ticksRemaining: 11
-          }
+          },
+          basicCastDirection: null
         },
         movement: dodgeDashMovement(direction),
         basicDirection: null,
@@ -456,6 +465,28 @@ export function stepPrototypeCombat(
       },
       movement: normalMovement(state, currentTick),
       basicDirection: null,
+      wActivated,
+      eReleasePlan: null
+    };
+  }
+
+  if (
+    previousCast?.abilityId === JAO_BASIC_DEFINITION.id ||
+    combatant.activeCast?.abilityId === JAO_BASIC_DEFINITION.id
+  ) {
+    const direction = state.basicCastDirection;
+    const castStillActive =
+      combatant.activeCast?.abilityId === JAO_BASIC_DEFINITION.id;
+
+    return {
+      state: {
+        ...state,
+        combatant,
+        basicCastDirection: castStillActive ? direction : null
+      },
+      movement: { kind: 'locked' },
+      basicDirection:
+        basicActivated && direction !== null ? direction : null,
       wActivated,
       eReleasePlan: null
     };
@@ -644,11 +675,53 @@ export function stepPrototypeCombat(
     };
   }
 
-  const canUseBasic =
+  const cadenceTicks = getJaoBasicCadenceTicks(
+    state.ultimate,
+    currentTick
+  );
+  const canStartBasic =
     combatant.activeCast === null &&
     combatant.dodge === null &&
     command.basicHeld &&
-    command.basicDirection !== null;
+    command.basicDirection !== null &&
+    currentTick >= state.basic.nextAllowedTick;
+
+  if (canStartBasic && command.basicDirection !== null) {
+    const direction = normalizeDirection(command.basicDirection);
+    const cast = tryAcceptAbility(
+      combatant,
+      {
+        ability: {
+          id: JAO_BASIC_DEFINITION.id,
+          costFocus: 0,
+          cooldownTicks: 0,
+          windupTicks: JAO_BASIC_DEFINITION.windupTicks,
+          recoveryTicks: JAO_BASIC_DEFINITION.recoveryTicks
+        }
+      },
+      {
+        targetValid: true,
+        stunned: false
+      }
+    );
+
+    if (cast.accepted) {
+      return {
+        state: {
+          ...state,
+          combatant: cast.state,
+          basic: {
+            nextAllowedTick: currentTick + cadenceTicks
+          },
+          basicCastDirection: direction
+        },
+        movement: { kind: 'locked' },
+        basicDirection: null,
+        wActivated,
+        eReleasePlan: null
+      };
+    }
+  }
 
   return {
     state: {
@@ -656,9 +729,7 @@ export function stepPrototypeCombat(
       combatant
     },
     movement: normalMovement(state, currentTick),
-    basicDirection: canUseBasic
-      ? normalizeDirection(command.basicDirection!)
-      : null,
+    basicDirection: null,
     wActivated,
     eReleasePlan: null
   };
@@ -667,33 +738,25 @@ export function stepPrototypeCombat(
 export function resolvePrototypeBasicAttack(
   state: PrototypeCombatState,
   world: PrototypeWorldState,
-  direction: Vec2
+  direction: Vec2,
+  attackInstanceId: string
 ): PrototypeBasicAttackResult {
-  const result = resolveJaoBasicAttack({
-    state: state.basic,
+  const result = resolveJaoBasicHit({
     currentTick: world.tick,
     ownerEntityId: world.player.entityId,
-    attackInstanceId:
-      `attack:basic:${world.player.entityId}:${world.tick}`,
+    attackInstanceId,
     origin: world.player.position,
     direction: normalizeDirection(direction),
     rank: 1,
     blockers: world.blockers,
     targets: prototypeTargets(world),
-    passive: state.passive,
-    cadenceTicks: getJaoBasicCadenceTicks(
-      state.ultimate,
-      world.tick
-    )
+    passive: state.passive
   });
 
   return {
-    accepted: result.accepted,
+    accepted: true,
     hitTargetIds: result.hitTargetIds,
-    state: {
-      ...state,
-      basic: result.state
-    },
+    state,
     world: updateWorldTargets(world, result.targets)
   };
 }
@@ -795,6 +858,7 @@ export function defeatPrototypeCombat(
     dodgeDash: null,
     eCharge: null,
     eReleasePlan: null,
+    basicCastDirection: null,
     resonance: createResonanceState()
   };
 }

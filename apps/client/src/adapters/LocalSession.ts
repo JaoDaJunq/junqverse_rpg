@@ -242,15 +242,18 @@ export class LocalSession implements GameSession {
       }
 
       if (combatStep.basicDirection !== null) {
-        const basic = resolvePrototypeBasicAttack(
-          this.combat,
-          this.state,
-          combatStep.basicDirection
-        );
-        this.combat = basic.state;
-        this.state = basic.world;
+        const attackInstanceId =
+          this.combat.combatant.activeCast?.attackInstanceId;
 
-        if (basic.accepted) {
+        if (attackInstanceId !== undefined) {
+          const basic = resolvePrototypeBasicAttack(
+            this.combat,
+            this.state,
+            combatStep.basicDirection,
+            attackInstanceId
+          );
+          this.combat = basic.state;
+          this.state = basic.world;
           normalMovement = { x: 0, y: 0 };
         }
       }
