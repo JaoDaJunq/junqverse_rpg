@@ -329,6 +329,7 @@ export function resolveJaoBasicAttack(
     readonly targets: readonly JaoCombatTarget[];
     readonly registry?: HitRegistry;
     readonly passive: JaoPassiveState;
+    readonly cadenceTicks?: number;
   }
 ): JaoBasicResult {
   assertTick(input.currentTick, 'currentTick');
@@ -339,6 +340,11 @@ export function resolveJaoBasicAttack(
   assertRank(input.rank);
 
   const registry = input.registry ?? createHitRegistry();
+  const cadenceTicks =
+    input.cadenceTicks ?? JAO_BASIC_DEFINITION.cadenceTicks;
+  if (!Number.isInteger(cadenceTicks) || cadenceTicks <= 0) {
+    throw new RangeError('cadenceTicks must be a positive integer');
+  }
 
   if (input.currentTick < input.state.nextAllowedTick) {
     return {
@@ -379,7 +385,7 @@ export function resolveJaoBasicAttack(
     reason: 'accepted',
     state: {
       nextAllowedTick:
-        input.currentTick + JAO_BASIC_DEFINITION.cadenceTicks
+        input.currentTick + cadenceTicks
     },
     registry: cone.registry,
     targets,
