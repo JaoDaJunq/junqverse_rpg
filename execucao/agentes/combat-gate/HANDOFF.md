@@ -43,3 +43,14 @@ A passiva Leitura de Campo foi registrada como continuidade fora do aceite da T0
 Rodada manual humana de 5 minutos em hardware real, com registro de sensação, input, telegraphs e blur.
 
 Não iniciar próxima fase antes de fechar essa evidência e passar por revisão independente.
+
+
+## Visual V3 planejado
+
+O feedback visual do primeiro teste levou à criação de um plano separado para um personagem laboratório e uso mais intenso dos assets existentes.
+
+Ver:
+- `execucao/agentes/visual-v3/HANDOFF.md`
+- `execucao/agentes/visual-v3/RELATORIO.md`
+
+A execução deve permanecer dentro da T017/branch de protótipo até novo gate manual.
