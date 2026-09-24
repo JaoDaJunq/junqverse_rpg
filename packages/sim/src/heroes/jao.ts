@@ -3,7 +3,10 @@ import {
   JAO_BASE_STATS,
   JAO_BASIC_DEFINITION,
   JAO_PASSIVE_DEFINITION,
-  JAO_Q_DEFINITION
+  JAO_Q_DEFINITION,
+  JAO_W_DEFINITION,
+  JAO_E_DEFINITION,
+  JAO_R_DEFINITION
 } from '@junqverse/content';
 import {
   applyDamage,
@@ -25,14 +28,17 @@ import {
 } from '../hit-registry.js';
 import {
   applyResonancePrimer,
+  tryDetonateResonance,
   type ResonanceState,
   type ResonanceVisualEvent
 } from '../resonance.js';
 import {
+  applyStatus,
   getIncomingStatusMultiplier,
   type StatusState
 } from '../status.js';
 import { resolveConeHits } from '../areas.js';
+import type { CombatantState } from '../abilities.js';
 
 const EPSILON = 1e-9;
 
@@ -60,6 +66,7 @@ export interface JaoCombatTarget {
   readonly health: HealthState;
   readonly status: StatusState;
   readonly invulnerable?: boolean;
+  readonly isBoss?: boolean;
 }
 
 export interface JaoBasicState {
@@ -522,4 +529,390 @@ export function resolveJaoQDash(
     hitTargetIds,
     visualEvents
   };
+}
+
+
+export interface JaoWDeductionResult {
+  readonly targets: readonly JaoCombatTarget[];
+  readonly revealedTargetIds: readonly number[];
+  readonly revealUntilTick: number;
+}
+
+export interface JaoEChargeState {
+  readonly startedAtTick: number;
+  readonly lockedDirection: Vec2;
+}
+
+export interface JaoEReleasePlan {
+  readonly releaseTick: number;
+  readonly chargeTicks: number;
+}
+
+export interface JaoEResult {
+  readonly registry: HitRegistry;
+  readonly resonance: ResonanceState;
+  readonly targets: readonly JaoCombatTarget[];
+  readonly hitTargetIds: readonly number[];
+  readonly explodedTargetIds: readonly number[];
+  readonly visualEvents: readonly ResonanceVisualEvent[];
+  readonly baseDamage: number;
+}
+
+export interface JaoUltimateBuff {
+  readonly activatedAtTick: number;
+  readonly expiresAtTick: number;
+}
+
+export interface JaoKitState {
+  readonly ultimateCharge: number;
+  readonly ultimate: JaoUltimateBuff | null;
+}
+
+export interface JaoUltimateActivationResult {
+  readonly accepted: boolean;
+  readonly reason: 'accepted' | 'dead' | 'charge' | 'already_active';
+  readonly kit: JaoKitState;
+  readonly combatant: CombatantState;
+  readonly qResetApplied: boolean;
+}
+
+export function resolveJaoWDeduction(input: {
+  readonly origin: Vec2;
+  readonly currentTick: number;
+  readonly targets: readonly JaoCombatTarget[];
+}): JaoWDeductionResult {
+  assertFiniteVec(input.origin, 'origin');
+  assertTick(input.currentTick, 'currentTick');
+
+  const revealedTargetIds: number[] = [];
+
+  const targets = input.targets.map((target) => {
+    const distance = Math.hypot(
+      target.position.x - input.origin.x,
+      target.position.y - input.origin.y
+    );
+
+    if (!target.health.alive || distance > JAO_W_DEFINITION.radiusPx) {
+      return target;
+    }
+
+    revealedTargetIds.push(target.entityId);
+
+    const vulnerable = applyStatus(target.status, {
+      kind: 'vulnerable',
+      sourceId: 'jao_w_deduction',
+      durationTicks: JAO_W_DEFINITION.vulnerableDurationTicks
+    }, {
+      isBoss: target.isBoss ?? false
+    });
+
+    return {
+      ...target,
+      status: vulnerable.state
+    };
+  });
+
+  revealedTargetIds.sort((a, b) => a - b);
+
+  return {
+    targets,
+    revealedTargetIds,
+    revealUntilTick: input.currentTick + JAO_W_DEFINITION.revealDurationTicks
+  };
+}
+
+export function createJaoECharge(
+  startedAtTick: number,
+  direction: Vec2
+): JaoEChargeState {
+  assertTick(startedAtTick, 'startedAtTick');
+  const lockedDirection = normalizeDirection(direction);
+
+  return {
+    startedAtTick,
+    lockedDirection
+  };
+}
+
+export function planJaoERelease(
+  charge: JaoEChargeState,
+  requestedTick: number,
+  ultimateActive: boolean
+): JaoEReleasePlan {
+  assertTick(requestedTick, 'requestedTick');
+
+  if (requestedTick < charge.startedAtTick) {
+    throw new RangeError('requestedTick cannot precede E charge start');
+  }
+
+  if (ultimateActive) {
+    return {
+      releaseTick: Math.max(
+        requestedTick,
+        charge.startedAtTick + JAO_R_DEFINITION.eFullChargeTicks
+      ),
+      chargeTicks: JAO_E_DEFINITION.maxChargeTicks
+    };
+  }
+
+  const releaseTick = Math.max(
+    requestedTick,
+    charge.startedAtTick + JAO_E_DEFINITION.minChargeTicks
+  );
+  const elapsed = Math.min(
+    JAO_E_DEFINITION.maxChargeTicks,
+    releaseTick - charge.startedAtTick
+  );
+
+  return {
+    releaseTick,
+    chargeTicks: Math.max(JAO_E_DEFINITION.minChargeTicks, elapsed)
+  };
+}
+
+export function calculateJaoEBaseDamage(chargeTicks: number): number {
+  if (!Number.isInteger(chargeTicks)) {
+    throw new RangeError('chargeTicks must be an integer');
+  }
+
+  const clamped = Math.max(
+    JAO_E_DEFINITION.minChargeTicks,
+    Math.min(JAO_E_DEFINITION.maxChargeTicks, chargeTicks)
+  );
+  const span =
+    JAO_E_DEFINITION.maxChargeTicks - JAO_E_DEFINITION.minChargeTicks;
+  const progress = (clamped - JAO_E_DEFINITION.minChargeTicks) / span;
+
+  return (
+    JAO_E_DEFINITION.minBaseDamage +
+    (JAO_E_DEFINITION.maxBaseDamage - JAO_E_DEFINITION.minBaseDamage) *
+      progress
+  );
+}
+
+export function resolveJaoERelease(input: {
+  readonly ownerEntityId: number;
+  readonly attackInstanceId: string;
+  readonly origin: Vec2;
+  readonly direction: Vec2;
+  readonly chargeTicks: number;
+  readonly currentTick: number;
+  readonly rank: number;
+  readonly blockers: readonly Aabb[];
+  readonly targets: readonly JaoCombatTarget[];
+  readonly registry?: HitRegistry;
+  readonly resonance: ResonanceState;
+  readonly passive: JaoPassiveState;
+}): JaoEResult {
+  assertEntityId(input.ownerEntityId, 'ownerEntityId');
+  assertStableId(input.attackInstanceId, 'attackInstanceId');
+  assertFiniteVec(input.origin, 'origin');
+  assertTick(input.currentTick, 'currentTick');
+  assertRank(input.rank);
+
+  const direction = normalizeDirection(input.direction);
+  const registry = input.registry ?? createHitRegistry();
+
+  const cone = resolveConeHits({
+    attackInstanceId: input.attackInstanceId,
+    ownerEntityId: input.ownerEntityId,
+    origin: input.origin,
+    direction,
+    rangePx: JAO_E_DEFINITION.rangePx,
+    halfAngleRadians:
+      (JAO_E_DEFINITION.coneAngleDegrees * Math.PI / 180) / 2
+  }, input.targets, input.blockers, registry);
+
+  const baseDamage = calculateJaoEBaseDamage(input.chargeTicks);
+  const hitSet = new Set(cone.targetEntityIds);
+
+  let targets: readonly JaoCombatTarget[] = input.targets.map((target) =>
+    hitSet.has(target.entityId)
+      ? applyJaoDamage(
+          target,
+          baseDamage,
+          input.rank,
+          input.passive,
+          input.currentTick
+        ).target
+      : target
+  );
+
+  let resonance = input.resonance;
+  const explodedTargetIds: number[] = [];
+  const visualEvents: ResonanceVisualEvent[] = [];
+
+  for (const targetEntityId of [...cone.targetEntityIds].sort((a, b) => a - b)) {
+    const detonation = tryDetonateResonance(resonance, {
+      triggerKind: 'detonator',
+      primaryTargetEntityId: targetEntityId,
+      detonatorEntityId: input.ownerEntityId,
+      detonatorRank: input.rank,
+      currentTick: input.currentTick
+    }, targets);
+
+    resonance = detonation.state;
+    explodedTargetIds.push(...detonation.explodedTargetIds);
+    visualEvents.push(...detonation.visualEvents);
+
+    targets = detonation.targets.map((updated) => {
+      const original = targets.find(
+        (target) => target.entityId === updated.entityId
+      );
+      if (!original) {
+        throw new Error('resonance returned an unknown target');
+      }
+
+      return {
+        ...original,
+        health: updated.health,
+        status: updated.status
+      };
+    });
+  }
+
+  return {
+    registry: cone.registry,
+    resonance,
+    targets,
+    hitTargetIds: cone.targetEntityIds,
+    explodedTargetIds,
+    visualEvents,
+    baseDamage
+  };
+}
+
+export function createJaoKitState(
+  ultimateCharge = JAO_R_DEFINITION.ultimateCost
+): JaoKitState {
+  if (
+    !Number.isFinite(ultimateCharge) ||
+    ultimateCharge < 0 ||
+    ultimateCharge > JAO_R_DEFINITION.ultimateCost
+  ) {
+    throw new RangeError('ultimateCharge must be between 0 and 100');
+  }
+
+  return {
+    ultimateCharge,
+    ultimate: null
+  };
+}
+
+export function isJaoUltimateActive(
+  kit: JaoKitState,
+  currentTick: number
+): boolean {
+  assertTick(currentTick, 'currentTick');
+  return (
+    kit.ultimate !== null &&
+    currentTick < kit.ultimate.expiresAtTick
+  );
+}
+
+export function activateJaoUltimate(
+  kit: JaoKitState,
+  combatant: CombatantState,
+  currentTick: number
+): JaoUltimateActivationResult {
+  assertTick(currentTick, 'currentTick');
+
+  if (!combatant.alive) {
+    return {
+      accepted: false,
+      reason: 'dead',
+      kit,
+      combatant,
+      qResetApplied: false
+    };
+  }
+
+  if (isJaoUltimateActive(kit, currentTick)) {
+    return {
+      accepted: false,
+      reason: 'already_active',
+      kit,
+      combatant,
+      qResetApplied: false
+    };
+  }
+
+  if (kit.ultimateCharge < JAO_R_DEFINITION.ultimateCost) {
+    return {
+      accepted: false,
+      reason: 'charge',
+      kit,
+      combatant,
+      qResetApplied: false
+    };
+  }
+
+  const cooldowns = { ...combatant.resources.cooldowns };
+  const qResetApplied = (cooldowns[JAO_Q_DEFINITION.id] ?? 0) > 0;
+  delete cooldowns[JAO_Q_DEFINITION.id];
+
+  return {
+    accepted: true,
+    reason: 'accepted',
+    qResetApplied,
+    kit: {
+      ultimateCharge:
+        kit.ultimateCharge - JAO_R_DEFINITION.ultimateCost,
+      ultimate: {
+        activatedAtTick: currentTick,
+        expiresAtTick: currentTick + JAO_R_DEFINITION.durationTicks
+      }
+    },
+    combatant: {
+      ...combatant,
+      resources: {
+        ...combatant.resources,
+        cooldowns
+      }
+    }
+  };
+}
+
+export function stepJaoKitState(
+  kit: JaoKitState,
+  currentTick: number,
+  alive: boolean
+): JaoKitState {
+  assertTick(currentTick, 'currentTick');
+
+  if (
+    kit.ultimate === null ||
+    (!alive || currentTick >= kit.ultimate.expiresAtTick)
+  ) {
+    return kit.ultimate === null
+      ? kit
+      : { ...kit, ultimate: null };
+  }
+
+  return kit;
+}
+
+export function getJaoUltimateHasteMagnitude(
+  kit: JaoKitState,
+  currentTick: number
+): number {
+  return isJaoUltimateActive(kit, currentTick)
+    ? JAO_R_DEFINITION.hasteMagnitude
+    : 0;
+}
+
+export function getJaoBasicCadenceTicks(
+  kit: JaoKitState,
+  currentTick: number
+): number {
+  return isJaoUltimateActive(kit, currentTick)
+    ? Math.ceil(
+        JAO_BASIC_DEFINITION.cadenceTicks *
+          JAO_R_DEFINITION.basicCadenceMultiplier
+      )
+    : JAO_BASIC_DEFINITION.cadenceTicks;
+}
+
+export function getJaoEChargeMovementMultiplier(): number {
+  return JAO_E_DEFINITION.chargeMovementMultiplier;
 }
