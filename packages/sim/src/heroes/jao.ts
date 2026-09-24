@@ -294,7 +294,7 @@ function applyJaoDamage(
     incomingModifiers: [
       getIncomingStatusMultiplier(target.status)
     ],
-    invulnerable: target.invulnerable
+    invulnerable: target.invulnerable ?? false
   });
 
   return {
