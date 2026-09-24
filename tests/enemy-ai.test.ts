@@ -283,6 +283,64 @@ describe('T014 enemy AI and pathfinding', () => {
     )).toBeLessThanOrEqual(ECO_RASTEIRO_DEFINITION.attackRangePx);
   });
 
+
+  it('rastreador cancels a telegraphed attack when attacks become disabled', () => {
+    let state = createEnemyAiState();
+    const target = {
+      entityId: 1,
+      position: { x: 40, y: 0 }
+    };
+
+    const started = stepEnemyAi({
+      state,
+      archetype: 'eco_rasteiro',
+      currentTick: 0,
+      enemyEntityId: 6,
+      position: { x: 0, y: 0 },
+      target,
+      blockers: [],
+      grid: GRID,
+      attacksEnabled: true
+    });
+
+    state = started.state;
+    expect(started.events[0]?.kind).toBe('telegraph');
+
+    for (
+      let tick = 1;
+      tick < ECO_RASTEIRO_DEFINITION.telegraphTicks;
+      tick += 1
+    ) {
+      state = stepEnemyAi({
+        state,
+        archetype: 'eco_rasteiro',
+        currentTick: tick,
+        enemyEntityId: 6,
+        position: { x: 0, y: 0 },
+        target,
+        blockers: [],
+        grid: GRID,
+        attacksEnabled: false
+      }).state;
+    }
+
+    const cancelled = stepEnemyAi({
+      state,
+      archetype: 'eco_rasteiro',
+      currentTick: ECO_RASTEIRO_DEFINITION.telegraphTicks,
+      enemyEntityId: 6,
+      position: { x: 0, y: 0 },
+      target,
+      blockers: [],
+      grid: GRID,
+      attacksEnabled: false
+    });
+
+    expect(cancelled.events).toEqual([]);
+    expect(cancelled.state.phase).toBe('approach');
+    expect(cancelled.state.pendingActionId).toBeNull();
+  });
+
   it('emits distinct action ids across repeated attacks of the same family', () => {
     let state = createEnemyAiState();
     const target = {
