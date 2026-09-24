@@ -1,0 +1,46 @@
+name: T016 Independent Review
+
+on:
+  push:
+    branches:
+      - review/p0-T016
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Existing tests
+        run: npm run test
+
+      - name: Independent HUD tests
+        run: npx vitest run tests/review-t016.test.ts
+
+      - name: Planning integrity
+        run: npm run test:plan
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser regressions
+        run: npm run test:e2e
