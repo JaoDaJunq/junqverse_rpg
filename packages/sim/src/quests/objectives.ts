@@ -28,6 +28,11 @@ export type BasicQuestObjectiveDefinition =
       readonly encounterId: string;
     }
   | {
+      readonly type: 'sequence';
+      readonly targetIdsOrdered: readonly string[];
+      readonly resetOnError: boolean;
+    }
+  | {
       readonly type: 'all' | 'any';
       readonly children: readonly BasicQuestObjectiveDefinition[];
     };
@@ -195,6 +200,21 @@ function compileNode(
     };
   }
 
+  if (type === 'sequence') {
+    if (typeof objective.resetOnError !== 'boolean') {
+      throw new TypeError('resetOnError must be a boolean');
+    }
+
+    return {
+      type,
+      targetIdsOrdered: uniqueIds(
+        objective.targetIdsOrdered,
+        'targetIdsOrdered'
+      ),
+      resetOnError: objective.resetOnError
+    };
+  }
+
   if (type === 'all' || type === 'any') {
     if (compositionDepth >= 2) {
       throw new Error(
@@ -219,7 +239,7 @@ function compileNode(
   }
 
   throw new Error(
-    `objective type ${String(type)} is not supported by T018`
+    `objective type ${String(type)} is not supported by current quest engine`
   );
 }
 
@@ -372,6 +392,47 @@ function applyNodeEvent(
 
   if (definition.type === 'survive') {
     return state;
+  }
+
+  if (definition.type === 'sequence') {
+    if (event.type !== 'interaction_completed') {
+      return state;
+    }
+
+    const targetId = payloadString(event, 'targetId');
+    if (
+      targetId === null ||
+      !definition.targetIdsOrdered.includes(targetId)
+    ) {
+      return state;
+    }
+
+    const expected =
+      definition.targetIdsOrdered[state.matchedIds.length];
+
+    if (targetId !== expected) {
+      if (
+        !definition.resetOnError ||
+        state.matchedIds.length === 0
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        matchedIds: [],
+        completed: false
+      };
+    }
+
+    const matchedIds = [...state.matchedIds, targetId];
+    return {
+      ...state,
+      matchedIds,
+      completed:
+        matchedIds.length ===
+        definition.targetIdsOrdered.length
+    };
   }
 
   const children = definition.children.map(
