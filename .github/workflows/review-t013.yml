@@ -1,0 +1,47 @@
+name: T013 Independent Review
+
+on:
+  push:
+    branches:
+      - review/p0-T013
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Existing regression suite
+        run: npm run test
+
+      - name: Independent Jão advanced tests
+        run: npx vitest run tests/review-t013.test.ts
+
+      - name: No global slow or runtime dependencies in sim
+        shell: bash
+        run: |
+          ! grep -R -nE "Date\.now|Math\.random|setTimeout|setInterval|from ['\"]phaser['\"]|window\.|document\." packages/sim/src
+          grep -q "worldTimeScale: 1" apps/client/src/presentation/heroVfx.ts
+          grep -q "enemyTimeScale: 1" apps/client/src/presentation/heroVfx.ts
+
+      - name: Planning integrity
+        run: npm run test:plan
+
+      - name: Build
+        run: npm run build
