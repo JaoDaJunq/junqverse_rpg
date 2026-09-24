@@ -344,7 +344,7 @@ describe('T017 combat input bridge', () => {
   it('bridges dodge into resources and moves exactly 112 px', () => {
     const session = makeSession(new OneShotActionInput('dodge'));
 
-    session.advance((1000 / 60) * 12);
+    session.advance((1000 / 60) * 13);
     const snapshot = session.getSnapshot();
 
     expect(snapshot.combat.resources.dodgeCharges).toBe(1);
