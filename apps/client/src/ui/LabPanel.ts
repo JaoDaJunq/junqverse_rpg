@@ -58,6 +58,7 @@ export class LabPanel {
   private readonly options: LabPanelOptions;
   private loadout: LabLoadout;
   private selectedSlot: LabSlotId = 'basic';
+  private previewTimers: number[] = [];
 
   public constructor(parent: HTMLElement, options: LabPanelOptions) {
     this.options = options;
@@ -69,7 +70,26 @@ export class LabPanel {
   }
 
   public destroy(): void {
+    this.clearPreviewTimers();
     this.root.remove();
+  }
+
+  private clearPreviewTimers(): void {
+    for (const timer of this.previewTimers) {
+      window.clearTimeout(timer);
+    }
+    this.previewTimers = [];
+  }
+
+  private previewAllEffects(): void {
+    this.clearPreviewTimers();
+
+    LAB_EFFECTS.forEach((effect, index) => {
+      const timer = window.setTimeout(() => {
+        this.options.onPreview(this.selectedSlot, effect.id);
+      }, index * 420);
+      this.previewTimers.push(timer);
+    });
   }
 
   private render(): void {
@@ -129,6 +149,27 @@ export class LabPanel {
 
     panel.appendChild(slotRow);
 
+    const skillCatalog = document.createElement('details');
+    skillCatalog.className = 'prototype-effect-catalog';
+    const skillSummary = document.createElement('summary');
+    skillSummary.textContent = `CATÁLOGO DE SKILLS (${LAB_SKILLS.length})`;
+    skillCatalog.appendChild(skillSummary);
+
+    for (const skill of LAB_SKILLS) {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'prototype-effect-item';
+      item.innerHTML =
+        `<strong>${skill.slot === 'basic' ? 'BÁSICO' : skill.slot.toUpperCase()} • ${skill.label}</strong><span>${skill.mechanic}</span>`;
+      item.addEventListener('click', () => {
+        this.selectedSlot = skill.slot;
+        this.render();
+      });
+      skillCatalog.appendChild(item);
+    }
+
+    panel.appendChild(skillCatalog);
+
     const selectedSkill = LAB_SKILLS.find(
       (skill) => skill.slot === this.selectedSlot
     )!;
@@ -163,6 +204,21 @@ export class LabPanel {
     });
     panel.appendChild(select);
 
+    const assignments = document.createElement('div');
+    assignments.className = 'prototype-assignments';
+
+    for (const skill of LAB_SKILLS) {
+      const effect = LAB_EFFECTS.find(
+        (candidate) => candidate.id === this.loadout.effects[skill.slot]
+      );
+      const row = document.createElement('div');
+      row.innerHTML =
+        `<span>${skill.slot === 'basic' ? 'BÁSICO' : skill.slot.toUpperCase()}</span><strong>${effect?.label ?? this.loadout.effects[skill.slot]}</strong>`;
+      assignments.appendChild(row);
+    }
+
+    panel.appendChild(assignments);
+
     const actions = document.createElement('div');
     actions.className = 'prototype-lab-actions';
 
@@ -174,6 +230,11 @@ export class LabPanel {
       );
     });
 
+    const previewAll = button('RODAR TODOS', 'prototype-lab-action');
+    previewAll.addEventListener('click', () => {
+      this.previewAllEffects();
+    });
+
     const reset = button('RESET VFX', 'prototype-lab-action secondary');
     reset.addEventListener('click', () => {
       this.loadout = DEFAULT_LAB_LOADOUT;
@@ -182,7 +243,7 @@ export class LabPanel {
       this.render();
     });
 
-    actions.append(preview, reset);
+    actions.append(preview, previewAll, reset);
     panel.appendChild(actions);
 
     const catalog = document.createElement('details');
