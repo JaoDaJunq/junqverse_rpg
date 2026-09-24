@@ -36,3 +36,45 @@ export const JAO_Q_DEFINITION = {
   appliesResonancePrimer: true,
   grantsInvulnerability: false
 } as const;
+
+
+export const JAO_W_DEFINITION = {
+  id: 'jao_w',
+  nameKey: 'jao_w_deducao',
+  costFocus: 15,
+  cooldownTicks: 600,
+  windupTicks: 9,
+  recoveryTicks: 9,
+  radiusPx: 240,
+  revealDurationTicks: 300,
+  vulnerableDurationTicks: 180
+} as const;
+
+export const JAO_E_DEFINITION = {
+  id: 'jao_e',
+  nameKey: 'jao_e_corte_aurora',
+  costFocus: 25,
+  cooldownTicks: 420,
+  minChargeTicks: 12,
+  maxChargeTicks: 60,
+  minBaseDamage: 40,
+  maxBaseDamage: 80,
+  coneAngleDegrees: 55,
+  rangePx: 110,
+  recoveryTicks: 15,
+  chargeMovementMultiplier: 0.5,
+  isResonanceDetonator: true
+} as const;
+
+export const JAO_R_DEFINITION = {
+  id: 'jao_r',
+  nameKey: 'jao_r_campo_absoluto',
+  ultimateCost: 100,
+  durationTicks: 360,
+  windupTicks: 12,
+  recoveryTicks: 12,
+  hasteMagnitude: 0.20,
+  qResetCount: 1,
+  eFullChargeTicks: 12,
+  basicCadenceMultiplier: 0.8
+} as const;
