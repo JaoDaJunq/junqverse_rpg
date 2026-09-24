@@ -3,53 +3,30 @@
 - Papel: enemy AI
 - Ticket: T014
 - Branch: agent/t014-enemy-ai
-- Estado: IN_PROGRESS até CI e revisão
-- Dependências: T009 e T010 DONE
+- Estado: DONE após revisão R2
+- Pull Request: #16
 
 ## Implementado
-### Conteúdo
-- eco_rasteiro com stats, telegraph 39 ticks e cooldown 90.
-- eco_atirador com stats, telegraph 54 ticks, cooldown 132 e projétil 300 px/s.
+- definições P0 de eco_rasteiro e eco_atirador;
+- FSM idle/approach/telegraph/attack/recovery;
+- decisão a cada 6 ticks;
+- A* determinístico em grid;
+- linha de visão;
+- telegraphs antes de ataques;
+- enemyActionId + familyId estáveis para Leitura de Campo;
+- IA emite evento de ataque uma vez, sem aplicar dano por frame.
 
-### FSM
-- idle/perception;
-- approach;
-- telegraph;
-- attack;
-- recovery;
-- decisões em intervalos de 6 ticks;
-- rasteiro recua em recovery;
-- atirador cancela tiro se perder linha de visão antes do disparo.
+## Correções encontradas durante a entrega
+1. chamada interna do pathfinding usava nomes de argumentos errados; corrigida.
+2. teste inicial exigia movimento apesar de cenário totalmente bloqueado; teste corrigido sem alterar regra.
+3. FSM pulava a fase attack; materializada como fase explícita de 1 tick.
+4. revisão R1 descobriu que attacksEnabled=false durante telegraph ainda permitia ataque do rasteiro; corrigido para cancelar qualquer arquétipo.
+5. ID de ação cancelado permanece consumido, impedindo reutilização.
 
-### A*
-- grid determinístico 4-direções;
-- blockers convertidos em células;
-- path estável com desempate determinístico;
-- steering para próxima célula.
-
-### Eventos
-- telegraph e attack compartilham enemyActionId;
-- ataques seguintes usam IDs distintos;
-- familyId estável para Leitura de Campo do Jão;
-- IA não aplica dano por frame, apenas emite o evento de ataque.
-
-## Testes
-tests/enemy-ai.test.ts cobre:
-- valores documentados;
-- A* contornando parede;
-- atirador sem tiro através de parede;
-- cancelamento de tiro se LOS some durante telegraph;
-- telegraph antes de attack;
-- um attack event por ação;
-- navegação do rasteiro ao redor de canto;
-- IDs distintos entre ações da mesma família.
+## Evidência
+- CI geral: 35954193771 PASS.
+- revisão independente R1: 35954090576 FAIL útil.
+- revisão independente R2: 35954274211 PASS.
 
 ## Fora de escopo
-- aplicação de dano pelo ataque;
-- sprites/animações;
-- IA dos demais inimigos;
-- elites;
-- T015/T016/T017.
-
-## Evidência pendente
-Aguardar CI e revisão independente.
+T015 defeat/restart, T016 HUD e T017 gate integrado.
