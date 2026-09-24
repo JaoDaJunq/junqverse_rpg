@@ -235,6 +235,38 @@ describe('T018 quest engine', () => {
     expect(newEvent.state.status).toBe('completed');
   });
 
+  it('does not persist unrelated collected items in quest progress', () => {
+    const quest = definition();
+    let state = activateQuest(
+      quest,
+      createQuestEngineState(quest, 'run_quest')
+    ).state;
+
+    state = applyQuestEvent(
+      quest,
+      state,
+      event(
+        'event_enter',
+        'area_entered',
+        { areaId: 'praca_centro' }
+      )
+    ).state;
+
+    const unrelated = applyQuestEvent(
+      quest,
+      state,
+      event(
+        'event_unrelated_item',
+        'item_collected',
+        { itemId: 'loot_random' }
+      )
+    );
+
+    expect(unrelated.state.status).toBe('active');
+    expect(unrelated.state.currentStageId).toBe('stage_two');
+    expect(unrelated.state.collectedIds).toEqual([]);
+  });
+
   it('completes the final objective once and freezes the completed quest', () => {
     const quest = definition();
     let state = activateQuest(

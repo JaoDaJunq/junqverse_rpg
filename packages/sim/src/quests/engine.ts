@@ -9,7 +9,8 @@ import {
   compileBasicObjective,
   createBasicObjectiveState,
   isBasicObjectiveComplete,
-  type BasicObjectiveState
+  type BasicObjectiveState,
+  type BasicQuestObjectiveDefinition
 } from './objectives.js';
 
 const ID_PATTERN = /^[a-z0-9_:-]{1,96}$/;
@@ -150,9 +151,30 @@ function emitActionsOnce(
   };
 }
 
+function objectiveContainsItem(
+  definition: BasicQuestObjectiveDefinition,
+  itemId: string
+): boolean {
+  if (definition.type === 'collect') {
+    return definition.itemIds.includes(itemId);
+  }
+
+  if (
+    definition.type === 'all' ||
+    definition.type === 'any'
+  ) {
+    return definition.children.some((child) =>
+      objectiveContainsItem(child, itemId)
+    );
+  }
+
+  return false;
+}
+
 function collectItemId(
   collectedIds: readonly string[],
-  event: EventEnvelope
+  event: EventEnvelope,
+  objective: BasicQuestObjectiveDefinition
 ): readonly string[] {
   if (event.type !== 'item_collected') {
     return collectedIds;
@@ -163,7 +185,8 @@ function collectItemId(
     typeof itemId !== 'string' ||
     !ID_PATTERN.test(itemId) ||
     itemId === '__proto__' ||
-    collectedIds.includes(itemId)
+    collectedIds.includes(itemId) ||
+    !objectiveContainsItem(objective, itemId)
   ) {
     return collectedIds;
   }
@@ -303,7 +326,8 @@ export function applyQuestEvent(
   ];
   const collectedIds = collectItemId(
     state.collectedIds,
-    event
+    event,
+    objective
   );
 
   if (!isBasicObjectiveComplete(objectiveState)) {
