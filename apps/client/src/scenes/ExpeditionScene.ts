@@ -72,7 +72,8 @@ export class ExpeditionScene extends Phaser.Scene {
       }
     );
     const session = new LocalSession(world, mapper, {
-      initialUltimateCharge: 100
+      initialUltimateCharge: 100,
+      enemyAiEnabled: true
     });
     const initial = session.getSnapshot();
     const view = new WorldView(this, initial, {
