@@ -168,7 +168,14 @@ export function defeatEncounter(state: EncounterState): EncounterState {
     defeated: true,
     player: {
       ...state.player,
+      health: {
+        ...state.player.health,
+        health: 0,
+        alive: false,
+        shields: { bySource: {} }
+      },
       combatant: killCombatant(state.player.combatant),
+      status: createStatusState(),
       transient: clearJaoTransientBuffsOnDeath(state.player.transient)
     },
     activeEnemyEntityIds: [],
