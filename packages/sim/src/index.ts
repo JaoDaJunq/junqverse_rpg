@@ -20,3 +20,4 @@ export * from './encounter.js';
 export * from './quest-runtime.js';
 export * from './quest-objective-matcher.js';
 export * from './quest-objective-progress.js';
+export * from './quest-survive.js';
