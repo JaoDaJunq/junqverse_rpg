@@ -20,7 +20,7 @@ const makeTarget = (
   position: { x, y },
   health: createHealthState(100),
   status: createStatusState()
-
+});
 
 describe('T011 resonance', () => {
   it('allows one hero to primer and detonate a target', () => {
