@@ -619,7 +619,8 @@ describe('T017 combat input bridge', () => {
           }]
         }
       ),
-      new ConstantInput(0, 0)
+      new ConstantInput(0, 0),
+      { enemyAiEnabled: true }
     );
 
     session.advance((1000 / 60) * 60);
