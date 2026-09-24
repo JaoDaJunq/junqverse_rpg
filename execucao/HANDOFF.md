@@ -1,52 +1,34 @@
 # Passagem de contexto
 
 ## Estado atual
-T001-T013 estão concluídas e aprovadas por revisão independente.
+T001-T014 estão concluídas e aprovadas por revisão independente.
 
-## Protótipo visual
-T007 já permite movimentação, colisão, câmera e pausa no Phaser.
-
-## Combate e Jão
-- T008-T010: cast, recursos, dano, estados, projéteis, cones e zonas.
+## Protótipo visual e combate
+- T007: movimentação, colisão, câmera e pausa no Phaser.
+- T008-T010: cast, recursos, dano, status, projéteis, cones e zonas.
 - T011: Ressonância.
-- T012: Jão básico, Leitura de Campo e Q.
-- T013: W Dedução, E Corte da Aurora e R Campo Absoluto.
+- T012-T013: kit completo do Jão na simulação.
+- T014: IA inicial de eco_rasteiro e eco_atirador.
 
-## T013
-### W
-- raio 240;
-- reveal 300 ticks;
-- vulnerable 180 ticks;
-- reveal de inimigos/pistas/armadilhas.
+## T014
+- FSM: idle → approach → telegraph → attack → recovery.
+- decisão a cada 6 ticks.
+- A* determinístico em grid.
+- linha de visão para ataques.
+- atirador cancela tiro se LOS some no ataque.
+- attacksEnabled cancela telegraph de qualquer arquétipo.
+- telegraph/attack compartilham enemyActionId.
+- IDs cancelados não são reutilizados.
+- IA emite eventos; não aplica dano por frame.
 
-### E
-- carga 12-60 ticks;
-- dano 40-80 linear;
-- direção fixada na aceitação;
-- movimento x0,5 na carga;
-- detonator de Ressonância;
-- durante Campo Absoluto, carga máxima em 12 ticks.
+## Evidência T014
+- CI geral final do código: 35954193771 PASS.
+- revisão R1: 35954090576 encontrou cancelamento incorreto do rasteiro.
+- correção aplicada.
+- revisão independente R2: 35954274211 PASS.
 
-### R
-- consome 100 de ultimate;
-- windup 12 ticks;
-- duração 360 ticks após o windup;
-- recovery 12 ticks via cast spec T008;
-- haste local 20%;
-- básico em 27 ticks de cadência;
-- reset único do Q no aceite;
-- sem slow global, worldTimeScale=1 e enemyTimeScale=1.
+## Próximas tarefas
+- T015 - derrota e reinício da sala de teste.
+- T016 - HUD funcional de combate.
 
-## Correções descobertas na T013
-- Campo Absoluto inicialmente ativava o buff antes do windup; corrigido.
-- E letal inicialmente não consumia/detonava Ressonância; corrigido com confirmação explícita do hit detonador.
-- teste confirmou vizinho fora do cone mas dentro da explosão.
-
-## Evidência
-- CI geral final: 35952850650 PASS.
-- revisão independente: 35952969118 PASS.
-
-## Próxima tarefa recomendada
-T014 - IA de rasteiro e atirador.
-
-T016 também está liberada e pode ser executada em paralelo. T015 aguarda T014; depois T017 fecha o gate integrado.
+As duas estão liberadas. T017 fecha o gate integrado depois de T015 + T016.
