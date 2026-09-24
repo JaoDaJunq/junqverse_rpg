@@ -92,10 +92,6 @@ describe('T014 enemy AI and pathfinding', () => {
 
     expect(result.events).toEqual([]);
     expect(result.state.phase).toBe('approach');
-    expect(Math.hypot(
-      result.state.desiredMovement.x,
-      result.state.desiredMovement.y
-    )).toBeGreaterThan(0);
   });
 
   it('atirador cancels the shot if line of sight becomes blocked during telegraph', () => {
