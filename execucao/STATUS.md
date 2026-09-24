@@ -23,3 +23,4 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 | T018 | DONE | CI 36018449319 PASS; 139 testes + 4 Playwright; revisão independente aprovada; IDs derivados validados contra QuestProgressSchema |
 | T019 | DONE | CI 36019365915 PASS; 149 testes + 4 Playwright; revisão independente aprovada; sim permanece sem dependência de protocol |
 | T020 | DONE | CI 36020420310 PASS; 157 testes + 4 Playwright; revisão independente aprovada; collect/defeat com count e dedupe global validados |
+| T021 | IN_PROGRESS | Objetivo survive por ticks autoritativos iniciado |
