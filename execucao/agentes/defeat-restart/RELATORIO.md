@@ -1,48 +1,26 @@
 # Relatório do agente T015
 
-- Papel: defeat/restart
-- Ticket: T015
-- Branch: agent/t015-defeat-restart
-- Estado: IN_PROGRESS até CI e revisão
-- Dependências: T007, T013 e T014 DONE
+- Estado: DONE após revisão independente
+- Pull Request: #18
 
 ## Implementado
-### Simulação
-- EncounterCheckpoint imutável;
-- EncounterState por geração;
-- derrota encerra HP, shields, status, cast, esquiva/transientes;
-- remove inimigos ativos, projéteis, zonas, hit registry e Ressonância da instância;
-- restart reconstrói o checkpoint;
-- vida/foco/esquiva cheios;
-- ultimate restaurada ao valor do checkpoint;
-- cooldowns e transientes limpos.
+- EncounterCheckpoint/EncounterState;
+- defeat/restart idempotente;
+- limpeza de efeitos e entidades da instância;
+- restauração de recursos do checkpoint;
+- LocalSession.restart();
+- DefeatPanel;
+- fluxo técnico ?debugDefeat=1 + K.
 
-### Sessão local
-- LocalSession mantém cópia do snapshot inicial;
-- restart reseta tick, posição, acumulador e pausa;
-- input é limpo;
-- sessão parada não pode ser ressuscitada.
+## Correções durante a entrega
+- estado derrotado de HealthState alinhado ao CombatantState;
+- visibilidade do painel passou a ser controlada explicitamente;
+- teste de restart ajustado para respeitar a interpolação T007 em vez de ler movimento após alpha=0.
 
-### UI
-- DefeatPanel DOM semântico com Tentar novamente e Retornar;
-- retry reinicia a sala dentro da sessão;
-- retornar reinicia a scene inteira, exercitando cleanup de listeners;
-- sala técnica oferece gatilho K em DEV ou ?debugDefeat=1 para teste real antes do combate visual estar integrado.
+## Evidência
+- CI 35955159394 PASS.
+- review 35955252488 PASS.
+- Playwright defeat/retry/return PASS.
 
-## Testes
-- estado sujo é finalizado na derrota;
-- checkpoint restaura recursos e ultimate;
-- 10 reinícios consecutivos não acumulam artefatos;
-- derrota repetida é idempotente;
-- checkpoint rejeita enemy IDs duplicados;
-- LocalSession reinicia 10x sem duplicar entidade;
-- sessão stopped não reinicia;
-- Playwright abre painel, usa retry e return e mantém um único canvas.
-
-## Fora de escopo
-- dano visual disparando derrota automaticamente;
-- HUD T016;
-- gate integrado T017.
-
-## Evidência pendente
-Aguardar CI e revisão independente.
+## Próximo passo
+T016 HUD; depois T017.
