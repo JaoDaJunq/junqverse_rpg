@@ -281,7 +281,10 @@ function applyJaoDamage(
   rank: number,
   passive: JaoPassiveState,
   currentTick: number
-): JaoCombatTarget {
+): {
+  readonly target: JaoCombatTarget;
+  readonly effectiveDamage: number;
+} {
   const damage = applyDamage(target.health, {
     base: baseDamage,
     powerMultiplier: campaignPowerMultiplier(rank),
@@ -295,8 +298,11 @@ function applyJaoDamage(
   });
 
   return {
-    ...target,
-    health: damage.state
+    target: {
+      ...target,
+      health: damage.state
+    },
+    effectiveDamage: damage.effectiveDamage
   };
 }
 
@@ -354,7 +360,7 @@ export function resolveJaoBasicAttack(
           input.rank,
           input.passive,
           input.currentTick
-        )
+        ).target
       : target
   );
 
@@ -484,8 +490,8 @@ export function resolveJaoQDash(
     );
 
     if (
-      damaged.health.alive &&
-      damaged.health.health < target.health.health
+      damaged.effectiveDamage > 0 &&
+      damaged.target.health.alive
     ) {
       const primed = applyResonancePrimer(
         resonance,
@@ -496,7 +502,7 @@ export function resolveJaoQDash(
       visualEvents.push(primed.visualEvent);
     }
 
-    return damaged;
+    return damaged.target;
   });
 
   return {
