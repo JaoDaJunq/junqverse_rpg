@@ -18,3 +18,4 @@ export * from './heroes/jao-advanced.js';
 export * from './ai/pathfinding.js';
 export * from './ai/fsm.js';
 export * from './encounter.js';
+export * from './quests/objectives.js';
