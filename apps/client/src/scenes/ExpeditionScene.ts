@@ -4,7 +4,6 @@ import {
   createPrototypeWorld,
   type Aabb
 } from '@junqverse/sim';
-import { JAO_BASE_STATS } from '@junqverse/content';
 import {
   LocalSession,
   type LocalSessionSnapshot
@@ -27,8 +26,6 @@ const TEST_BLOCKERS: readonly Aabb[] = [
   { x: 760, y: 360, width: 260, height: 32 },
   { x: 320, y: 520, width: 320, height: 32 }
 ];
-
-const HUD_HEALTH = createHealthState(JAO_BASE_STATS.maxHealth);
 
 function technicalDefeatEnabled(): boolean {
   return (
@@ -73,7 +70,8 @@ export class ExpeditionScene extends Phaser.Scene {
     );
     const session = new LocalSession(world, mapper, {
       initialUltimateCharge: 100,
-      enemyAiEnabled: true
+      enemyAiEnabled: true,
+      enemyAttacksEnabled: true
     });
     const initial = session.getSnapshot();
     const view = new WorldView(this, initial, {
@@ -183,7 +181,11 @@ export class ExpeditionScene extends Phaser.Scene {
     }
 
     return createJaoHudSnapshot({
-      health: HUD_HEALTH,
+      health: createHealthState(
+        snapshot.player.maxHealth,
+        0,
+        snapshot.player.health
+      ),
       resources: snapshot.combat.resources,
       ultimate: snapshot.combat.ultimate,
       bindings: this.mapper.getBindings()

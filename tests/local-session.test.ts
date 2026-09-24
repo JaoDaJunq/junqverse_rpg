@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { InputFrame } from '../packages/protocol/src/index.js';
-import { createPrototypeWorld } from '../packages/sim/src/index.js';
+import {
+  applyPrototypeEnemyAttacks,
+  createPrototypeWorld
+} from '../packages/sim/src/index.js';
 import {
   LocalSession,
   type SessionInputSource
@@ -262,6 +265,7 @@ describe('T007 local session', () => {
       expect(restarted.tick).toBe(0);
       expect(restarted.player.entityId).toBe(1);
       expect(restarted.player.position).toEqual({ x: 100, y: 100 });
+      expect(restarted.player.health).toBe(320);
       expect(restarted.combat.resources.focus).toBe(100);
       expect(restarted.combat.resources.dodgeCharges).toBe(2);
       expect(restarted.combat.resources.cooldowns).toEqual({});
@@ -680,6 +684,69 @@ describe('T017 combat input bridge', () => {
 
     expect(enemy?.health).toBe(70);
     expect(enemy?.resonanceMarked).toBe(false);
+  });
+
+
+  it('lets the Eco Rasteiro telegraph and damage Jão once', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'enemy_damage_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        {
+          enemySpawns: [{
+            archetype: 'eco_rasteiro',
+            position: { x: 140, y: 100 }
+          }]
+        }
+      ),
+      new ConstantInput(0, 0),
+      { enemyAttacksEnabled: true }
+    );
+
+    session.advance((1000 / 60) * 45);
+    const snapshot = session.getSnapshot();
+
+    expect(snapshot.player.health).toBe(308);
+    expect(snapshot.player.alive).toBe(true);
+    expect(snapshot.enemies[0]?.aiPhase).toBe('recovery');
+  });
+
+  it('blocks an enemy attack while the player is invulnerable', () => {
+    const world = createPrototypeWorld(
+      'enemy_iframe_test',
+      1,
+      { x: 100, y: 100 },
+      [],
+      {
+        enemySpawns: [{
+          archetype: 'eco_rasteiro',
+          position: { x: 140, y: 100 }
+        }]
+      }
+    );
+    const attack = [{
+      kind: 'attack' as const,
+      enemyEntityId: 2,
+      targetEntityId: 1,
+      enemyActionId: 'enemy_action:2:0',
+      familyId: 'eco_rasteiro_cone'
+    }];
+
+    const blocked = applyPrototypeEnemyAttacks(
+      world,
+      attack,
+      true
+    );
+    const hit = applyPrototypeEnemyAttacks(
+      world,
+      attack,
+      false
+    );
+
+    expect(blocked.player.health.health).toBe(320);
+    expect(hit.player.health.health).toBe(308);
   });
 
 });

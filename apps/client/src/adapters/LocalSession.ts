@@ -1,10 +1,12 @@
 import type { InputFrame } from '@junqverse/protocol';
 import {
   TICKS_PER_SECOND,
+  applyPrototypeEnemyAttacks,
   applyPrototypePlayerDelta,
   createPrototypeCombatSnapshot,
   createPrototypeCombatState,
   createPrototypeSnapshot,
+  isDodgeInvulnerable,
   resolvePrototypeBasicAttack,
   resolvePrototypeE,
   resolvePrototypeQ,
@@ -31,6 +33,7 @@ export interface SessionInputSource {
 export interface LocalSessionOptions {
   readonly initialUltimateCharge?: number;
   readonly enemyAiEnabled?: boolean;
+  readonly enemyAttacksEnabled?: boolean;
 }
 
 export interface LocalSessionSnapshot extends PrototypeSnapshot {
@@ -57,7 +60,13 @@ function clonePrototypeWorldState(
     player: {
       ...state.player,
       previousPosition: { ...state.player.previousPosition },
-      position: { ...state.player.position }
+      position: { ...state.player.position },
+      health: {
+        ...state.player.health,
+        shields: {
+          bySource: { ...state.player.health.shields.bySource }
+        }
+      }
     },
     enemies: state.enemies.map((enemy) => ({
       ...enemy,
@@ -126,6 +135,7 @@ export class LocalSession implements GameSession {
   private readonly input: SessionInputSource;
   private readonly initialUltimateCharge: number;
   private readonly enemyAiEnabled: boolean;
+  private readonly enemyAttacksEnabled: boolean;
   private accumulatorMs = 0;
   private paused = false;
   private stopped = false;
@@ -138,7 +148,10 @@ export class LocalSession implements GameSession {
     this.initialState = clonePrototypeWorldState(initialState);
     this.state = clonePrototypeWorldState(initialState);
     this.initialUltimateCharge = options.initialUltimateCharge ?? 0;
-    this.enemyAiEnabled = options.enemyAiEnabled ?? false;
+    this.enemyAttacksEnabled =
+      options.enemyAttacksEnabled ?? false;
+    this.enemyAiEnabled =
+      options.enemyAiEnabled ?? this.enemyAttacksEnabled;
     this.combat = createPrototypeCombatState(
       this.state.player.entityId,
       this.initialUltimateCharge
@@ -247,9 +260,14 @@ export class LocalSession implements GameSession {
       }
 
       if (this.enemyAiEnabled) {
-        this.state = stepPrototypeEnemyAi(
+        const ai = stepPrototypeEnemyAi(
           this.state,
-          false
+          this.enemyAttacksEnabled
+        );
+        this.state = applyPrototypeEnemyAttacks(
+          ai.state,
+          ai.events,
+          isDodgeInvulnerable(this.combat.combatant)
         );
       }
 

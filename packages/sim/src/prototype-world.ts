@@ -1,9 +1,14 @@
 import {
+  JAO_BASE_STATS,
   P0_ENEMY_DEFINITIONS,
   type P0EnemyArchetype,
   type Vec2
 } from '@junqverse/content';
-import { createHealthState, type HealthState } from './damage.js';
+import {
+  applyDamage,
+  createHealthState,
+  type HealthState
+} from './damage.js';
 import {
   hasResonanceMark,
   type ResonanceState
@@ -17,6 +22,7 @@ import {
 import {
   createEnemyAiState,
   stepEnemyAi,
+  type EnemyAiActionEvent,
   type EnemyAiPhase,
   type EnemyAiState
 } from './ai/fsm.js';
@@ -33,6 +39,7 @@ export interface PrototypePlayerState {
   readonly position: Vec2;
   readonly radius: number;
   readonly speedPxPerSecond: number;
+  readonly health: HealthState;
 }
 
 export interface PrototypeEnemySpawn {
@@ -64,6 +71,9 @@ export interface PrototypeSnapshot {
     readonly entityId: number;
     readonly position: Vec2;
     readonly radius: number;
+    readonly health: number;
+    readonly maxHealth: number;
+    readonly alive: boolean;
   };
   readonly enemies: readonly {
     readonly entityId: number;
@@ -85,6 +95,11 @@ export interface PrototypeWorldOptions {
   readonly speedPxPerSecond?: number;
   readonly enemySpawns?: readonly PrototypeEnemySpawn[];
   readonly grid?: GridSpec;
+}
+
+export interface PrototypeEnemyAiStepResult {
+  readonly state: PrototypeWorldState;
+  readonly events: readonly EnemyAiActionEvent[];
 }
 
 export interface PrototypePlayerDeltaResult {
@@ -161,7 +176,8 @@ export function createPrototypeWorld(
       previousPosition: { ...spawn },
       position: { ...spawn },
       radius,
-      speedPxPerSecond
+      speedPxPerSecond,
+      health: createHealthState(JAO_BASE_STATS.maxHealth)
     },
     enemies
   };
@@ -201,7 +217,8 @@ export function stepPrototypeWorld(
 export function stepPrototypeEnemyAi(
   state: PrototypeWorldState,
   attacksEnabled = false
-): PrototypeWorldState {
+): PrototypeEnemyAiStepResult {
+  const events: EnemyAiActionEvent[] = [];
   const enemies = state.enemies.map((enemy) => {
     if (!enemy.health.alive) {
       return enemy;
@@ -213,14 +230,18 @@ export function stepPrototypeEnemyAi(
       currentTick: state.tick,
       enemyEntityId: enemy.entityId,
       position: enemy.position,
-      target: {
-        entityId: state.player.entityId,
-        position: state.player.position
-      },
+      target: state.player.health.alive
+        ? {
+            entityId: state.player.entityId,
+            position: state.player.position
+          }
+        : null,
       blockers: state.blockers,
       grid: state.grid,
       attacksEnabled
     });
+
+    events.push(...stepped.events);
 
     const definition = P0_ENEMY_DEFINITIONS[enemy.archetype];
     const moved = moveCircleForTick(
@@ -240,8 +261,58 @@ export function stepPrototypeEnemyAi(
   });
 
   return {
+    state: {
+      ...state,
+      enemies
+    },
+    events
+  };
+}
+
+export function applyPrototypeEnemyAttacks(
+  state: PrototypeWorldState,
+  events: readonly EnemyAiActionEvent[],
+  playerInvulnerable: boolean
+): PrototypeWorldState {
+  let health = state.player.health;
+
+  for (const event of events) {
+    if (event.kind !== 'attack' || !health.alive) {
+      continue;
+    }
+
+    const enemy = state.enemies.find(
+      (candidate) => candidate.entityId === event.enemyEntityId
+    );
+    if (!enemy || !enemy.health.alive) {
+      continue;
+    }
+
+    const definition = P0_ENEMY_DEFINITIONS[enemy.archetype];
+
+    if (
+      enemy.archetype === 'eco_rasteiro' &&
+      Math.hypot(
+        state.player.position.x - enemy.position.x,
+        state.player.position.y - enemy.position.y
+      ) > definition.attackRangePx
+    ) {
+      continue;
+    }
+
+    health = applyDamage(health, {
+      base: definition.baseDamage,
+      powerMultiplier: 1,
+      invulnerable: playerInvulnerable
+    }).state;
+  }
+
+  return {
     ...state,
-    enemies
+    player: {
+      ...state.player,
+      health
+    }
   };
 }
 
@@ -295,6 +366,9 @@ export function createPrototypeSnapshot(
     player: {
       entityId: state.player.entityId,
       radius: state.player.radius,
+      health: state.player.health.health,
+      maxHealth: state.player.health.maxHealth,
+      alive: state.player.health.alive,
       position: {
         x: previous.x + (current.x - previous.x) * alpha,
         y: previous.y + (current.y - previous.y) * alpha
