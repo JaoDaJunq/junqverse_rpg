@@ -1,3 +1,4 @@
+import './ui/styles.css';
 import Phaser from 'phaser';
 import { ExpeditionScene } from './scenes/ExpeditionScene.js';
 
