@@ -20,6 +20,37 @@ const makeTarget = (
   position: { x, y },
   health: createHealthState(100),
   status: createStatusState()
+
+  it('allows a confirmed lethal detonator hit to consume the mark and explode nearby', () => {
+    const state = applyResonancePrimer(
+      createResonanceState(),
+      2,
+      0
+    ).state;
+
+    const deadPrimary: ResonanceTarget = {
+      entityId: 2,
+      position: { x: 0, y: 0 },
+      health: createHealthState(100, 0, 0),
+      status: createStatusState()
+    };
+    const nearby = makeTarget(3, 40, 0);
+
+    const result = tryDetonateResonance(state, {
+      triggerKind: 'detonator',
+      primaryTargetEntityId: 2,
+      detonatorEntityId: 1,
+      detonatorRank: 1,
+      currentTick: 10,
+      primaryHitConfirmed: true
+    }, [deadPrimary, nearby]);
+
+    expect(result.detonated).toBe(true);
+    expect(result.consumedMark).toBe(true);
+    expect(hasResonanceMark(result.state, 2, 10)).toBe(false);
+    expect(result.targets.find((target) => target.entityId === 3)?.health.health).toBe(75);
+  });
+
 });
 
 describe('T011 resonance', () => {
