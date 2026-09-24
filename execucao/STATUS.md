@@ -20,3 +20,4 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 | T015 | DONE | CI 35955159394 PASS; revisão independente 35955252488 PASS |
 | T016 | DONE | CI 35955830871 PASS; 133 testes + 4 Playwright; revisão independente aprovada |
 | T017 | TODO | Liberada por T003 + T015 + T016 DONE |
+| T018 | IN_PROGRESS | Runtime base de quests iniciado em paralelo; depende apenas de T003 |
