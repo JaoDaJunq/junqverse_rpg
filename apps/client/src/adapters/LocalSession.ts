@@ -9,6 +9,7 @@ import {
   resolvePrototypeE,
   resolvePrototypeW,
   stepPrototypeCombat,
+  stepPrototypeEnemyAi,
   stepPrototypeWorld,
   type PrototypeCombatCommand,
   type PrototypeCombatSnapshot,
@@ -50,6 +51,7 @@ function clonePrototypeWorldState(
     ...state,
     rng: { ...state.rng },
     blockers: state.blockers.map((blocker) => ({ ...blocker })),
+    grid: { ...state.grid },
     player: {
       ...state.player,
       previousPosition: { ...state.player.previousPosition },
@@ -68,6 +70,10 @@ function clonePrototypeWorldState(
       status: {
         ...enemy.status,
         effects: enemy.status.effects.map((effect) => ({ ...effect }))
+      },
+      ai: {
+        ...enemy.ai,
+        desiredMovement: { ...enemy.ai.desiredMovement }
       }
     }))
   };
@@ -216,6 +222,11 @@ export class LocalSession implements GameSession {
         );
         this.state = moved.state;
       }
+
+      this.state = stepPrototypeEnemyAi(
+        this.state,
+        false
+      );
 
       this.accumulatorMs = Math.max(0, this.accumulatorMs - TICK_MS);
     }

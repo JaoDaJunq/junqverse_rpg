@@ -15,7 +15,10 @@ function enemyHealthText(
   enemy: PrototypeSnapshot['enemies'][number]
 ): string {
   const vulnerable = enemy.vulnerable ? ' • VULN' : '';
-  return `${enemy.health}/${enemy.maxHealth}${vulnerable}`;
+  const ai = enemy.aiPhase === 'idle'
+    ? ''
+    : ` • ${enemy.aiPhase.toUpperCase()}`;
+  return `${enemy.health}/${enemy.maxHealth}${vulnerable}${ai}`;
 }
 
 export class WorldView {

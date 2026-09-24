@@ -399,7 +399,8 @@ describe('T017 combat input bridge', () => {
       health: 70,
       maxHealth: 70,
       alive: true,
-      vulnerable: false
+      vulnerable: false,
+      aiPhase: 'idle'
     }]);
 
     const restarted = session.restart();
@@ -601,6 +602,33 @@ describe('T017 combat input bridge', () => {
     expect(
       activated.combat.resources.cooldowns.jao_q
     ).toBeUndefined();
+  });
+
+
+  it('moves the technical enemy toward Jão using the existing FSM', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'enemy_approach_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        {
+          enemySpawns: [{
+            archetype: 'eco_rasteiro',
+            position: { x: 260, y: 100 }
+          }]
+        }
+      ),
+      new ConstantInput(0, 0)
+    );
+
+    session.advance((1000 / 60) * 60);
+    const enemy = session.getSnapshot().enemies[0];
+
+    expect(enemy?.position.x).toBeLessThan(260);
+    expect(enemy?.position.x).toBeGreaterThan(100);
+    expect(enemy?.aiPhase).toBe('approach');
+    expect(enemy?.health).toBe(70);
   });
 
 });

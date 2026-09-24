@@ -11,6 +11,13 @@ import {
   moveCircleForTick
 } from './movement.js';
 import {
+  createEnemyAiState,
+  stepEnemyAi,
+  type EnemyAiPhase,
+  type EnemyAiState
+} from './ai/fsm.js';
+import type { GridSpec } from './ai/pathfinding.js';
+import {
   createStatusState,
   stepStatuses,
   type StatusState
@@ -37,12 +44,14 @@ export interface PrototypeEnemyState {
   readonly radius: number;
   readonly health: HealthState;
   readonly status: StatusState;
+  readonly ai: EnemyAiState;
 }
 
 export interface PrototypeWorldState extends WorldState {
   readonly player: PrototypePlayerState;
   readonly enemies: readonly PrototypeEnemyState[];
   readonly blockers: readonly Aabb[];
+  readonly grid: GridSpec;
 }
 
 export interface PrototypeSnapshot {
@@ -61,6 +70,7 @@ export interface PrototypeSnapshot {
     readonly maxHealth: number;
     readonly alive: boolean;
     readonly vulnerable: boolean;
+    readonly aiPhase: EnemyAiPhase;
   }[];
   readonly blockers: readonly Aabb[];
 }
@@ -69,6 +79,7 @@ export interface PrototypeWorldOptions {
   readonly radius?: number;
   readonly speedPxPerSecond?: number;
   readonly enemySpawns?: readonly PrototypeEnemySpawn[];
+  readonly grid?: GridSpec;
 }
 
 export interface PrototypePlayerDeltaResult {
@@ -127,13 +138,19 @@ export function createPrototypeWorld(
         definition.maxHealth,
         definition.armor
       ),
-      status: createStatusState()
+      status: createStatusState(),
+      ai: createEnemyAiState()
     });
   }
 
   return {
     ...world,
     blockers: blockers.map((blocker) => ({ ...blocker })),
+    grid: options.grid ?? {
+      width: 40,
+      height: 24,
+      tileSize: 32
+    },
     player: {
       entityId: playerAllocation.entityId,
       previousPosition: { ...spawn },
@@ -172,6 +189,54 @@ export function stepPrototypeWorld(
       previousPosition: enemy.position,
       status: stepStatuses(enemy.status)
     }))
+  };
+}
+
+
+export function stepPrototypeEnemyAi(
+  state: PrototypeWorldState,
+  attacksEnabled = false
+): PrototypeWorldState {
+  const enemies = state.enemies.map((enemy) => {
+    if (!enemy.health.alive) {
+      return enemy;
+    }
+
+    const stepped = stepEnemyAi({
+      state: enemy.ai,
+      archetype: enemy.archetype,
+      currentTick: state.tick,
+      enemyEntityId: enemy.entityId,
+      position: enemy.position,
+      target: {
+        entityId: state.player.entityId,
+        position: state.player.position
+      },
+      blockers: state.blockers,
+      grid: state.grid,
+      attacksEnabled
+    });
+
+    const definition = P0_ENEMY_DEFINITIONS[enemy.archetype];
+    const moved = moveCircleForTick(
+      enemy.position,
+      stepped.state.desiredMovement,
+      definition.speedPxPerSecond,
+      enemy.radius,
+      state.blockers
+    );
+
+    return {
+      ...enemy,
+      previousPosition: enemy.position,
+      position: moved.position,
+      ai: stepped.state
+    };
+  });
+
+  return {
+    ...state,
+    enemies
   };
 }
 
@@ -246,7 +311,8 @@ export function createPrototypeSnapshot(
       alive: enemy.health.alive,
       vulnerable: enemy.status.effects.some(
         (effect) => effect.kind === 'vulnerable'
-      )
+      ),
+      aiPhase: enemy.ai.phase
     })),
     blockers: state.blockers
   };
