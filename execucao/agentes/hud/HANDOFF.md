@@ -1,16 +1,14 @@
 # Handoff do agente T016
 
 ## Estado atual
-T016 implementada na branch agent/t016-hud e aguardando CI/revisão.
+T016 reconciliada com T015 na branch agent/t016-hud e aguardando revisão independente.
 
 ## Arquivos principais
 - apps/client/src/presentation/hud-model.ts
 - apps/client/src/presentation/Hud.ts
 - apps/client/src/ui/styles.css
+- apps/client/src/scenes/ExpeditionScene.ts
 - tests/hud-model.test.ts
 
 ## Próximo passo
-1. CI;
-2. revisão independente;
-3. T016 DONE após aprovação;
-4. T017 ainda aguarda também T015.
+Revisão independente. Após T016 DONE, T017 fica liberada.
