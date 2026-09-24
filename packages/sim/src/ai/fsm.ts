@@ -212,9 +212,9 @@ export function stepEnemyAi(input: {
     }
 
     const canFire =
-      input.archetype !== 'eco_atirador' ||
+      attacksEnabled &&
       (
-        attacksEnabled &&
+        input.archetype !== 'eco_atirador' ||
         hasLineOfSight(
           input.position,
           input.target.position,
