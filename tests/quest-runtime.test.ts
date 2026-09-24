@@ -86,7 +86,7 @@ describe('T018 quest runtime', () => {
     expect(activated.progress.status).toBe('active');
     expect(activated.actions).toHaveLength(1);
     expect(activated.actions[0]).toMatchObject({
-      executionId: 'quest_action:quest_m02:stage_intro:2a62a43e:entry:0',
+      executionId: 'quest_action:quest_m02:stage_intro:2a55ecb0:entry:0',
       stageId: 'stage_intro',
       phase: 'entry'
     });
@@ -113,11 +113,11 @@ describe('T018 quest runtime', () => {
     expect(result.progress.currentStageId).toBe('stage_clear');
     expect(result.progress.completedStageIds).toEqual(['stage_intro']);
     expect(result.progress.checkpointId).toBe(
-      'checkpoint:quest_m02:stage_intro:2a62a43e'
+      'checkpoint:quest_m02:stage_intro:2a55ecb0'
     );
     expect(result.actions.map((action) => action.executionId)).toEqual([
-      'quest_action:quest_m02:stage_intro:2a62a43e:completion:0',
-      'quest_action:quest_m02:stage_clear:5d1da896:entry:0'
+      'quest_action:quest_m02:stage_intro:2a55ecb0:completion:0',
+      'quest_action:quest_m02:stage_clear:4713a847:entry:0'
     ]);
   });
 
@@ -172,7 +172,7 @@ describe('T018 quest runtime', () => {
       'stage_clear'
     ]);
     expect(completed.actions.map((action) => action.executionId)).toEqual([
-      'quest_action:quest_m02:stage_clear:5d1da896:completion:0'
+      'quest_action:quest_m02:stage_clear:4713a847:completion:0'
     ]);
 
     const repeated = completeQuestStage(
