@@ -1,5 +1,7 @@
 # Third-party prototype assets
 
+These assets are temporary visual scaffolding for the P0 playtest and are expected to be replaced by original JUNQVERSE art.
+
 ## Pixel Crawler — Anokolisa
 Source: https://anokolisa.itch.io/free-pixel-art-asset-pack-topdown-tileset-rpg-16x16-sprites
 
