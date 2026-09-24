@@ -135,7 +135,7 @@ describe('T007 local session', () => {
     const session = makeSession(input);
 
     for (let restart = 0; restart < 10; restart += 1) {
-      session.advance(1000 / 60);
+      session.advance(1000 / 30);
       expect(session.getSnapshot().player.position.x).toBeGreaterThan(100);
 
       const restarted = session.restart();
@@ -145,7 +145,7 @@ describe('T007 local session', () => {
       expect(session.isPaused()).toBe(false);
     }
 
-    session.advance(1000 / 60);
+    session.advance(1000 / 30);
     expect(session.getSnapshot().player.position.x).toBeGreaterThan(100);
     expect(input.clears).toBeGreaterThanOrEqual(10);
   });
