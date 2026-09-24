@@ -506,7 +506,7 @@ describe('T013 Jão W E and Campo Absoluto', () => {
       blockers: [],
       targets: [
         lowHealthPrimary,
-        target(3, 100, 0)
+        target(3, 80, 50)
       ],
       passive: createJaoPassiveState(),
       resonance
