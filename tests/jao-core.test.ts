@@ -7,7 +7,6 @@ import {
 import {
   applyShield,
   createHealthState,
-  createHitRegistry,
   createJaoBasicState,
   createJaoPassiveState,
   createResonanceState,
