@@ -3,7 +3,8 @@
 - Papel: hero gameplay core
 - Ticket: T012
 - Branch: agent/t012-jao-core
-- Estado: IN_PROGRESS até CI e revisão
+- Estado: DONE após revisão independente
+- Pull Request: #13
 
 ## Implementado
 ### Conteúdo
@@ -13,11 +14,11 @@
 - Q Passo Relâmpago.
 
 ### Passiva
-- observa família de enemyActionId;
-- exige segunda ação distinta da mesma família em até 360 ticks;
+- segunda ação distinta da mesma família em até 360 ticks;
 - vários projéteis do mesmo enemyActionId não contam novamente;
+- alcance de observação 300 px;
 - analyzed dura 300 ticks;
-- um analyzed por alvo, renovável;
+- uma marca por alvo, renovável;
 - outgoing x1.10 enquanto analyzed.
 
 ### Básico
@@ -29,19 +30,23 @@
 
 ### Q
 - dash 160 px;
-- para em parede usando swept movement existente;
+- para em parede;
 - 32 dano uma vez por alvo cruzado;
-- aplica Resonance primer em acerto efetivo;
-- não aplica primer em alvo invulnerável;
+- aplica Resonance primer em acerto efetivo inclusive contra shield;
+- alvo invulnerável não recebe primer;
 - não concede invulnerabilidade própria.
 
 ### Fixture
-packages/sim/src/testing/jao-reading-room.ts simula inimigo repetindo família de ataque para validar a passiva.
+packages/sim/src/testing/jao-reading-room.ts.
+
+## Evidência
+- CI geral: 35951218964 PASS.
+- revisão independente: 35951276420 PASS.
+
+## Correções durante implementação
+- normalização de optional invulnerable para exactOptionalPropertyTypes;
+- remoção de import de teste não usado;
+- ordenação de IDs mudou de localeCompare para comparação ASCII/lexical determinística.
 
 ## Fora de escopo
-- W/E/R (T013);
-- IA real do inimigo (T014);
-- VFX/HUD específicos.
-
-## Evidência pendente
-CI e revisão independente.
+W/E/R permanecem para T013.
