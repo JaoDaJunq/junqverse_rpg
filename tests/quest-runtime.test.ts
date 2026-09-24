@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  QuestDefinition,
-  QuestId
+import {
+  QuestProgressSchema,
+  type QuestDefinition,
+  type QuestId
 } from '../packages/content/src/index.js';
 import {
   activateQuest,
@@ -85,7 +86,7 @@ describe('T018 quest runtime', () => {
     expect(activated.progress.status).toBe('active');
     expect(activated.actions).toHaveLength(1);
     expect(activated.actions[0]).toMatchObject({
-      executionId: 'quest_m02:stage_intro:entry:0',
+      executionId: 'quest_action:quest_m02:stage_intro:2a62a43e:entry:0',
       stageId: 'stage_intro',
       phase: 'entry'
     });
@@ -112,11 +113,11 @@ describe('T018 quest runtime', () => {
     expect(result.progress.currentStageId).toBe('stage_clear');
     expect(result.progress.completedStageIds).toEqual(['stage_intro']);
     expect(result.progress.checkpointId).toBe(
-      'checkpoint:quest_m02:stage_intro'
+      'checkpoint:quest_m02:stage_intro:2a62a43e'
     );
     expect(result.actions.map((action) => action.executionId)).toEqual([
-      'quest_m02:stage_intro:completion:0',
-      'quest_m02:stage_clear:entry:0'
+      'quest_action:quest_m02:stage_intro:2a62a43e:completion:0',
+      'quest_action:quest_m02:stage_clear:5d1da896:entry:0'
     ]);
   });
 
@@ -171,7 +172,7 @@ describe('T018 quest runtime', () => {
       'stage_clear'
     ]);
     expect(completed.actions.map((action) => action.executionId)).toEqual([
-      'quest_m02:stage_clear:completion:0'
+      'quest_action:quest_m02:stage_clear:5d1da896:completion:0'
     ]);
 
     const repeated = completeQuestStage(
@@ -183,4 +184,44 @@ describe('T018 quest runtime', () => {
     expect(repeated.reason).toBe('not_active');
     expect(repeated.actions).toEqual([]);
   });
+
+  it('keeps derived ids serializable when a stage id uses the maximum length', () => {
+    const longStageId = 'a'.repeat(96);
+    const quest: QuestDefinition = {
+      ...definition(),
+      stages: [{
+        id: longStageId,
+        objective: { type: 'interact', targetId: 'console_long' },
+        entryActions: [
+          { type: 'start_dialogue', dialogueId: 'long_intro' }
+        ],
+        completionActions: [
+          { type: 'complete_quest' }
+        ],
+        checkpointAfter: true,
+        nextStageId: null
+      }]
+    };
+
+    let progress = createQuestProgress(
+      quest,
+      'run_m02_long',
+      []
+    );
+    progress = activateQuest(progress, quest).progress;
+    progress = completeQuestStage(
+      progress,
+      quest,
+      longStageId
+    ).progress;
+
+    const parsed = QuestProgressSchema.safeParse(progress);
+
+    expect(parsed.success).toBe(true);
+    expect(progress.executedActionIds.every(
+      (id) => id.length <= 96
+    )).toBe(true);
+    expect(progress.checkpointId?.length).toBeLessThanOrEqual(96);
+  });
+
 });

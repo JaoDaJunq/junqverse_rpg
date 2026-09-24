@@ -70,13 +70,30 @@ function assertMatchesDefinition(
   }
 }
 
+function hashStableId(value: string): string {
+  let hash = 0x811c9dc5;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+function stageStableFragment(stageId: string): string {
+  return `${stageId.slice(0, 32)}:${hashStableId(stageId)}`;
+}
+
 function actionExecutionId(
   definition: QuestDefinition,
   stage: QuestStage,
   phase: QuestActionPhase,
   index: number
 ): string {
-  return `${definition.id}:${stage.id}:${phase}:${index}`;
+  return `quest_action:${definition.id}:${stageStableFragment(
+    stage.id
+  )}:${phase}:${index}`;
 }
 
 function applyActions(
@@ -240,7 +257,7 @@ export function completeQuestStage(
     ? [...progress.completedStageIds]
     : [...progress.completedStageIds, stage.id];
   const checkpointId = stage.checkpointAfter
-    ? `checkpoint:${definition.id}:${stage.id}`
+    ? `checkpoint:${definition.id}:${stageStableFragment(stage.id)}`
     : completion.progress.checkpointId;
 
   if (stage.nextStageId === null) {
