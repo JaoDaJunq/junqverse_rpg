@@ -93,19 +93,24 @@ function clonePrototypeWorldState(
 
 function combatCommandFromFrame(
   frame: InputFrame,
-  state: PrototypeWorldState
-): PrototypeCombatCommand {
+  state: PrototypeWorldState,
+  lastAimDirection: { readonly x: number; readonly y: number }
+): {
+  readonly command: PrototypeCombatCommand;
+  readonly nextAimDirection: { readonly x: number; readonly y: number };
+} {
   const aimDelta = {
     x: frame.aimX - state.player.position.x,
     y: frame.aimY - state.player.position.y
   };
   const aimLength = Math.hypot(aimDelta.x, aimDelta.y);
-  const aimDirection = aimLength > AIM_EPSILON
+  const nextAimDirection = aimLength > AIM_EPSILON
     ? {
         x: aimDelta.x / aimLength,
         y: aimDelta.y / aimLength
       }
-    : null;
+    : lastAimDirection;
+  const aimDirection = nextAimDirection;
   const moveLength = Math.hypot(frame.moveX, frame.moveY);
   const dodgeDirection = moveLength > AIM_EPSILON
     ? {
@@ -115,7 +120,8 @@ function combatCommandFromFrame(
     : aimDirection;
 
   return {
-    qPressed: frame.pressed.includes('q'),
+    command: {
+      qPressed: frame.pressed.includes('q'),
     qDirection: aimDirection,
     wPressed: frame.pressed.includes('w'),
     rPressed: frame.pressed.includes('r'),
@@ -124,8 +130,10 @@ function combatCommandFromFrame(
     eDirection: aimDirection,
     dodgePressed: frame.pressed.includes('dodge'),
     dodgeDirection,
-    basicHeld: frame.basicHeld,
-    basicDirection: aimDirection
+      basicHeld: frame.basicHeld,
+      basicDirection: aimDirection
+    },
+    nextAimDirection
   };
 }
 
@@ -137,6 +145,7 @@ export class LocalSession implements GameSession {
   private readonly initialUltimateCharge: number;
   private readonly enemyAiEnabled: boolean;
   private readonly enemyAttacksEnabled: boolean;
+  private lastAimDirection = { x: 1, y: 0 };
   private accumulatorMs = 0;
   private paused = false;
   private stopped = false;
@@ -173,9 +182,15 @@ export class LocalSession implements GameSession {
 
     while (this.accumulatorMs + LOOP_EPSILON_MS >= TICK_MS) {
       const frame = this.input.nextFrame(this.state.tick);
+      const mapped = combatCommandFromFrame(
+        frame,
+        this.state,
+        this.lastAimDirection
+      );
+      this.lastAimDirection = mapped.nextAimDirection;
       const combatStep = stepPrototypeCombat(
         this.combat,
-        combatCommandFromFrame(frame, this.state),
+        mapped.command,
         this.state.tick
       );
       this.combat = combatStep.state;
@@ -310,6 +325,7 @@ export class LocalSession implements GameSession {
       this.state.player.entityId,
       this.initialUltimateCharge
     );
+    this.lastAimDirection = { x: 1, y: 0 };
     this.accumulatorMs = 0;
     this.paused = false;
     this.input.clear();

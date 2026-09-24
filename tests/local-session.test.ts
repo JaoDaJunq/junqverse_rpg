@@ -304,17 +304,34 @@ describe('T017 combat input bridge', () => {
     expect(finished.combat.qDashActive).toBe(false);
   });
 
-  it('rejects Q with zero aim without spending focus or cooldown', () => {
-    const session = makeSession(
-      new OneShotActionInput('q', { x: 100, y: 100 })
-    );
+  it('uses the last valid aim direction when current aim is zero', () => {
+    class LastAimQInput implements SessionInputSource {
+      public clear(): void {}
 
-    session.advance(1000 / 60);
+      public nextFrame(clientTick: number): InputFrame {
+        return {
+          seq: clientTick,
+          clientTick,
+          moveX: 0,
+          moveY: 0,
+          aimX: clientTick === 0 ? 200 : 100,
+          aimY: 100,
+          basicHeld: false,
+          pressed: clientTick === 1 ? ['q'] : [],
+          released: [],
+          interactHeld: false
+        };
+      }
+    }
+
+    const session = makeSession(new LastAimQInput());
+
+    session.advance((1000 / 60) * 2);
     const snapshot = session.getSnapshot();
 
-    expect(snapshot.combat.resources.focus).toBe(100);
-    expect(snapshot.combat.resources.cooldowns.jao_q).toBeUndefined();
-    expect(snapshot.combat.qDashActive).toBe(false);
+    expect(snapshot.combat.resources.focus).toBe(80);
+    expect(snapshot.combat.resources.cooldowns.jao_q).toBe(360);
+    expect(snapshot.combat.qDashActive).toBe(true);
   });
 
   it('stops Q dash at a wall', () => {
