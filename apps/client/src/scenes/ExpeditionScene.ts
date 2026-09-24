@@ -1,8 +1,17 @@
 import Phaser from 'phaser';
-import { createPrototypeWorld, type Aabb } from '@junqverse/sim';
+import {
+  createCombatResources,
+  createHealthState,
+  createJaoUltimateState,
+  createPrototypeWorld,
+  type Aabb
+} from '@junqverse/sim';
+import { JAO_BASE_STATS } from '@junqverse/content';
 import { LocalSession } from '../adapters/LocalSession.js';
 import { InputMapper } from '../input/InputMapper.js';
 import { WorldView } from '../presentation/WorldView.js';
+import { Hud } from '../presentation/Hud.js';
+import { createJaoHudSnapshot } from '../presentation/hud-model.js';
 
 const WORLD_WIDTH = 1200;
 const WORLD_HEIGHT = 720;
@@ -23,6 +32,7 @@ export class ExpeditionScene extends Phaser.Scene {
   private view: WorldView | null = null;
   private detachInput: (() => void) | null = null;
   private pauseLabel: Phaser.GameObjects.Text | null = null;
+  private hud: Hud | null = null;
   private cleanedUp = false;
 
   public constructor() {
@@ -68,6 +78,19 @@ export class ExpeditionScene extends Phaser.Scene {
         padding: { x: 10, y: 8 }
       }
     ).setScrollFactor(0).setDepth(1000);
+
+    const hudSnapshot = createJaoHudSnapshot({
+      health: createHealthState(JAO_BASE_STATS.maxHealth),
+      resources: createCombatResources(),
+      ultimate: createJaoUltimateState(),
+      bindings: mapper.getBindings()
+    });
+    this.hud = new Hud(
+      this,
+      this.scale.gameSize.width,
+      this.scale.gameSize.height,
+      hudSnapshot
+    );
 
     this.pauseLabel = this.add.text(
       480,
@@ -146,6 +169,8 @@ export class ExpeditionScene extends Phaser.Scene {
     this.mapper = null;
     this.view?.destroy();
     this.view = null;
+    this.hud?.destroy();
+    this.hud = null;
     this.pauseLabel = null;
   }
 }
