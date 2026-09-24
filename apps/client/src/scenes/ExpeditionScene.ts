@@ -67,7 +67,7 @@ export class ExpeditionScene extends Phaser.Scene {
         speedPxPerSecond: 180,
         enemySpawns: [{
           archetype: 'eco_rasteiro',
-          position: { x: 400, y: 240 }
+          position: { x: 360, y: 240 }
         }]
       }
     );

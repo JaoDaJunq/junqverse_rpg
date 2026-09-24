@@ -312,7 +312,8 @@ describe('T017 combat input bridge', () => {
       radius: 12,
       health: 70,
       maxHealth: 70,
-      alive: true
+      alive: true,
+      vulnerable: false
     }]);
 
     const restarted = session.restart();
@@ -366,6 +367,31 @@ describe('T017 combat input bridge', () => {
 
     session.advance(1000 / 60);
     expect(session.getSnapshot().enemies[0]?.health).toBe(70);
+  });
+
+
+  it('activates W after its windup and expires vulnerable on schedule', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'w_vulnerable_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        {
+          enemySpawns: [{
+            archetype: 'eco_rasteiro',
+            position: { x: 200, y: 100 }
+          }]
+        }
+      ),
+      new OneShotActionInput('w', { x: 200, y: 100 })
+    );
+
+    session.advance((1000 / 60) * 10);
+    expect(session.getSnapshot().enemies[0]?.vulnerable).toBe(true);
+
+    session.advance((1000 / 60) * 179);
+    expect(session.getSnapshot().enemies[0]?.vulnerable).toBe(false);
   });
 
 });

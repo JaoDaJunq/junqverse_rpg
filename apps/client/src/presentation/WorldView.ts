@@ -11,6 +11,13 @@ interface EnemyVisual {
   readonly health: Phaser.GameObjects.Text;
 }
 
+function enemyHealthText(
+  enemy: PrototypeSnapshot['enemies'][number]
+): string {
+  const vulnerable = enemy.vulnerable ? ' • VULN' : '';
+  return `${enemy.health}/${enemy.maxHealth}${vulnerable}`;
+}
+
 export class WorldView {
   public readonly player: Phaser.GameObjects.Arc;
   private readonly floor: Phaser.GameObjects.Graphics;
@@ -63,12 +70,16 @@ export class WorldView {
         0xef4444,
         1
       );
-      body.setStrokeStyle(2, 0xfef2f2, 1);
+      body.setStrokeStyle(
+        enemy.vulnerable ? 4 : 2,
+        enemy.vulnerable ? 0xfacc15 : 0xfef2f2,
+        1
+      );
 
       const health = scene.add.text(
         enemy.position.x,
         enemy.position.y - 24,
-        `${enemy.health}/${enemy.maxHealth}`,
+        enemyHealthText(enemy),
         {
           color: '#ffffff',
           fontFamily: 'system-ui, sans-serif',
@@ -99,10 +110,15 @@ export class WorldView {
 
       visual.body
         .setPosition(enemy.position.x, enemy.position.y)
+        .setStrokeStyle(
+          enemy.vulnerable ? 4 : 2,
+          enemy.vulnerable ? 0xfacc15 : 0xfef2f2,
+          1
+        )
         .setVisible(enemy.alive);
       visual.health
         .setPosition(enemy.position.x, enemy.position.y - 24)
-        .setText(`${enemy.health}/${enemy.maxHealth}`)
+        .setText(enemyHealthText(enemy))
         .setVisible(enemy.alive);
     }
   }

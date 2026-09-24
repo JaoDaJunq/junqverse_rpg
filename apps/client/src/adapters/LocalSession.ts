@@ -6,6 +6,7 @@ import {
   createPrototypeCombatState,
   createPrototypeSnapshot,
   resolvePrototypeBasicAttack,
+  resolvePrototypeW,
   stepPrototypeCombat,
   stepPrototypeWorld,
   type PrototypeCombatCommand,
@@ -136,6 +137,15 @@ export class LocalSession implements GameSession {
       let normalMovement = combatStep.movement.kind === 'normal'
         ? { x: frame.moveX, y: frame.moveY }
         : { x: 0, y: 0 };
+
+      if (combatStep.wActivated) {
+        const w = resolvePrototypeW(
+          this.combat,
+          this.state
+        );
+        this.combat = w.state;
+        this.state = w.world;
+      }
 
       if (combatStep.basicDirection !== null) {
         const basic = resolvePrototypeBasicAttack(

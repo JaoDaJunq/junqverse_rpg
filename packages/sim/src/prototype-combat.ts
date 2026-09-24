@@ -19,7 +19,10 @@ import {
   type JaoPassiveState
 } from './heroes/jao.js';
 import {
+  createJaoRevealState,
   createJaoUltimateState,
+  resolveJaoW,
+  type JaoRevealState,
   type JaoUltimateState
 } from './heroes/jao-advanced.js';
 import type { CombatResources } from './resources.js';
@@ -47,6 +50,7 @@ export interface PrototypeCombatState {
   readonly qDash: PrototypeQDashState | null;
   readonly basic: JaoBasicState;
   readonly passive: JaoPassiveState;
+  readonly reveal: JaoRevealState;
 }
 
 export type PrototypeCombatMovement =
@@ -62,6 +66,7 @@ export interface PrototypeCombatStepResult {
   readonly state: PrototypeCombatState;
   readonly movement: PrototypeCombatMovement;
   readonly basicDirection: Vec2 | null;
+  readonly wActivated: boolean;
 }
 
 export interface PrototypeBasicAttackResult {
@@ -69,6 +74,12 @@ export interface PrototypeBasicAttackResult {
   readonly world: PrototypeWorldState;
   readonly accepted: boolean;
   readonly hitTargetIds: readonly number[];
+}
+
+export interface PrototypeWResult {
+  readonly state: PrototypeCombatState;
+  readonly world: PrototypeWorldState;
+  readonly revealedEnemyIds: readonly number[];
 }
 
 export interface PrototypeCombatSnapshot {
@@ -116,6 +127,29 @@ function prototypeTargets(
   }));
 }
 
+function updateWorldTargets(
+  world: PrototypeWorldState,
+  targets: readonly JaoCombatTarget[]
+): PrototypeWorldState {
+  const byId = new Map(
+    targets.map((target) => [target.entityId, target])
+  );
+
+  return {
+    ...world,
+    enemies: world.enemies.map((enemy) => {
+      const target = byId.get(enemy.entityId);
+      return target
+        ? {
+            ...enemy,
+            health: target.health,
+            status: target.status
+          }
+        : enemy;
+    })
+  };
+}
+
 export function createPrototypeCombatState(
   playerEntityId: number,
   ultimateCharge = 0
@@ -125,7 +159,8 @@ export function createPrototypeCombatState(
     ultimate: createJaoUltimateState(ultimateCharge),
     qDash: null,
     basic: createJaoBasicState(),
-    passive: createJaoPassiveState()
+    passive: createJaoPassiveState(),
+    reveal: createJaoRevealState()
   };
 }
 
@@ -133,7 +168,13 @@ export function stepPrototypeCombat(
   state: PrototypeCombatState,
   command: PrototypeCombatCommand
 ): PrototypeCombatStepResult {
+  const previousCast = state.combatant.activeCast;
   let combatant = stepCombatant(state.combatant);
+  const wActivated =
+    previousCast?.abilityId === JAO_W_DEFINITION.id &&
+    previousCast.phase === 'windup' &&
+    combatant.activeCast?.abilityId === JAO_W_DEFINITION.id &&
+    combatant.activeCast.phase === 'active';
 
   if (state.qDash !== null) {
     const remaining = state.qDash.ticksRemaining - 1;
@@ -150,7 +191,8 @@ export function stepPrototypeCombat(
           : null
       },
       movement: qDashMovement(state.qDash.direction),
-      basicDirection: null
+      basicDirection: null,
+      wActivated
     };
   }
 
@@ -168,7 +210,8 @@ export function stepPrototypeCombat(
       movement: dodge.accepted
         ? { kind: 'locked' }
         : { kind: 'normal' },
-      basicDirection: null
+      basicDirection: null,
+      wActivated
     };
   }
 
@@ -203,7 +246,8 @@ export function stepPrototypeCombat(
             : null
         },
         movement: qDashMovement(direction),
-        basicDirection: null
+        basicDirection: null,
+        wActivated
       };
     }
 
@@ -213,7 +257,8 @@ export function stepPrototypeCombat(
         combatant
       },
       movement: { kind: 'normal' },
-      basicDirection: null
+      basicDirection: null,
+      wActivated
     };
   }
 
@@ -235,7 +280,8 @@ export function stepPrototypeCombat(
       movement: accepted.accepted
         ? { kind: 'locked' }
         : { kind: 'normal' },
-      basicDirection: null
+      basicDirection: null,
+      wActivated
     };
   }
 
@@ -253,7 +299,8 @@ export function stepPrototypeCombat(
     movement: { kind: 'normal' },
     basicDirection: canUseBasic
       ? normalizeDirection(command.basicDirection!)
-      : null
+      : null,
+    wActivated
   };
 }
 
@@ -276,10 +323,6 @@ export function resolvePrototypeBasicAttack(
     passive: state.passive
   });
 
-  const byId = new Map(
-    result.targets.map((target) => [target.entityId, target])
-  );
-
   return {
     accepted: result.accepted,
     hitTargetIds: result.hitTargetIds,
@@ -287,19 +330,29 @@ export function resolvePrototypeBasicAttack(
       ...state,
       basic: result.state
     },
-    world: {
-      ...world,
-      enemies: world.enemies.map((enemy) => {
-        const target = byId.get(enemy.entityId);
-        return target
-          ? {
-              ...enemy,
-              health: target.health,
-              status: target.status
-            }
-          : enemy;
-      })
-    }
+    world: updateWorldTargets(world, result.targets)
+  };
+}
+
+export function resolvePrototypeW(
+  state: PrototypeCombatState,
+  world: PrototypeWorldState
+): PrototypeWResult {
+  const result = resolveJaoW({
+    currentTick: world.tick,
+    origin: world.player.position,
+    reveal: state.reveal,
+    targets: prototypeTargets(world),
+    revealables: []
+  });
+
+  return {
+    revealedEnemyIds: result.revealedEnemyIds,
+    state: {
+      ...state,
+      reveal: result.reveal
+    },
+    world: updateWorldTargets(world, result.targets)
   };
 }
 

@@ -10,7 +10,11 @@ import {
   moveCircleAlongSegment,
   moveCircleForTick
 } from './movement.js';
-import { createStatusState, type StatusState } from './status.js';
+import {
+  createStatusState,
+  stepStatuses,
+  type StatusState
+} from './status.js';
 
 export interface PrototypePlayerState {
   readonly entityId: number;
@@ -56,6 +60,7 @@ export interface PrototypeSnapshot {
     readonly health: number;
     readonly maxHealth: number;
     readonly alive: boolean;
+    readonly vulnerable: boolean;
   }[];
   readonly blockers: readonly Aabb[];
 }
@@ -161,7 +166,12 @@ export function stepPrototypeWorld(
       ...state.player,
       previousPosition: state.player.position,
       position: moved.position
-    }
+    },
+    enemies: state.enemies.map((enemy) => ({
+      ...enemy,
+      previousPosition: enemy.position,
+      status: stepStatuses(enemy.status)
+    }))
   };
 }
 
@@ -233,7 +243,10 @@ export function createPrototypeSnapshot(
       },
       health: enemy.health.health,
       maxHealth: enemy.health.maxHealth,
-      alive: enemy.health.alive
+      alive: enemy.health.alive,
+      vulnerable: enemy.status.effects.some(
+        (effect) => effect.kind === 'vulnerable'
+      )
     })),
     blockers: state.blockers
   };
