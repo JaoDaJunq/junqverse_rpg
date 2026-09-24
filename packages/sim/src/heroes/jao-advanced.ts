@@ -2,6 +2,7 @@ import type { Vec2 } from '@junqverse/content';
 import {
   JAO_BASIC_DEFINITION,
   JAO_E_DEFINITION,
+  JAO_Q_DEFINITION,
   JAO_R_DEFINITION,
   JAO_W_DEFINITION
 } from '@junqverse/content';
@@ -58,6 +59,7 @@ export interface JaoEChargeState {
   readonly attackInstanceId: string;
   readonly startedAtTick: number;
   readonly direction: Vec2;
+  readonly maxChargeTicks: number;
 }
 
 export interface JaoEReleasePlan {
@@ -252,6 +254,7 @@ export function createJaoECharge(input: {
   readonly attackInstanceId: string;
   readonly startedAtTick: number;
   readonly direction: Vec2;
+  readonly ultimate: JaoUltimateState;
 }): JaoEChargeState {
   assertEntityId(input.ownerEntityId, 'ownerEntityId');
   assertStableId(input.attackInstanceId, 'attackInstanceId');
@@ -261,7 +264,11 @@ export function createJaoECharge(input: {
     ownerEntityId: input.ownerEntityId,
     attackInstanceId: input.attackInstanceId,
     startedAtTick: input.startedAtTick,
-    direction: normalizeDirection(input.direction)
+    direction: normalizeDirection(input.direction),
+    maxChargeTicks: getJaoEMaxChargeTicks(
+      input.ultimate,
+      input.startedAtTick
+    )
   };
 }
 
@@ -311,17 +318,13 @@ export function getJaoEBaseDamage(chargeTicks: number): number {
 export function planJaoERelease(input: {
   readonly charge: JaoEChargeState;
   readonly requestedReleaseTick: number;
-  readonly ultimate: JaoUltimateState;
 }): JaoEReleasePlan {
   assertTick(input.requestedReleaseTick, 'requestedReleaseTick');
   if (input.requestedReleaseTick < input.charge.startedAtTick) {
     throw new RangeError('release cannot precede charge acceptance');
   }
 
-  const maxChargeTicks = getJaoEMaxChargeTicks(
-    input.ultimate,
-    input.requestedReleaseTick
-  );
+  const maxChargeTicks = input.charge.maxChargeTicks;
   const requestedChargeTicks =
     input.requestedReleaseTick - input.charge.startedAtTick;
   const chargeTicks = Math.max(
@@ -378,35 +381,25 @@ export function resolveJaoERelease(input: {
   const visualEvents: ResonanceVisualEvent[] = [];
 
   for (const targetEntityId of cone.targetEntityIds) {
+    let effectiveDamage = 0;
+
     targets = targets.map((target) => {
       if (target.entityId !== targetEntityId) {
         return target;
       }
-      return applyJaoAttackDamage(
+
+      const damaged = applyJaoAttackDamage(
         target,
         input.plan.baseDamage,
         input.rank,
         input.passive,
         input.currentTick
-      ).target;
+      );
+      effectiveDamage = damaged.effectiveDamage;
+      return damaged.target;
     });
 
-    const directTarget = targets.find(
-      (target) => target.entityId === targetEntityId
-    );
-    const originalTarget = input.targets.find(
-      (target) => target.entityId === targetEntityId
-    );
-
-    if (
-      !directTarget ||
-      !originalTarget ||
-      (
-        directTarget.health.health === originalTarget.health.health &&
-        JSON.stringify(directTarget.health.shields) ===
-          JSON.stringify(originalTarget.health.shields)
-      )
-    ) {
+    if (effectiveDamage <= 0) {
       continue;
     }
 
@@ -474,7 +467,7 @@ function resetJaoQCooldown(
   resources: CombatResources
 ): CombatResources {
   const cooldowns = { ...resources.cooldowns };
-  delete cooldowns.jao_q;
+  delete cooldowns[JAO_Q_DEFINITION.id];
   return {
     ...resources,
     cooldowns
