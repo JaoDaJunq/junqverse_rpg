@@ -370,6 +370,10 @@ function applyNodeEvent(
     };
   }
 
+  if (definition.type === 'survive') {
+    return state;
+  }
+
   const children = definition.children.map(
     (child, index) =>
       applyNodeEvent(
