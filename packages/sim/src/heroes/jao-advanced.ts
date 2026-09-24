@@ -233,7 +233,7 @@ export function resolveJaoW(input: {
     revealedObjectIds.push(revealable.id);
     reveal = {
       entries: upsertReveal(reveal.entries, {
-        id: revealable.id,
+        id: `${revealable.kind}:${revealable.id}`,
         kind: revealable.kind,
         expiresAtTick:
           input.currentTick + JAO_W_DEFINITION.revealDurationTicks
@@ -293,8 +293,8 @@ export function getJaoEMaxChargeTicks(
 }
 
 export function getJaoEBaseDamage(chargeTicks: number): number {
-  if (!Number.isInteger(chargeTicks)) {
-    throw new RangeError('chargeTicks must be an integer');
+  if (!Number.isInteger(chargeTicks) || chargeTicks < 0) {
+    throw new RangeError('chargeTicks must be a non-negative integer');
   }
 
   const clamped = Math.max(
