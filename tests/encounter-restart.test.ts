@@ -115,8 +115,12 @@ describe('T015 encounter defeat and restart', () => {
     const defeated = defeatEncounter(dirtyEncounter());
 
     expect(defeated.defeated).toBe(true);
+    expect(defeated.player.health.health).toBe(0);
+    expect(defeated.player.health.alive).toBe(false);
+    expect(defeated.player.health.shields.bySource).toEqual({});
     expect(defeated.player.combatant.alive).toBe(false);
     expect(defeated.player.combatant.activeCast).toBeNull();
+    expect(defeated.player.status.effects).toEqual([]);
     expect(defeated.player.transient.eCharge).toBeNull();
     expect(defeated.player.transient.ultimate.activeFromTick).toBeNull();
     expect(defeated.player.transient.ultimate.activeUntilTick).toBeNull();
