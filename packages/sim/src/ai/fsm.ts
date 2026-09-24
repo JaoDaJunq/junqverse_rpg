@@ -244,13 +244,9 @@ export function stepEnemyAi(input: {
     return {
       state: {
         ...input.state,
-        phase: 'recovery',
-        phaseTicksRemaining: config.cooldownTicks,
-        pendingActionId: null,
-        desiredMovement:
-          input.archetype === 'eco_rasteiro'
-            ? normalizeAway(input.position, input.target.position)
-            : { x: 0, y: 0 }
+        phase: 'attack',
+        phaseTicksRemaining: 1,
+        desiredMovement: { x: 0, y: 0 }
       },
       events: [{
         kind: 'attack',
@@ -259,6 +255,22 @@ export function stepEnemyAi(input: {
         enemyActionId: input.state.pendingActionId,
         familyId: config.familyId
       }]
+    };
+  }
+
+  if (input.state.phase === 'attack') {
+    return {
+      state: {
+        ...input.state,
+        phase: 'recovery',
+        phaseTicksRemaining: config.cooldownTicks,
+        pendingActionId: null,
+        desiredMovement:
+          input.archetype === 'eco_rasteiro'
+            ? normalizeAway(input.position, input.target.position)
+            : { x: 0, y: 0 }
+      },
+      events: []
     };
   }
 
