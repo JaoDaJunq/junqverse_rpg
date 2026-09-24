@@ -17,6 +17,7 @@ import {
   type ResonanceState,
   type ResonanceVisualEvent
 } from '../resonance.js';
+import type { AbilityCastSpec } from '../abilities.js';
 import type { CombatResources } from '../resources.js';
 import {
   applyStatus,
@@ -81,6 +82,7 @@ export interface JaoEResult {
 
 export interface JaoUltimateState {
   readonly charge: number;
+  readonly activeFromTick: number | null;
   readonly activeUntilTick: number | null;
 }
 
@@ -272,15 +274,40 @@ export function createJaoECharge(input: {
   };
 }
 
+function isJaoUltimateCommitted(
+  state: JaoUltimateState,
+  currentTick: number
+): boolean {
+  return (
+    state.activeUntilTick !== null &&
+    state.activeUntilTick > currentTick
+  );
+}
+
 export function isJaoUltimateActive(
   state: JaoUltimateState,
   currentTick: number
 ): boolean {
   assertTick(currentTick, 'currentTick');
   return (
+    state.activeFromTick !== null &&
     state.activeUntilTick !== null &&
-    state.activeUntilTick > currentTick
+    currentTick >= state.activeFromTick &&
+    currentTick < state.activeUntilTick
   );
+}
+
+export function getJaoUltimateCastSpec(): AbilityCastSpec {
+  return {
+    ability: {
+      id: JAO_R_DEFINITION.id,
+      costFocus: 0,
+      cooldownTicks: 0,
+      windupTicks: JAO_R_DEFINITION.windupTicks,
+      recoveryTicks: JAO_R_DEFINITION.recoveryTicks
+    },
+    activeTicks: 1
+  };
 }
 
 export function getJaoEMaxChargeTicks(
@@ -447,6 +474,7 @@ export function createJaoUltimateState(
   }
   return {
     charge,
+    activeFromTick: null,
     activeUntilTick: null
   };
 }
@@ -482,7 +510,7 @@ export function tryActivateJaoUltimate(input: {
 }): JaoUltimateActivationResult {
   assertTick(input.currentTick, 'currentTick');
 
-  if (isJaoUltimateActive(input.ultimate, input.currentTick)) {
+  if (isJaoUltimateCommitted(input.ultimate, input.currentTick)) {
     return {
       accepted: false,
       reason: 'already_active',
@@ -508,8 +536,12 @@ export function tryActivateJaoUltimate(input: {
     ultimate: {
       charge:
         input.ultimate.charge - JAO_R_DEFINITION.ultimateChargeCost,
+      activeFromTick:
+        input.currentTick + JAO_R_DEFINITION.windupTicks,
       activeUntilTick:
-        input.currentTick + JAO_R_DEFINITION.durationTicks
+        input.currentTick +
+        JAO_R_DEFINITION.windupTicks +
+        JAO_R_DEFINITION.durationTicks
     },
     resources: resetJaoQCooldown(input.resources),
     qResetApplied: true
@@ -555,6 +587,7 @@ export function clearJaoTransientBuffsOnDeath(
   return {
     ultimate: {
       ...state.ultimate,
+      activeFromTick: null,
       activeUntilTick: null
     },
     eCharge: null
