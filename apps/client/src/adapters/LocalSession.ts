@@ -18,13 +18,30 @@ export interface SessionInputSource {
 export interface GameSession {
   advance(renderDeltaMs: number): PrototypeSnapshot;
   getSnapshot(): PrototypeSnapshot;
+  restart(): PrototypeSnapshot;
   setPaused(paused: boolean): void;
   isPaused(): boolean;
   stop(): void;
 }
 
+function clonePrototypeWorldState(
+  state: PrototypeWorldState
+): PrototypeWorldState {
+  return {
+    ...state,
+    rng: { ...state.rng },
+    blockers: state.blockers.map((blocker) => ({ ...blocker })),
+    player: {
+      ...state.player,
+      previousPosition: { ...state.player.previousPosition },
+      position: { ...state.player.position }
+    }
+  };
+}
+
 export class LocalSession implements GameSession {
   private state: PrototypeWorldState;
+  private readonly initialState: PrototypeWorldState;
   private readonly input: SessionInputSource;
   private accumulatorMs = 0;
   private paused = false;
@@ -34,7 +51,8 @@ export class LocalSession implements GameSession {
     initialState: PrototypeWorldState,
     input: SessionInputSource
   ) {
-    this.state = initialState;
+    this.initialState = clonePrototypeWorldState(initialState);
+    this.state = clonePrototypeWorldState(initialState);
     this.input = input;
   }
 
@@ -66,6 +84,19 @@ export class LocalSession implements GameSession {
       this.state,
       this.accumulatorMs / TICK_MS
     );
+  }
+
+  public restart(): PrototypeSnapshot {
+    if (this.stopped) {
+      throw new Error('cannot restart a stopped session');
+    }
+
+    this.state = clonePrototypeWorldState(this.initialState);
+    this.accumulatorMs = 0;
+    this.paused = false;
+    this.input.clear();
+
+    return this.getSnapshot();
   }
 
   public setPaused(paused: boolean): void {
