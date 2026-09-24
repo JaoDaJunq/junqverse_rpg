@@ -8,6 +8,7 @@ import {
   addJaoUltimateCharge,
   applyResonancePrimer,
   applyStatus,
+  clearJaoTransientBuffsOnDeath,
   createCombatResources,
   createHealthState,
   createJaoBasicState,
@@ -31,7 +32,6 @@ import {
   resolveJaoERelease,
   resolveJaoW,
   startCooldown,
-  stepStatuses,
   tryActivateJaoUltimate,
   type JaoCombatTarget
 } from '../packages/sim/src/index.js';
@@ -436,7 +436,7 @@ describe('T013 Jão W E and Campo Absoluto', () => {
       ultimate: activated.ultimate
     });
 
-    const cleared = (await import('../packages/sim/src/index.js')).clearJaoTransientBuffsOnDeath({
+    const cleared = clearJaoTransientBuffsOnDeath({
       ultimate: activated.ultimate,
       eCharge: charge
     });
