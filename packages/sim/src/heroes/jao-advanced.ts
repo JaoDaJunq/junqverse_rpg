@@ -408,7 +408,8 @@ export function resolveJaoERelease(input: {
       primaryTargetEntityId: targetEntityId,
       detonatorEntityId: input.plan.ownerEntityId,
       detonatorRank: input.rank,
-      currentTick: input.currentTick
+      currentTick: input.currentTick,
+      primaryHitConfirmed: true
     }, targets);
 
     resonance = detonated.state;
