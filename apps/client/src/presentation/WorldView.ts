@@ -96,6 +96,14 @@ export class WorldView {
     }
   }
 
+  public setUltimateActive(active: boolean): void {
+    this.player.setStrokeStyle(
+      active ? 4 : 2,
+      active ? 0x93c5fd : 0xe5e7eb,
+      1
+    );
+  }
+
   public render(snapshot: PrototypeSnapshot): void {
     this.player.setPosition(
       snapshot.player.position.x,

@@ -1,6 +1,7 @@
 import {
   JAO_E_DEFINITION,
   JAO_Q_DEFINITION,
+  JAO_R_DEFINITION,
   JAO_W_DEFINITION,
   type Vec2
 } from '@junqverse/content';
@@ -23,10 +24,14 @@ import {
   createJaoECharge,
   createJaoRevealState,
   createJaoUltimateState,
+  getJaoBasicCadenceTicks,
   getJaoEMaxChargeTicks,
+  getJaoUltimateCastSpec,
+  isJaoUltimateActive,
   planJaoERelease,
   resolveJaoERelease,
   resolveJaoW,
+  tryActivateJaoUltimate,
   type JaoEChargeState,
   type JaoEReleasePlan,
   type JaoRevealState,
@@ -45,6 +50,7 @@ export interface PrototypeCombatCommand {
   readonly qPressed: boolean;
   readonly qDirection: Vec2 | null;
   readonly wPressed: boolean;
+  readonly rPressed: boolean;
   readonly ePressed: boolean;
   readonly eReleased: boolean;
   readonly eDirection: Vec2 | null;
@@ -116,10 +122,25 @@ export interface PrototypeCombatSnapshot {
   readonly dodgeActive: boolean;
   readonly qDashActive: boolean;
   readonly eCharging: boolean;
+  readonly ultimateActive: boolean;
 }
 
-function normalMovement(multiplier = 1): PrototypeCombatMovement {
-  return { kind: 'normal', multiplier };
+function normalMovement(
+  state: PrototypeCombatState,
+  currentTick: number,
+  multiplier = 1
+): PrototypeCombatMovement {
+  const ultimateMultiplier = isJaoUltimateActive(
+    state.ultimate,
+    currentTick
+  )
+    ? 1 + JAO_R_DEFINITION.hasteMagnitude
+    : 1;
+
+  return {
+    kind: 'normal',
+    multiplier: multiplier * ultimateMultiplier
+  };
 }
 
 function normalizeDirection(direction: Vec2): Vec2 {
@@ -304,6 +325,8 @@ export function stepPrototypeCombat(
         eReleasePlan
       },
       movement: normalMovement(
+        state,
+        currentTick,
         JAO_E_DEFINITION.movementMultiplierWhileCharging
       ),
       basicDirection: null,
@@ -346,7 +369,7 @@ export function stepPrototypeCombat(
       },
       movement: dodge.accepted
         ? { kind: 'locked' }
-        : normalMovement(),
+        : normalMovement(state, currentTick),
       basicDirection: null,
       wActivated,
       eReleasePlan: null
@@ -395,7 +418,7 @@ export function stepPrototypeCombat(
         ...state,
         combatant
       },
-      movement: normalMovement(),
+      movement: normalMovement(state, currentTick),
       basicDirection: null,
       wActivated,
       eReleasePlan: null
@@ -419,7 +442,54 @@ export function stepPrototypeCombat(
       },
       movement: accepted.accepted
         ? { kind: 'locked' }
-        : normalMovement(),
+        : normalMovement(state, currentTick),
+      basicDirection: null,
+      wActivated,
+      eReleasePlan: null
+    };
+  }
+
+  if (command.rPressed) {
+    const cast = tryAcceptAbility(
+      combatant,
+      getJaoUltimateCastSpec(),
+      {
+        targetValid: true,
+        stunned: false
+      }
+    );
+
+    if (cast.accepted) {
+      const activated = tryActivateJaoUltimate({
+        ultimate: state.ultimate,
+        resources: cast.state.resources,
+        currentTick
+      });
+
+      if (activated.accepted) {
+        return {
+          state: {
+            ...state,
+            combatant: {
+              ...cast.state,
+              resources: activated.resources
+            },
+            ultimate: activated.ultimate
+          },
+          movement: { kind: 'locked' },
+          basicDirection: null,
+          wActivated,
+          eReleasePlan: null
+        };
+      }
+    }
+
+    return {
+      state: {
+        ...state,
+        combatant
+      },
+      movement: normalMovement(state, currentTick),
       basicDirection: null,
       wActivated,
       eReleasePlan: null
@@ -467,6 +537,8 @@ export function stepPrototypeCombat(
           eReleasePlan: null
         },
         movement: normalMovement(
+          state,
+          currentTick,
           JAO_E_DEFINITION.movementMultiplierWhileCharging
         ),
         basicDirection: null,
@@ -480,7 +552,7 @@ export function stepPrototypeCombat(
         ...state,
         combatant: accepted.state
       },
-      movement: normalMovement(),
+      movement: normalMovement(state, currentTick),
       basicDirection: null,
       wActivated,
       eReleasePlan: null
@@ -498,7 +570,7 @@ export function stepPrototypeCombat(
       ...state,
       combatant
     },
-    movement: normalMovement(),
+    movement: normalMovement(state, currentTick),
     basicDirection: canUseBasic
       ? normalizeDirection(command.basicDirection!)
       : null,
@@ -523,7 +595,11 @@ export function resolvePrototypeBasicAttack(
     rank: 1,
     blockers: world.blockers,
     targets: prototypeTargets(world),
-    passive: state.passive
+    passive: state.passive,
+    cadenceTicks: getJaoBasicCadenceTicks(
+      state.ultimate,
+      world.tick
+    )
   });
 
   return {
@@ -588,7 +664,8 @@ export function resolvePrototypeE(
 }
 
 export function createPrototypeCombatSnapshot(
-  state: PrototypeCombatState
+  state: PrototypeCombatState,
+  currentTick: number
 ): PrototypeCombatSnapshot {
   return {
     resources: state.combatant.resources,
@@ -596,6 +673,10 @@ export function createPrototypeCombatSnapshot(
     activeAbilityId: state.combatant.activeCast?.abilityId ?? null,
     dodgeActive: state.combatant.dodge !== null,
     qDashActive: state.qDash !== null,
-    eCharging: state.eCharge !== null
+    eCharging: state.eCharge !== null,
+    ultimateActive: isJaoUltimateActive(
+      state.ultimate,
+      currentTick
+    )
   };
 }

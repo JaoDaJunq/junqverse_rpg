@@ -124,6 +124,35 @@ class ChargedEInput implements SessionInputSource {
   }
 }
 
+
+class QThenRInput implements SessionInputSource {
+  public clears = 0;
+
+  public nextFrame(clientTick: number): InputFrame {
+    return {
+      seq: clientTick,
+      clientTick,
+      moveX: 0,
+      moveY: 0,
+      aimX: 300,
+      aimY: 100,
+      basicHeld: false,
+      pressed:
+        clientTick === 0
+          ? ['q']
+          : clientTick === 25
+            ? ['r']
+            : [],
+      released: [],
+      interactHeld: false
+    };
+  }
+
+  public clear(): void {
+    this.clears += 1;
+  }
+}
+
 function makeSession(input = new ConstantInput(1, 0)): LocalSession {
   return new LocalSession(
     createPrototypeWorld(
@@ -498,6 +527,57 @@ describe('T017 combat input bridge', () => {
     session.advance(1000 / 30);
 
     expect(session.getSnapshot().player.position.x).toBeCloseTo(101.5, 6);
+  });
+
+
+  it('activates R from full charge after the documented windup', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'r_activation_test',
+        1,
+        { x: 100, y: 100 },
+        []
+      ),
+      new OneShotActionInput('r'),
+      { initialUltimateCharge: 100 }
+    );
+
+    const accepted = session.advance(1000 / 60);
+    expect(accepted.combat.ultimate.charge).toBe(0);
+    expect(accepted.combat.activeAbilityId).toBe('jao_r');
+    expect(accepted.combat.ultimateActive).toBe(false);
+
+    session.advance((1000 / 60) * 11);
+    expect(session.getSnapshot().combat.ultimateActive).toBe(true);
+
+    session.advance((1000 / 60) * 360);
+    expect(session.getSnapshot().combat.ultimateActive).toBe(false);
+  });
+
+  it('resets the current Q cooldown once when R is accepted', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'r_q_reset_test',
+        1,
+        { x: 100, y: 100 },
+        []
+      ),
+      new QThenRInput(),
+      { initialUltimateCharge: 100 }
+    );
+
+    session.advance((1000 / 60) * 25);
+    expect(
+      session.getSnapshot().combat.resources.cooldowns.jao_q
+    ).toBeGreaterThan(0);
+
+    session.advance(1000 / 60);
+    const activated = session.getSnapshot();
+
+    expect(activated.combat.ultimate.charge).toBe(0);
+    expect(
+      activated.combat.resources.cooldowns.jao_q
+    ).toBeUndefined();
   });
 
 });

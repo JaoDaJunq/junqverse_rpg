@@ -26,6 +26,10 @@ export interface SessionInputSource {
   clear(): void;
 }
 
+export interface LocalSessionOptions {
+  readonly initialUltimateCharge?: number;
+}
+
 export interface LocalSessionSnapshot extends PrototypeSnapshot {
   readonly combat: PrototypeCombatSnapshot;
 }
@@ -89,6 +93,7 @@ function combatCommandFromFrame(
     qPressed: frame.pressed.includes('q'),
     qDirection: aimDirection,
     wPressed: frame.pressed.includes('w'),
+    rPressed: frame.pressed.includes('r'),
     ePressed: frame.pressed.includes('e'),
     eReleased: frame.released.includes('e'),
     eDirection: aimDirection,
@@ -103,18 +108,22 @@ export class LocalSession implements GameSession {
   private combat: PrototypeCombatState;
   private readonly initialState: PrototypeWorldState;
   private readonly input: SessionInputSource;
+  private readonly initialUltimateCharge: number;
   private accumulatorMs = 0;
   private paused = false;
   private stopped = false;
 
   public constructor(
     initialState: PrototypeWorldState,
-    input: SessionInputSource
+    input: SessionInputSource,
+    options: LocalSessionOptions = {}
   ) {
     this.initialState = clonePrototypeWorldState(initialState);
     this.state = clonePrototypeWorldState(initialState);
+    this.initialUltimateCharge = options.initialUltimateCharge ?? 0;
     this.combat = createPrototypeCombatState(
-      this.state.player.entityId
+      this.state.player.entityId,
+      this.initialUltimateCharge
     );
     this.input = input;
   }
@@ -209,7 +218,10 @@ export class LocalSession implements GameSession {
         this.state,
         this.accumulatorMs / TICK_MS
       ),
-      combat: createPrototypeCombatSnapshot(this.combat)
+      combat: createPrototypeCombatSnapshot(
+        this.combat,
+        this.state.tick
+      )
     };
   }
 
@@ -220,7 +232,8 @@ export class LocalSession implements GameSession {
 
     this.state = clonePrototypeWorldState(this.initialState);
     this.combat = createPrototypeCombatState(
-      this.state.player.entityId
+      this.state.player.entityId,
+      this.initialUltimateCharge
     );
     this.accumulatorMs = 0;
     this.paused = false;

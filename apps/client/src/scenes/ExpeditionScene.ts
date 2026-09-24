@@ -71,7 +71,9 @@ export class ExpeditionScene extends Phaser.Scene {
         }]
       }
     );
-    const session = new LocalSession(world, mapper);
+    const session = new LocalSession(world, mapper, {
+      initialUltimateCharge: 100
+    });
     const initial = session.getSnapshot();
     const view = new WorldView(this, initial, {
       width: WORLD_WIDTH,
@@ -170,6 +172,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
     const snapshot = this.session.advance(delta);
     this.view.render(snapshot);
+    this.view.setUltimateActive(snapshot.combat.ultimateActive);
     this.hud?.render(this.createHudSnapshot(snapshot));
   }
 
@@ -220,6 +223,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
     const snapshot = this.session.restart();
     this.view.render(snapshot);
+    this.view.setUltimateActive(snapshot.combat.ultimateActive);
     this.hud?.render(this.createHudSnapshot(snapshot));
     this.cameras.main.centerOn(
       snapshot.player.position.x,
