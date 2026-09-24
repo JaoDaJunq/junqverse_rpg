@@ -1,7 +1,7 @@
 # Passagem de contexto
 
 ## Estado atual
-T001-T011 estão concluídas e aprovadas por revisão independente.
+T001-T012 estão concluídas e aprovadas por revisão independente.
 
 ## Protótipo visual atual
 T007 permite movimentação, colisão, câmera e pausa no Phaser.
@@ -10,17 +10,27 @@ T007 permite movimentação, colisão, câmera e pausa no Phaser.
 - T008: cast, foco, cooldown, dodge e attackInstanceId.
 - T009: dano, shield, cura e estados.
 - T010: projéteis, cones, zonas e HitRegistry.
-- T011: Ressonância com primer/detonator, raio 64, slow, rank scaling e cap global por vítima.
+- T011: Ressonância com primer/detonator e cap global por vítima.
 
-## Evidência T011
-- CI geral do código: 35902193336 PASS.
-- revisão independente: 35902273423 PASS.
-- cap global confirmado até N+89 e liberado em N+90.
-- explosão não propaga nem consome marcas vizinhas.
-- DoT/resonance_explosion não detonam.
-- cue visual exige outline + icon.
+## Jão disponível após T012
+- stats base: 320 HP / 180 px/s / raio 12;
+- passiva Leitura de Campo: segunda ação distinta da mesma família em até 360 ticks aplica analyzed por 300 ticks;
+- projéteis do mesmo enemyActionId não contam como repetições;
+- analyzed concede outgoing x1.10 contra o alvo;
+- básico Corte curto: 26 dano, cone 80°, alcance 60, cadência 33 ticks;
+- Q Passo Relâmpago: dash 160 px, para em parede, 32 dano uma vez por alvo cruzado e aplica primer de Ressonância;
+- fixture de sala de teste para inimigo repetindo ataque.
+
+## Evidência T012
+- CI geral final do código: 35951218964 PASS.
+- revisão independente: 35951276420 PASS.
+- limites 300 px e 360 ticks testados.
+- refresh de analyzed sem stack confirmado.
+- básico não atravessa parede.
+- analyzed afeta também dano do Q.
+- Q ordena hits pela trajetória e mantém determinismo sem localeCompare.
 
 ## Próxima tarefa
-T012 - básico, passiva e Q do Jão.
+T013 - Jão W, E e ultimate Campo Absoluto.
 
-T013 permanece bloqueada até T012 DONE.
+T014 (IA) já tem suas dependências genéricas satisfeitas e pode ser executada em paralelo, mas a sequência do herói segue T013.
