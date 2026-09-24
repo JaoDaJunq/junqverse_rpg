@@ -20,3 +20,4 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 | T015 | DONE | CI 35955159394 PASS; revisão independente 35955252488 PASS |
 | T016 | DONE | CI 35955830871 PASS; 133 testes + 4 Playwright; revisão independente aprovada |
 | T017 | REVIEW | CI 36002062824 PASS; 157 testes + 4 Playwright; revisão técnica corrigiu mira zero e timing do básico; pendente rodada manual humana documentada |
+| T018 | IN_PROGRESS | Branch empilhada sobre T017 REVIEW por autorização explícita do MVP; motor de objetivos básicos iniciado sem marcar T017 como DONE |
