@@ -1,30 +1,26 @@
 # Passagem de contexto
 
 ## Estado atual
-T001-T010 estão concluídas e aprovadas por revisão independente.
+T001-T011 estão concluídas e aprovadas por revisão independente.
 
-## Protótipo visual
-T007 mantém movimentação visual, colisão, câmera e pausa.
+## Protótipo visual atual
+T007 permite movimentação, colisão, câmera e pausa no Phaser.
 
-## Combate genérico atual
-T008:
-- cast, foco, cooldown, dodge, attackInstanceId.
+## Combate genérico disponível
+- T008: cast, foco, cooldown, dodge e attackInstanceId.
+- T009: dano, shield, cura e estados.
+- T010: projéteis, cones, zonas e HitRegistry.
+- T011: Ressonância com primer/detonator, raio 64, slow, rank scaling e cap global por vítima.
 
-T009:
-- dano, shield, cura e estados.
-
-T010:
-- projétil swept contra alvos/parede;
-- cone com linha de visão;
-- zonas com pulsos por tick;
-- HitRegistry por ataque/pulso;
-- cleanup de transient effects por owner/sala.
-
-## Evidência T010
-- CI geral: 35901294567 PASS.
-- revisão independente: 35901430269 PASS.
+## Evidência T011
+- CI geral do código: 35902193336 PASS.
+- revisão independente: 35902273423 PASS.
+- cap global confirmado até N+89 e liberado em N+90.
+- explosão não propaga nem consome marcas vizinhas.
+- DoT/resonance_explosion não detonam.
+- cue visual exige outline + icon.
 
 ## Próxima tarefa
-T011 - marcas e detonação de Ressonância.
+T012 - básico, passiva e Q do Jão.
 
-Após T011 DONE, T012 fica liberada para o básico/passiva/Q do Jão.
+T013 permanece bloqueada até T012 DONE.
