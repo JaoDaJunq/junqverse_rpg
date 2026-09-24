@@ -231,10 +231,19 @@ export function observeJaoEnemyAction(
       lastActionId: input.enemyActionId,
       lastObservedTick: input.currentTick
     }
-  ].sort((a, b) =>
-    a.enemyEntityId - b.enemyEntityId ||
-    a.familyId.localeCompare(b.familyId)
-  );
+  ].sort((a, b) => {
+    const entityOrder = a.enemyEntityId - b.enemyEntityId;
+    if (entityOrder !== 0) {
+      return entityOrder;
+    }
+    if (a.familyId < b.familyId) {
+      return -1;
+    }
+    if (a.familyId > b.familyId) {
+      return 1;
+    }
+    return 0;
+  });
 
   const repeatedWithinWindow =
     previous !== undefined &&
