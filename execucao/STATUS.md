@@ -22,3 +22,4 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 | T017 | TODO | Liberada por T003 + T015 + T016 DONE |
 | T018 | DONE | CI 36018449319 PASS; 139 testes + 4 Playwright; revisão independente aprovada; IDs derivados validados contra QuestProgressSchema |
 | T019 | DONE | CI 36019365915 PASS; 149 testes + 4 Playwright; revisão independente aprovada; sim permanece sem dependência de protocol |
+| T020 | IN_PROGRESS | Progresso idempotente de objetivos diretos iniciado |
