@@ -335,6 +335,7 @@ export function resolveJaoBasicAttack(
     readonly targets: readonly JaoCombatTarget[];
     readonly registry?: HitRegistry;
     readonly passive: JaoPassiveState;
+    readonly kit?: JaoKitState;
   }
 ): JaoBasicResult {
   assertTick(input.currentTick, 'currentTick');
@@ -385,7 +386,12 @@ export function resolveJaoBasicAttack(
     reason: 'accepted',
     state: {
       nextAllowedTick:
-        input.currentTick + JAO_BASIC_DEFINITION.cadenceTicks
+        input.currentTick +
+        (
+          input.kit
+            ? getJaoBasicCadenceTicks(input.kit, input.currentTick)
+            : JAO_BASIC_DEFINITION.cadenceTicks
+        )
     },
     registry: cone.registry,
     targets,
@@ -726,18 +732,7 @@ export function resolveJaoERelease(input: {
   const baseDamage = calculateJaoEBaseDamage(input.chargeTicks);
   const hitSet = new Set(cone.targetEntityIds);
 
-  let targets: readonly JaoCombatTarget[] = input.targets.map((target) =>
-    hitSet.has(target.entityId)
-      ? applyJaoDamage(
-          target,
-          baseDamage,
-          input.rank,
-          input.passive,
-          input.currentTick
-        ).target
-      : target
-  );
-
+  let targets: readonly JaoCombatTarget[] = input.targets;
   let resonance = input.resonance;
   const explodedTargetIds: number[] = [];
   const visualEvents: ResonanceVisualEvent[] = [];
@@ -770,6 +765,18 @@ export function resolveJaoERelease(input: {
       };
     });
   }
+
+  targets = targets.map((target) =>
+    hitSet.has(target.entityId)
+      ? applyJaoDamage(
+          target,
+          baseDamage,
+          input.rank,
+          input.passive,
+          input.currentTick
+        ).target
+      : target
+  );
 
   return {
     registry: cone.registry,
