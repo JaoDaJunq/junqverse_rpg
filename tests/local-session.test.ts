@@ -341,13 +341,36 @@ describe('T017 combat input bridge', () => {
     expect(snapshot.combat.activeAbilityId).toBe('jao_w');
   });
 
-  it('bridges dodge into the authoritative combat resource state', () => {
+  it('bridges dodge into resources and moves exactly 112 px', () => {
     const session = makeSession(new OneShotActionInput('dodge'));
 
-    const snapshot = session.advance(1000 / 60);
+    session.advance((1000 / 60) * 12);
+    const snapshot = session.getSnapshot();
 
     expect(snapshot.combat.resources.dodgeCharges).toBe(1);
-    expect(snapshot.combat.dodgeActive).toBe(true);
+    expect(snapshot.player.position.x).toBeCloseTo(212, 6);
+    expect(snapshot.player.position.y).toBeCloseTo(100, 6);
+  });
+
+  it('stops dodge movement at a wall', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'dodge_wall_test',
+        1,
+        { x: 60, y: 100 },
+        [{ x: 100, y: 0, width: 8, height: 200 }]
+      ),
+      new OneShotActionInput('dodge', { x: 200, y: 100 })
+    );
+
+    session.advance((1000 / 60) * 12);
+
+    expect(
+      session.getSnapshot().player.position.x
+    ).toBeLessThanOrEqual(88);
+    expect(
+      session.getSnapshot().combat.resources.dodgeCharges
+    ).toBe(1);
   });
 
   it('spawns a technical enemy with stable id and real health state', () => {

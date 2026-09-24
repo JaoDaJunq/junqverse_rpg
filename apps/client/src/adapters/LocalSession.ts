@@ -88,6 +88,13 @@ function combatCommandFromFrame(
         y: aimDelta.y / aimLength
       }
     : null;
+  const moveLength = Math.hypot(frame.moveX, frame.moveY);
+  const dodgeDirection = moveLength > AIM_EPSILON
+    ? {
+        x: frame.moveX / moveLength,
+        y: frame.moveY / moveLength
+      }
+    : aimDirection;
 
   return {
     qPressed: frame.pressed.includes('q'),
@@ -98,6 +105,7 @@ function combatCommandFromFrame(
     eReleased: frame.released.includes('e'),
     eDirection: aimDirection,
     dodgePressed: frame.pressed.includes('dodge'),
+    dodgeDirection,
     basicHeld: frame.basicHeld,
     basicDirection: aimDirection
   };
@@ -194,7 +202,10 @@ export class LocalSession implements GameSession {
         normalMovement
       );
 
-      if (combatStep.movement.kind === 'q_dash') {
+      if (
+        combatStep.movement.kind === 'q_dash' ||
+        combatStep.movement.kind === 'dodge_dash'
+      ) {
         const movement = combatStep.movement;
         const moved = applyPrototypePlayerDelta(
           this.state,

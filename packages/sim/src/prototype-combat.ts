@@ -55,6 +55,7 @@ export interface PrototypeCombatCommand {
   readonly eReleased: boolean;
   readonly eDirection: Vec2 | null;
   readonly dodgePressed: boolean;
+  readonly dodgeDirection: Vec2 | null;
   readonly basicHeld: boolean;
   readonly basicDirection: Vec2 | null;
 }
@@ -64,10 +65,16 @@ export interface PrototypeQDashState {
   readonly ticksRemaining: number;
 }
 
+export interface PrototypeDodgeDashState {
+  readonly direction: Vec2;
+  readonly ticksRemaining: number;
+}
+
 export interface PrototypeCombatState {
   readonly combatant: CombatantState;
   readonly ultimate: JaoUltimateState;
   readonly qDash: PrototypeQDashState | null;
+  readonly dodgeDash: PrototypeDodgeDashState | null;
   readonly basic: JaoBasicState;
   readonly passive: JaoPassiveState;
   readonly reveal: JaoRevealState;
@@ -84,6 +91,11 @@ export type PrototypeCombatMovement =
   | { readonly kind: 'locked' }
   | {
       readonly kind: 'q_dash';
+      readonly direction: Vec2;
+      readonly distancePx: number;
+    }
+  | {
+      readonly kind: 'dodge_dash';
       readonly direction: Vec2;
       readonly distancePx: number;
     };
@@ -168,6 +180,14 @@ function qDashMovement(direction: Vec2): PrototypeCombatMovement {
   };
 }
 
+function dodgeDashMovement(direction: Vec2): PrototypeCombatMovement {
+  return {
+    kind: 'dodge_dash',
+    direction,
+    distancePx: 112 / 12
+  };
+}
+
 function prototypeTargets(
   world: PrototypeWorldState
 ): readonly JaoCombatTarget[] {
@@ -229,6 +249,7 @@ export function createPrototypeCombatState(
     combatant: createCombatantState(playerEntityId),
     ultimate: createJaoUltimateState(ultimateCharge),
     qDash: null,
+    dodgeDash: null,
     basic: createJaoBasicState(),
     passive: createJaoPassiveState(),
     reveal: createJaoRevealState(),
@@ -259,17 +280,27 @@ export function stepPrototypeCombat(
   let eReleasePlan = state.eReleasePlan;
 
   if (eCharge !== null) {
-    if (command.dodgePressed) {
+    if (
+      command.dodgePressed &&
+      command.dodgeDirection !== null
+    ) {
       const dodge = tryStartDodge(combatant, { stunned: false });
       if (dodge.accepted) {
+        const direction = normalizeDirection(
+          command.dodgeDirection
+        );
         return {
           state: {
             ...state,
             combatant: dodge.state,
+            dodgeDash: {
+              direction,
+              ticksRemaining: 11
+            },
             eCharge: null,
             eReleasePlan: null
           },
-          movement: { kind: 'locked' },
+          movement: dodgeDashMovement(direction),
           basicDirection: null,
           wActivated,
           eReleasePlan: null
@@ -335,6 +366,29 @@ export function stepPrototypeCombat(
     };
   }
 
+  if (state.dodgeDash !== null) {
+    const remaining = state.dodgeDash.ticksRemaining - 1;
+
+    return {
+      state: {
+        ...state,
+        combatant,
+        dodgeDash: remaining > 0
+          ? {
+              ...state.dodgeDash,
+              ticksRemaining: remaining
+            }
+          : null
+      },
+      movement: dodgeDashMovement(
+        state.dodgeDash.direction
+      ),
+      basicDirection: null,
+      wActivated,
+      eReleasePlan: null
+    };
+  }
+
   if (state.qDash !== null) {
     const remaining = state.qDash.ticksRemaining - 1;
 
@@ -356,20 +410,42 @@ export function stepPrototypeCombat(
     };
   }
 
-  if (command.dodgePressed) {
+  if (
+    command.dodgePressed &&
+    command.dodgeDirection !== null
+  ) {
     const dodge = tryStartDodge(combatant, {
       stunned: false
     });
     combatant = dodge.state;
+
+    if (dodge.accepted) {
+      const direction = normalizeDirection(
+        command.dodgeDirection
+      );
+
+      return {
+        state: {
+          ...state,
+          combatant,
+          dodgeDash: {
+            direction,
+            ticksRemaining: 11
+          }
+        },
+        movement: dodgeDashMovement(direction),
+        basicDirection: null,
+        wActivated,
+        eReleasePlan: null
+      };
+    }
 
     return {
       state: {
         ...state,
         combatant
       },
-      movement: dodge.accepted
-        ? { kind: 'locked' }
-        : normalMovement(state, currentTick),
+      movement: normalMovement(state, currentTick),
       basicDirection: null,
       wActivated,
       eReleasePlan: null
