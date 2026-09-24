@@ -5,6 +5,7 @@ import {
   applyPrototypePlayerDelta,
   createPrototypeCombatSnapshot,
   createPrototypeCombatState,
+  defeatPrototypeCombat,
   createPrototypeSnapshot,
   isDodgeInvulnerable,
   resolvePrototypeBasicAttack,
@@ -269,6 +270,14 @@ export class LocalSession implements GameSession {
           ai.events,
           isDodgeInvulnerable(this.combat.combatant)
         );
+      }
+
+      if (!this.state.player.health.alive) {
+        this.combat = defeatPrototypeCombat(this.combat);
+        this.paused = true;
+        this.accumulatorMs = 0;
+        this.input.clear();
+        break;
       }
 
       this.accumulatorMs = Math.max(0, this.accumulatorMs - TICK_MS);

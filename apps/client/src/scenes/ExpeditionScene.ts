@@ -173,6 +173,14 @@ export class ExpeditionScene extends Phaser.Scene {
     this.view.render(snapshot);
     this.view.setUltimateActive(snapshot.combat.ultimateActive);
     this.hud?.render(this.createHudSnapshot(snapshot));
+
+    if (
+      !snapshot.player.alive &&
+      !this.defeatPanel?.isVisible()
+    ) {
+      this.pauseLabel?.setVisible(false);
+      this.defeatPanel?.show();
+    }
   }
 
   private createHudSnapshot(snapshot: LocalSessionSnapshot) {

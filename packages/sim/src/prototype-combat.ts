@@ -7,6 +7,7 @@ import {
 } from '@junqverse/content';
 import {
   createCombatantState,
+  killCombatant,
   stepCombatant,
   tryAcceptAbility,
   tryStartDodge,
@@ -22,6 +23,7 @@ import {
   type JaoPassiveState
 } from './heroes/jao.js';
 import {
+  clearJaoTransientBuffsOnDeath,
   createJaoECharge,
   createJaoRevealState,
   createJaoUltimateState,
@@ -773,6 +775,27 @@ export function resolvePrototypeE(
       eReleasePlan: null
     },
     world: updateWorldTargets(world, result.targets)
+  };
+}
+
+
+export function defeatPrototypeCombat(
+  state: PrototypeCombatState
+): PrototypeCombatState {
+  const cleared = clearJaoTransientBuffsOnDeath({
+    ultimate: state.ultimate,
+    eCharge: state.eCharge
+  });
+
+  return {
+    ...state,
+    combatant: killCombatant(state.combatant),
+    ultimate: cleared.ultimate,
+    qDash: null,
+    dodgeDash: null,
+    eCharge: null,
+    eReleasePlan: null,
+    resonance: createResonanceState()
   };
 }
 

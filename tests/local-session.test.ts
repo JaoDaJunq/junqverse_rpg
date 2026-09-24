@@ -749,4 +749,55 @@ describe('T017 combat input bridge', () => {
     expect(hit.player.health.health).toBe(308);
   });
 
+
+  it('pauses on real defeat and restarts the checkpoint without duplicated state', () => {
+    const enemySpawns = Array.from(
+      { length: 27 },
+      () => ({
+        archetype: 'eco_rasteiro' as const,
+        position: { x: 140, y: 100 }
+      })
+    );
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'real_defeat_restart_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        { enemySpawns }
+      ),
+      new ConstantInput(0, 0),
+      { enemyAttacksEnabled: true }
+    );
+
+    session.advance((1000 / 60) * 45);
+    const defeated = session.getSnapshot();
+
+    expect(defeated.player.health).toBe(0);
+    expect(defeated.player.alive).toBe(false);
+    expect(session.isPaused()).toBe(true);
+    expect(defeated.combat.activeAbilityId).toBeNull();
+    expect(defeated.combat.ultimateActive).toBe(false);
+
+    const defeatedTick = defeated.tick;
+    session.advance(1000);
+    expect(session.getSnapshot().tick).toBe(defeatedTick);
+
+    const restarted = session.restart();
+
+    expect(restarted.tick).toBe(0);
+    expect(restarted.player.health).toBe(320);
+    expect(restarted.player.alive).toBe(true);
+    expect(restarted.combat.resources.focus).toBe(100);
+    expect(restarted.combat.resources.dodgeCharges).toBe(2);
+    expect(restarted.combat.resources.cooldowns).toEqual({});
+    expect(restarted.enemies).toHaveLength(27);
+    expect(
+      restarted.enemies.every(
+        (enemy) => enemy.health === 70 && enemy.alive
+      )
+    ).toBe(true);
+    expect(session.isPaused()).toBe(false);
+  });
+
 });
