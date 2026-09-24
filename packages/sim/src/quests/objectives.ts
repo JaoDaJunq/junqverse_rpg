@@ -23,6 +23,16 @@ export type BasicQuestObjectiveDefinition =
       readonly encounterId: string;
     }
   | {
+      readonly type: 'survive';
+      readonly durationTicks: number;
+      readonly encounterId: string;
+    }
+  | {
+      readonly type: 'sequence';
+      readonly targetIdsOrdered: readonly string[];
+      readonly resetOnError: boolean;
+    }
+  | {
       readonly type: 'all' | 'any';
       readonly children: readonly BasicQuestObjectiveDefinition[];
     };
@@ -30,6 +40,7 @@ export type BasicQuestObjectiveDefinition =
 export interface BasicObjectiveNodeState {
   readonly completed: boolean;
   readonly matchedIds: readonly string[];
+  readonly elapsedTicks: number;
   readonly children: readonly BasicObjectiveNodeState[];
 }
 
@@ -170,6 +181,40 @@ function compileNode(
     };
   }
 
+  if (type === 'survive') {
+    const durationTicks = assertNonNegativeInteger(
+      objective.durationTicks,
+      'durationTicks'
+    );
+    if (durationTicks <= 0) {
+      throw new RangeError('durationTicks must be positive');
+    }
+
+    return {
+      type,
+      durationTicks,
+      encounterId: assertStableId(
+        objective.encounterId,
+        'encounterId'
+      )
+    };
+  }
+
+  if (type === 'sequence') {
+    if (typeof objective.resetOnError !== 'boolean') {
+      throw new TypeError('resetOnError must be a boolean');
+    }
+
+    return {
+      type,
+      targetIdsOrdered: uniqueIds(
+        objective.targetIdsOrdered,
+        'targetIdsOrdered'
+      ),
+      resetOnError: objective.resetOnError
+    };
+  }
+
   if (type === 'all' || type === 'any') {
     if (compositionDepth >= 2) {
       throw new Error(
@@ -194,7 +239,7 @@ function compileNode(
   }
 
   throw new Error(
-    `objective type ${String(type)} is not supported by T018`
+    `objective type ${String(type)} is not supported by current quest engine`
   );
 }
 
@@ -211,6 +256,7 @@ function createNodeState(
     return {
       completed: false,
       matchedIds: [],
+      elapsedTicks: 0,
       children: definition.children.map(createNodeState)
     };
   }
@@ -218,6 +264,7 @@ function createNodeState(
   return {
     completed: false,
     matchedIds: [],
+    elapsedTicks: 0,
     children: []
   };
 }
@@ -343,6 +390,51 @@ function applyNodeEvent(
     };
   }
 
+  if (definition.type === 'survive') {
+    return state;
+  }
+
+  if (definition.type === 'sequence') {
+    if (event.type !== 'interaction_completed') {
+      return state;
+    }
+
+    const targetId = payloadString(event, 'targetId');
+    if (
+      targetId === null ||
+      !definition.targetIdsOrdered.includes(targetId)
+    ) {
+      return state;
+    }
+
+    const expected =
+      definition.targetIdsOrdered[state.matchedIds.length];
+
+    if (targetId !== expected) {
+      if (
+        !definition.resetOnError ||
+        state.matchedIds.length === 0
+      ) {
+        return state;
+      }
+
+      return {
+        ...state,
+        matchedIds: [],
+        completed: false
+      };
+    }
+
+    const matchedIds = [...state.matchedIds, targetId];
+    return {
+      ...state,
+      matchedIds,
+      completed:
+        matchedIds.length ===
+        definition.targetIdsOrdered.length
+    };
+  }
+
   const children = definition.children.map(
     (child, index) =>
       applyNodeEvent(
@@ -394,6 +486,90 @@ export function applyBasicObjectiveEvent(
     ],
     node: applyNodeEvent(definition, state.node, event)
   };
+}
+
+
+function stepNodeTime(
+  definition: BasicQuestObjectiveDefinition,
+  state: BasicObjectiveNodeState,
+  ticks: number
+): BasicObjectiveNodeState {
+  if (state.completed || ticks === 0) {
+    return state;
+  }
+
+  if (definition.type === 'survive') {
+    const elapsedTicks = Math.min(
+      definition.durationTicks,
+      state.elapsedTicks + ticks
+    );
+
+    return {
+      ...state,
+      elapsedTicks,
+      completed: elapsedTicks >= definition.durationTicks
+    };
+  }
+
+  if (
+    definition.type !== 'all' &&
+    definition.type !== 'any'
+  ) {
+    return state;
+  }
+
+  const children = definition.children.map(
+    (child, index) =>
+      stepNodeTime(
+        child,
+        state.children[index] ?? createNodeState(child),
+        ticks
+      )
+  );
+  const completed = definition.type === 'all'
+    ? children.every((child) => child.completed)
+    : children.some((child) => child.completed);
+
+  if (
+    completed === state.completed &&
+    children.every(
+      (child, index) => child === state.children[index]
+    )
+  ) {
+    return state;
+  }
+
+  return {
+    ...state,
+    completed,
+    children
+  };
+}
+
+export function stepBasicObjectiveTime(
+  definition: BasicQuestObjectiveDefinition,
+  state: BasicObjectiveState,
+  ticks = 1,
+  paused = false
+): BasicObjectiveState {
+  const safeTicks = assertNonNegativeInteger(ticks, 'ticks');
+
+  if (paused || state.node.completed || safeTicks === 0) {
+    return state;
+  }
+
+  const node = stepNodeTime(
+    definition,
+    state.node,
+    safeTicks
+  );
+
+  return node === state.node
+    ? state
+    : {
+        ...state,
+        node
+      };
 }
 
 export function isBasicObjectiveComplete(

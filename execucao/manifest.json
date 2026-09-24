@@ -223,6 +223,17 @@
         "docs/09_QUEST_ENGINE.md",
         "docs/08_CONTRATOS_DE_DADOS.md"
       ]
+    },
+    {
+      "id": "T019",
+      "phase": "P1",
+      "title": "Sobrevivência sequência e escolha",
+      "deps": [
+        "T018"
+      ],
+      "refs": [
+        "docs/09_QUEST_ENGINE.md"
+      ]
     }
   ]
 }

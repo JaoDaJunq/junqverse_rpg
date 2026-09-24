@@ -21,3 +21,4 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 | T016 | DONE | CI 35955830871 PASS; 133 testes + 4 Playwright; revisão independente aprovada |
 | T017 | REVIEW | CI 36002062824 PASS; 157 testes + 4 Playwright; revisão técnica corrigiu mira zero e timing do básico; pendente rodada manual humana documentada |
 | T018 | REVIEW | CI 36008599138 PASS; 19 arquivos/172 testes + 4 Playwright; revisão técnica aprovada; aguardando T017 DONE para fechamento pelo grafo |
+| T019 | IN_PROGRESS | Branch empilhada sobre T018 REVIEW por autorização explícita do MVP; survive/sequence/choose iniciados sem marcar upstream como DONE |
