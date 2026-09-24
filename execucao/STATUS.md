@@ -18,5 +18,5 @@ Use TODO, IN_PROGRESS, BLOCKED, REVIEW ou DONE. Evidência é obrigatória para 
 | T013 | DONE | Revisão independente aprovada |
 | T014 | DONE | Revisão independente aprovada |
 | T015 | DONE | CI 35955159394 PASS; revisão independente 35955252488 PASS |
-| T016 | TODO | Liberada por T007 + T008 + T013 DONE |
-| T017 | TODO | Depende de T003 + T015 + T016 |
+| T016 | DONE | CI 35955830871 PASS; 133 testes + 4 Playwright; revisão independente aprovada |
+| T017 | TODO | Liberada por T003 + T015 + T016 DONE |

@@ -1,8 +1,17 @@
 import Phaser from 'phaser';
-import { createPrototypeWorld, type Aabb } from '@junqverse/sim';
+import {
+  createCombatResources,
+  createHealthState,
+  createJaoUltimateState,
+  createPrototypeWorld,
+  type Aabb
+} from '@junqverse/sim';
+import { JAO_BASE_STATS } from '@junqverse/content';
 import { LocalSession } from '../adapters/LocalSession.js';
 import { InputMapper } from '../input/InputMapper.js';
 import { WorldView } from '../presentation/WorldView.js';
+import { Hud } from '../presentation/Hud.js';
+import { createJaoHudSnapshot } from '../presentation/hud-model.js';
 import { DefeatPanel } from '../ui/DefeatPanel.js';
 
 const WORLD_WIDTH = 1200;
@@ -18,6 +27,10 @@ const TEST_BLOCKERS: readonly Aabb[] = [
   { x: 320, y: 520, width: 320, height: 32 }
 ];
 
+const HUD_HEALTH = createHealthState(JAO_BASE_STATS.maxHealth);
+const HUD_RESOURCES = createCombatResources();
+const HUD_ULTIMATE = createJaoUltimateState();
+
 function technicalDefeatEnabled(): boolean {
   return (
     import.meta.env.DEV ||
@@ -29,6 +42,7 @@ export class ExpeditionScene extends Phaser.Scene {
   private mapper: InputMapper | null = null;
   private session: LocalSession | null = null;
   private view: WorldView | null = null;
+  private hud: Hud | null = null;
   private detachInput: (() => void) | null = null;
   private pauseLabel: Phaser.GameObjects.Text | null = null;
   private defeatPanel: DefeatPanel | null = null;
@@ -74,7 +88,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.add.text(
       16,
       16,
-      `JUNQVERSE • Sala técnica T015\nWASD mover • Esc pausar${debugHint}`,
+      `JUNQVERSE • Sala técnica T016\nWASD mover • Esc pausar${debugHint}`,
       {
         color: '#f9fafb',
         fontFamily: 'system-ui, sans-serif',
@@ -83,6 +97,13 @@ export class ExpeditionScene extends Phaser.Scene {
         padding: { x: 10, y: 8 }
       }
     ).setScrollFactor(0).setDepth(1000);
+
+    this.hud = new Hud(
+      this,
+      this.scale.gameSize.width,
+      this.scale.gameSize.height,
+      this.createHudSnapshot()
+    );
 
     this.pauseLabel = this.add.text(
       480,
@@ -99,7 +120,7 @@ export class ExpeditionScene extends Phaser.Scene {
     )
       .setOrigin(0.5)
       .setScrollFactor(0)
-      .setDepth(1001)
+      .setDepth(1200)
       .setVisible(false);
 
     const app = document.getElementById('app');
@@ -143,6 +164,20 @@ export class ExpeditionScene extends Phaser.Scene {
 
     const snapshot = this.session.advance(delta);
     this.view.render(snapshot);
+    this.hud?.render(this.createHudSnapshot());
+  }
+
+  private createHudSnapshot() {
+    if (!this.mapper) {
+      throw new Error('input mapper is required for HUD snapshot');
+    }
+
+    return createJaoHudSnapshot({
+      health: HUD_HEALTH,
+      resources: HUD_RESOURCES,
+      ultimate: HUD_ULTIMATE,
+      bindings: this.mapper.getBindings()
+    });
   }
 
   private readonly onWindowBlur = (): void => {
@@ -179,6 +214,7 @@ export class ExpeditionScene extends Phaser.Scene {
 
     const snapshot = this.session.restart();
     this.view.render(snapshot);
+    this.hud?.render(this.createHudSnapshot());
     this.cameras.main.centerOn(
       snapshot.player.position.x,
       snapshot.player.position.y
@@ -208,6 +244,8 @@ export class ExpeditionScene extends Phaser.Scene {
     this.mapper = null;
     this.view?.destroy();
     this.view = null;
+    this.hud?.destroy();
+    this.hud = null;
     this.pauseLabel = null;
     this.defeatPanel?.destroy();
     this.defeatPanel = null;
