@@ -4,6 +4,10 @@ import {
   type Vec2
 } from '@junqverse/content';
 import { createHealthState, type HealthState } from './damage.js';
+import {
+  hasResonanceMark,
+  type ResonanceState
+} from './resonance.js';
 import { allocateEntityId, createWorld, stepWorld, type WorldState } from './world.js';
 import { isCirclePositionFree, type Aabb } from './geometry.js';
 import {
@@ -70,6 +74,7 @@ export interface PrototypeSnapshot {
     readonly maxHealth: number;
     readonly alive: boolean;
     readonly vulnerable: boolean;
+    readonly resonanceMarked: boolean;
     readonly aiPhase: EnemyAiPhase;
   }[];
   readonly blockers: readonly Aabb[];
@@ -274,7 +279,8 @@ export function applyPrototypePlayerDelta(
 
 export function createPrototypeSnapshot(
   state: PrototypeWorldState,
-  interpolationAlpha: number
+  interpolationAlpha: number,
+  resonance?: ResonanceState
 ): PrototypeSnapshot {
   if (!Number.isFinite(interpolationAlpha)) {
     throw new RangeError('interpolation alpha must be finite');
@@ -312,6 +318,13 @@ export function createPrototypeSnapshot(
       vulnerable: enemy.status.effects.some(
         (effect) => effect.kind === 'vulnerable'
       ),
+      resonanceMarked:
+        resonance !== undefined &&
+        hasResonanceMark(
+          resonance,
+          enemy.entityId,
+          state.tick
+        ),
       aiPhase: enemy.ai.phase
     })),
     blockers: state.blockers

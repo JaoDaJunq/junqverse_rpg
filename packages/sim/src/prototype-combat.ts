@@ -16,6 +16,7 @@ import {
   createJaoBasicState,
   createJaoPassiveState,
   resolveJaoBasicAttack,
+  resolveJaoQDash,
   type JaoBasicState,
   type JaoCombatTarget,
   type JaoPassiveState
@@ -112,6 +113,12 @@ export interface PrototypeBasicAttackResult {
   readonly state: PrototypeCombatState;
   readonly world: PrototypeWorldState;
   readonly accepted: boolean;
+  readonly hitTargetIds: readonly number[];
+}
+
+export interface PrototypeQResult {
+  readonly state: PrototypeCombatState;
+  readonly world: PrototypeWorldState;
   readonly hitTargetIds: readonly number[];
 }
 
@@ -684,6 +691,36 @@ export function resolvePrototypeBasicAttack(
     state: {
       ...state,
       basic: result.state
+    },
+    world: updateWorldTargets(world, result.targets)
+  };
+}
+
+
+export function resolvePrototypeQ(
+  state: PrototypeCombatState,
+  world: PrototypeWorldState,
+  attackInstanceId: string,
+  direction: Vec2
+): PrototypeQResult {
+  const result = resolveJaoQDash({
+    ownerEntityId: world.player.entityId,
+    attackInstanceId,
+    start: world.player.position,
+    direction: normalizeDirection(direction),
+    currentTick: world.tick,
+    rank: 1,
+    blockers: world.blockers,
+    targets: prototypeTargets(world),
+    resonance: state.resonance,
+    passive: state.passive
+  });
+
+  return {
+    hitTargetIds: result.hitTargetIds,
+    state: {
+      ...state,
+      resonance: result.resonance
     },
     world: updateWorldTargets(world, result.targets)
   };

@@ -400,6 +400,7 @@ describe('T017 combat input bridge', () => {
       maxHealth: 70,
       alive: true,
       vulnerable: false,
+      resonanceMarked: false,
       aiPhase: 'idle'
     }]);
 
@@ -630,6 +631,55 @@ describe('T017 combat input bridge', () => {
     expect(enemy?.position.x).toBeGreaterThan(100);
     expect(enemy?.aiPhase).toBe('approach');
     expect(enemy?.health).toBe(70);
+  });
+
+
+  it('makes Q damage crossed targets and apply Resonance', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'q_damage_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        {
+          enemySpawns: [{
+            archetype: 'eco_rasteiro',
+            position: { x: 180, y: 100 }
+          }]
+        }
+      ),
+      new OneShotActionInput('q', { x: 300, y: 100 })
+    );
+
+    session.advance(1000 / 60);
+    const enemy = session.getSnapshot().enemies[0];
+
+    expect(enemy?.health).toBe(38);
+    expect(enemy?.resonanceMarked).toBe(true);
+  });
+
+  it('does not let Q damage or mark a target behind a wall', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'q_blocked_damage_test',
+        1,
+        { x: 60, y: 100 },
+        [{ x: 100, y: 0, width: 8, height: 200 }],
+        {
+          enemySpawns: [{
+            archetype: 'eco_rasteiro',
+            position: { x: 140, y: 100 }
+          }]
+        }
+      ),
+      new OneShotActionInput('q', { x: 220, y: 100 })
+    );
+
+    session.advance(1000 / 60);
+    const enemy = session.getSnapshot().enemies[0];
+
+    expect(enemy?.health).toBe(70);
+    expect(enemy?.resonanceMarked).toBe(false);
   });
 
 });

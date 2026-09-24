@@ -15,10 +15,13 @@ function enemyHealthText(
   enemy: PrototypeSnapshot['enemies'][number]
 ): string {
   const vulnerable = enemy.vulnerable ? ' • VULN' : '';
+  const resonance = enemy.resonanceMarked
+    ? ' • RESSONÂNCIA'
+    : '';
   const ai = enemy.aiPhase === 'idle'
     ? ''
     : ` • ${enemy.aiPhase.toUpperCase()}`;
-  return `${enemy.health}/${enemy.maxHealth}${vulnerable}${ai}`;
+  return `${enemy.health}/${enemy.maxHealth}${vulnerable}${resonance}${ai}`;
 }
 
 export class WorldView {
@@ -74,8 +77,12 @@ export class WorldView {
         1
       );
       body.setStrokeStyle(
-        enemy.vulnerable ? 4 : 2,
-        enemy.vulnerable ? 0xfacc15 : 0xfef2f2,
+        enemy.vulnerable || enemy.resonanceMarked ? 4 : 2,
+        enemy.vulnerable
+          ? 0xfacc15
+          : enemy.resonanceMarked
+            ? 0x60a5fa
+            : 0xfef2f2,
         1
       );
 
@@ -122,8 +129,12 @@ export class WorldView {
       visual.body
         .setPosition(enemy.position.x, enemy.position.y)
         .setStrokeStyle(
-          enemy.vulnerable ? 4 : 2,
-          enemy.vulnerable ? 0xfacc15 : 0xfef2f2,
+          enemy.vulnerable || enemy.resonanceMarked ? 4 : 2,
+          enemy.vulnerable
+            ? 0xfacc15
+            : enemy.resonanceMarked
+              ? 0x60a5fa
+              : 0xfef2f2,
           1
         )
         .setVisible(enemy.alive);

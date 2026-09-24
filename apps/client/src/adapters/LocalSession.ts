@@ -7,6 +7,7 @@ import {
   createPrototypeSnapshot,
   resolvePrototypeBasicAttack,
   resolvePrototypeE,
+  resolvePrototypeQ,
   resolvePrototypeW,
   stepPrototypeCombat,
   stepPrototypeEnemyAi,
@@ -172,6 +173,25 @@ export class LocalSession implements GameSession {
           }
         : { x: 0, y: 0 };
 
+      if (
+        frame.pressed.includes('q') &&
+        combatStep.movement.kind === 'q_dash'
+      ) {
+        const attackInstanceId =
+          this.combat.combatant.activeCast?.attackInstanceId;
+
+        if (attackInstanceId !== undefined) {
+          const q = resolvePrototypeQ(
+            this.combat,
+            this.state,
+            attackInstanceId,
+            combatStep.movement.direction
+          );
+          this.combat = q.state;
+          this.state = q.world;
+        }
+      }
+
       if (combatStep.wActivated) {
         const w = resolvePrototypeW(
           this.combat,
@@ -243,7 +263,8 @@ export class LocalSession implements GameSession {
     return {
       ...createPrototypeSnapshot(
         this.state,
-        this.accumulatorMs / TICK_MS
+        this.accumulatorMs / TICK_MS,
+        this.combat.resonance
       ),
       combat: createPrototypeCombatSnapshot(
         this.combat,
