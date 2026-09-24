@@ -62,6 +62,7 @@ export class WorldView {
   private readonly floor: Phaser.GameObjects.TileSprite;
   private readonly blockerTiles: Phaser.GameObjects.TileSprite[] = [];
   private readonly blockerOutline: Phaser.GameObjects.Graphics;
+  private readonly decorations: Phaser.GameObjects.GameObject[] = [];
   private readonly enemies = new Map<number, EnemyVisual>();
   private lastPlayerPosition: { x: number; y: number };
   private facing: Facing = 'down';
@@ -80,7 +81,7 @@ export class WorldView {
       bounds.height,
       'pixel-floor',
       0
-    ).setOrigin(0).setDepth(-20);
+    ).setOrigin(0).setDepth(-20).setTileScale(2, 2);
 
     this.blockerOutline = scene.add.graphics().setDepth(-5);
     this.blockerOutline.lineStyle(1, 0x94a3b8, 0.5);
@@ -96,6 +97,7 @@ export class WorldView {
       )
         .setOrigin(0)
         .setDepth(-10)
+        .setTileScale(2, 2)
         .setTint(0x94a3b8);
 
       this.blockerTiles.push(tile);
@@ -106,6 +108,46 @@ export class WorldView {
         blocker.height
       );
     }
+
+    const addDecoration = (
+      x: number,
+      y: number,
+      texture: string,
+      frame: number,
+      scale = 2,
+      depth = -2,
+      tint?: number
+    ): void => {
+      const shadow = scene.add.ellipse(
+        x,
+        y + 8,
+        22,
+        8,
+        0x020617,
+        0.28
+      ).setDepth(depth - 1);
+      const sprite = scene.add.sprite(x, y, texture, frame)
+        .setScale(scale)
+        .setDepth(depth);
+      if (tint !== undefined) {
+        sprite.setTint(tint);
+      }
+      this.decorations.push(shadow, sprite);
+    };
+
+    addDecoration(112, 96, 'pixel-rocks', 3, 2.2);
+    addDecoration(1090, 110, 'pixel-rocks', 7, 2.1);
+    addDecoration(1080, 650, 'pixel-rocks', 5, 1.8);
+    addDecoration(96, 640, 'pixel-rocks', 9, 1.7);
+
+    addDecoration(520, 88, 'pixel-dungeon-props', 8, 2);
+    addDecoration(688, 88, 'pixel-dungeon-props', 9, 2);
+    addDecoration(1040, 312, 'pixel-dungeon-props', 79, 2);
+    addDecoration(248, 472, 'pixel-dungeon-props', 80, 2);
+
+    addDecoration(904, 160, 'pixel-esoteric', 26, 1.9, -2, 0x93c5fd);
+    addDecoration(232, 176, 'pixel-esoteric', 27, 1.9, -2, 0xc4b5fd);
+    addDecoration(672, 600, 'pixel-esoteric', 54, 1.9, -2, 0xfacc15);
 
     this.player = scene.add.sprite(
       initial.player.position.x,
@@ -229,6 +271,8 @@ export class WorldView {
     }
     this.enemies.clear();
     this.player.destroy();
+    this.decorations.forEach((item) => item.destroy());
+    this.decorations.length = 0;
     this.blockerTiles.forEach((tile) => tile.destroy());
     this.blockerTiles.length = 0;
     this.blockerOutline.destroy();

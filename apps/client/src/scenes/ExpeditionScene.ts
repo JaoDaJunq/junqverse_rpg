@@ -62,6 +62,21 @@ export class ExpeditionScene extends Phaser.Scene {
       'assets/pixel-crawler/Wall_Tiles.png',
       { frameWidth: 16, frameHeight: 16 }
     );
+    this.load.spritesheet(
+      'pixel-dungeon-props',
+      'assets/pixel-crawler/Dungeon_Props.png',
+      { frameWidth: 16, frameHeight: 16 }
+    );
+    this.load.spritesheet(
+      'pixel-esoteric',
+      'assets/pixel-crawler/Esoteric.png',
+      { frameWidth: 16, frameHeight: 16 }
+    );
+    this.load.spritesheet(
+      'pixel-rocks',
+      'assets/pixel-crawler/Rocks.png',
+      { frameWidth: 16, frameHeight: 16 }
+    );
 
     this.load.spritesheet(
       'jao-idle-down-sheet',
@@ -139,12 +154,13 @@ export class ExpeditionScene extends Phaser.Scene {
     this.mapper = mapper;
     this.session = session;
     this.view = view;
-    this.fx = new CombatFxView(this, initial);
+    this.fx = new CombatFxView(this, initial, view.player);
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     camera.startFollow(view.player, true, 0.12, 0.12);
     camera.setDeadzone(120, 80);
+    camera.roundPixels = true;
 
     const debugHint = this.defeatTestEnabled
       ? '\nK testar derrota'
@@ -295,7 +311,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.view.render(snapshot);
     this.view.setUltimateActive(snapshot.combat.ultimateActive);
     this.fx?.destroy();
-    this.fx = new CombatFxView(this, snapshot);
+    this.fx = new CombatFxView(this, snapshot, this.view.player);
     this.fx.render(snapshot);
     this.hud?.render(this.createHudSnapshot(snapshot));
     this.cameras.main.centerOn(

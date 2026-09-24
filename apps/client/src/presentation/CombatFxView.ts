@@ -55,15 +55,22 @@ export class CombatFxView {
     | 'active'
     | 'recovery'
     | null = null;
+  private readonly playerSprite: Phaser.GameObjects.Sprite;
+  private lastAfterimageTick = -1;
+  private lastUltimatePulseTick = -1;
+  private previousPlayerPosition: Vec2;
 
   public constructor(
     scene: Phaser.Scene,
-    initial: LocalSessionSnapshot
+    initial: LocalSessionSnapshot,
+    playerSprite: Phaser.GameObjects.Sprite
   ) {
     this.scene = scene;
+    this.playerSprite = playerSprite;
     this.telegraphs = scene.add.graphics().setDepth(10);
 
     this.previousPlayerHealth = initial.player.health;
+    this.previousPlayerPosition = { ...initial.player.position };
 
     for (const enemy of initial.enemies) {
       this.previousHealth.set(enemy.entityId, enemy.health);
@@ -79,6 +86,7 @@ export class CombatFxView {
 
     this.drawPlayerAreas(snapshot);
     this.drawEnemyTelegraphs(snapshot);
+    this.spawnUltimatePresentation(snapshot);
     this.spawnTransitions(snapshot);
     this.spawnDamageImpacts(snapshot);
 
@@ -87,6 +95,7 @@ export class CombatFxView {
     this.previousUltimate = snapshot.combat.ultimateActive;
     this.previousAbility = snapshot.combat.activeAbilityId;
     this.previousAbilityPhase = snapshot.combat.activeAbilityPhase;
+    this.previousPlayerPosition = { ...snapshot.player.position };
   }
 
   public destroy(): void {
@@ -155,10 +164,10 @@ export class CombatFxView {
     }
 
     if (snapshot.combat.ultimateActive) {
-      this.telegraphs.fillStyle(0x60a5fa, 0.06);
-      this.telegraphs.fillCircle(origin.x, origin.y, 92);
-      this.telegraphs.lineStyle(2, 0x93c5fd, 0.55);
-      this.telegraphs.strokeCircle(origin.x, origin.y, 92);
+      this.telegraphs.lineStyle(2, 0x93c5fd, 0.65);
+      this.telegraphs.strokeCircle(origin.x, origin.y, 24);
+      this.telegraphs.lineStyle(1, 0x60a5fa, 0.42);
+      this.telegraphs.strokeCircle(origin.x, origin.y, 34);
     }
   }
 
@@ -212,6 +221,61 @@ export class CombatFxView {
     this.telegraphs.fillPoints(points, true);
     this.telegraphs.lineStyle(2, color, 0.8);
     this.telegraphs.strokePoints(points, true);
+  }
+
+  private spawnUltimatePresentation(
+    snapshot: LocalSessionSnapshot
+  ): void {
+    if (!snapshot.combat.ultimateActive) {
+      return;
+    }
+
+    const moved =
+      Math.hypot(
+        snapshot.player.position.x - this.previousPlayerPosition.x,
+        snapshot.player.position.y - this.previousPlayerPosition.y
+      ) > 0.5;
+
+    if (
+      moved &&
+      snapshot.tick !== this.lastAfterimageTick &&
+      snapshot.tick % 3 === 0
+    ) {
+      this.lastAfterimageTick = snapshot.tick;
+      const ghost = this.scene.add.sprite(
+        this.previousPlayerPosition.x,
+        this.previousPlayerPosition.y,
+        this.playerSprite.texture.key,
+        this.playerSprite.frame.name
+      )
+        .setScale(this.playerSprite.scaleX, this.playerSprite.scaleY)
+        .setFlipX(this.playerSprite.flipX)
+        .setDepth(19)
+        .setTint(0x60a5fa)
+        .setAlpha(0.28);
+
+      this.scene.tweens.add({
+        targets: ghost,
+        alpha: 0,
+        duration: 140,
+        onComplete: () => ghost.destroy()
+      });
+    }
+
+    if (
+      snapshot.tick !== this.lastUltimatePulseTick &&
+      snapshot.tick % 12 === 0
+    ) {
+      this.lastUltimatePulseTick = snapshot.tick;
+      this.spawnBurst(
+        'vfx-spark',
+        snapshot.player.position.x,
+        snapshot.player.position.y,
+        0x93c5fd,
+        0.045,
+        150
+      );
+    }
   }
 
   private spawnTransitions(snapshot: LocalSessionSnapshot): void {
