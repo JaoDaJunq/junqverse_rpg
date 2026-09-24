@@ -45,6 +45,14 @@ export interface LabPanelOptions {
   readonly onPreview: (slot: LabSlotId, effectId: LabEffectId) => void;
 }
 
+function slotLabel(slot: LabSlotId): string {
+  if (slot === 'basic') return 'BÁSICO';
+  if (slot === 'q') return '1';
+  if (slot === 'w') return '2';
+  if (slot === 'e') return '3';
+  return 'R';
+}
+
 function button(text: string, className: string): HTMLButtonElement {
   const element = document.createElement('button');
   element.type = 'button';
@@ -135,7 +143,7 @@ export class LabPanel {
 
     for (const skill of LAB_SKILLS) {
       const slotButton = button(
-        skill.slot === 'basic' ? 'BÁSICO' : skill.slot.toUpperCase(),
+        slotLabel(skill.slot),
         'prototype-slot-button'
       );
       slotButton.title = `${skill.label} • ${skill.mechanic}`;
@@ -160,7 +168,7 @@ export class LabPanel {
       item.type = 'button';
       item.className = 'prototype-effect-item';
       item.innerHTML =
-        `<strong>${skill.slot === 'basic' ? 'BÁSICO' : skill.slot.toUpperCase()} • ${skill.label}</strong><span>${skill.mechanic}</span>`;
+        `<strong>${slotLabel(skill.slot)} • ${skill.label}</strong><span>${skill.mechanic}</span>`;
       item.addEventListener('click', () => {
         this.selectedSlot = skill.slot;
         this.render();
@@ -213,7 +221,7 @@ export class LabPanel {
       );
       const row = document.createElement('div');
       row.innerHTML =
-        `<span>${skill.slot === 'basic' ? 'BÁSICO' : skill.slot.toUpperCase()}</span><strong>${effect?.label ?? this.loadout.effects[skill.slot]}</strong>`;
+        `<span>${slotLabel(skill.slot)}</span><strong>${effect?.label ?? this.loadout.effects[skill.slot]}</strong>`;
       assignments.appendChild(row);
     }
 
