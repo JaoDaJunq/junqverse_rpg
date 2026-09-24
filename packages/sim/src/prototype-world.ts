@@ -295,7 +295,7 @@ export function applyPrototypeEnemyAttacks(
       Math.hypot(
         state.player.position.x - enemy.position.x,
         state.player.position.y - enemy.position.y
-      ) > definition.attackRangePx
+      ) > P0_ENEMY_DEFINITIONS.eco_rasteiro.attackRangePx
     ) {
       continue;
     }
