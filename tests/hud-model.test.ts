@@ -23,8 +23,14 @@ describe('T016 HUD model', () => {
     const remapped = rebindInput(DEFAULT_BINDINGS, 'q', 'KeyQ');
     const slots = createHudSlots(remapped, {});
 
-    expect(slots.find((slot) => slot.id === 'q')?.key).toBe('Q');
-    expect(slots.find((slot) => slot.id === 'w')?.key).toBe('2');
+    expect(slots.find((slot) => slot.id === 'q')).toMatchObject({
+      key: 'Q',
+      label: 'Passo'
+    });
+    expect(slots.find((slot) => slot.id === 'w')).toMatchObject({
+      key: '2',
+      label: 'Dedução'
+    });
     expect(formatBindingCode('Space')).toBe('␣');
   });
 

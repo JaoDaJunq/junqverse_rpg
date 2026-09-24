@@ -98,10 +98,10 @@ export function createHudSlots(
   cooldowns: Readonly<Record<string, number>>
 ): readonly CombatHudSlot[] {
   return [
-    { id: 'q', label: 'Q', key: formatBindingCode(bindings.q), cooldownTicks: cooldowns.jao_q ?? 0 },
-    { id: 'w', label: 'W', key: formatBindingCode(bindings.w), cooldownTicks: cooldowns.jao_w ?? 0 },
-    { id: 'e', label: 'E', key: formatBindingCode(bindings.e), cooldownTicks: cooldowns.jao_e ?? 0 },
-    { id: 'r', label: 'R', key: formatBindingCode(bindings.r), cooldownTicks: 0 }
+    { id: 'q', label: 'Passo', key: formatBindingCode(bindings.q), cooldownTicks: cooldowns.jao_q ?? 0 },
+    { id: 'w', label: 'Dedução', key: formatBindingCode(bindings.w), cooldownTicks: cooldowns.jao_w ?? 0 },
+    { id: 'e', label: 'Aurora', key: formatBindingCode(bindings.e), cooldownTicks: cooldowns.jao_e ?? 0 },
+    { id: 'r', label: 'Campo', key: formatBindingCode(bindings.r), cooldownTicks: 0 }
   ];
 }
 

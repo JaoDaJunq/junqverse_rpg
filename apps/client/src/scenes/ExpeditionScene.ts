@@ -49,6 +49,55 @@ export class ExpeditionScene extends Phaser.Scene {
     super('expedition');
   }
 
+  public preload(): void {
+    this.load.spritesheet(
+      'pixel-floor',
+      'assets/pixel-crawler/Floors_Tiles.png',
+      { frameWidth: 16, frameHeight: 16 }
+    );
+    this.load.spritesheet(
+      'pixel-wall',
+      'assets/pixel-crawler/Wall_Tiles.png',
+      { frameWidth: 16, frameHeight: 16 }
+    );
+
+    this.load.spritesheet(
+      'jao-idle-down-sheet',
+      'assets/pixel-crawler/player_idle_down.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'jao-idle-side-sheet',
+      'assets/pixel-crawler/player_idle_side.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'jao-idle-up-sheet',
+      'assets/pixel-crawler/player_idle_up.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'jao-walk-down-sheet',
+      'assets/pixel-crawler/player_walk_down.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'jao-walk-side-sheet',
+      'assets/pixel-crawler/player_walk_side.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'jao-walk-up-sheet',
+      'assets/pixel-crawler/player_walk_up.png',
+      { frameWidth: 64, frameHeight: 64 }
+    );
+    this.load.spritesheet(
+      'eco-skeleton-idle-sheet',
+      'assets/pixel-crawler/enemy_skeleton_idle.png',
+      { frameWidth: 32, frameHeight: 32 }
+    );
+  }
+
   public create(): void {
     this.cleanedUp = false;
     this.defeatTestEnabled = technicalDefeatEnabled();
