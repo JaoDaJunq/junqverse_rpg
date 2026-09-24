@@ -56,6 +56,7 @@ export const JAO_E_DEFINITION = {
   nameKey: 'jao_e_corte_aurora',
   costFocus: 25,
   cooldownTicks: 420,
+  windupTicks: 0,
   target: 'direction',
   coneAngleDegrees: 55,
   rangePx: 110,
