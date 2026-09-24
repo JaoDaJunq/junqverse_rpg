@@ -24,6 +24,7 @@ import {
   getJaoEBaseDamage,
   getJaoEChargeMovementMultiplier,
   getJaoHasteMagnitude,
+  getJaoUltimateCastSpec,
   getJaoWorldTimeScale,
   hasResonanceMark,
   isJaoUltimateActive,
@@ -325,6 +326,26 @@ describe('T013 Jão W E and Campo Absoluto', () => {
     })).toThrow('not ready');
   });
 
+  it('Campo Absoluto exposes the documented 12-tick windup and recovery to the generic cast cycle', () => {
+    const spec = getJaoUltimateCastSpec();
+    expect(spec.ability.windupTicks).toBe(12);
+    expect(spec.ability.recoveryTicks).toBe(12);
+    expect(spec.ability.costFocus).toBe(0);
+
+    const accepted = tryAcceptAbility(
+      createCombatantState(99),
+      spec,
+      {
+        targetValid: true,
+        stunned: false
+      }
+    );
+
+    expect(accepted.accepted).toBe(true);
+    expect(accepted.state.activeCast?.phase).toBe('windup');
+    expect(accepted.state.activeCast?.phaseTicksRemaining).toBe(12);
+  });
+
   it('Campo Absoluto consumes 100 charge and resets Q only once', () => {
     const withQCooldown = startCooldown(
       createCombatResources(),
@@ -383,10 +404,15 @@ describe('T013 Jão W E and Campo Absoluto', () => {
     expect(getJaoHasteMagnitude(
       activated.ultimate,
       sharedStatus,
-      1
+      12
     )).toBe(0.2);
 
-    expect(getJaoBasicCadenceTicks(activated.ultimate, 1)).toBe(27);
+    expect(getJaoHasteMagnitude(
+      activated.ultimate,
+      sharedStatus,
+      11
+    )).toBe(0.15);
+    expect(getJaoBasicCadenceTicks(activated.ultimate, 12)).toBe(27);
     expect(getJaoWorldTimeScale()).toBe(1);
     expect(JAO_CAMPO_ABSOLUTO_PRESENTATION.worldTimeScale).toBe(1);
     expect(JAO_CAMPO_ABSOLUTO_PRESENTATION.enemyTimeScale).toBe(1);
@@ -400,12 +426,12 @@ describe('T013 Jão W E and Campo Absoluto', () => {
     });
     const cadence = getJaoBasicCadenceTicks(
       activated.ultimate,
-      1
+      12
     );
 
     const result = resolveJaoBasicAttack({
       state: createJaoBasicState(),
-      currentTick: 1,
+      currentTick: 12,
       ownerEntityId: 1,
       attackInstanceId: 'attack:basic:campo',
       origin: { x: 0, y: 0 },
@@ -417,7 +443,7 @@ describe('T013 Jão W E and Campo Absoluto', () => {
       cadenceTicks: cadence
     });
 
-    expect(result.state.nextAllowedTick).toBe(28);
+    expect(result.state.nextAllowedTick).toBe(39);
   });
 
   it('ultimate expires exactly at duration and clears local buffs on death', () => {
@@ -427,13 +453,15 @@ describe('T013 Jão W E and Campo Absoluto', () => {
       currentTick: 100
     });
 
-    expect(isJaoUltimateActive(activated.ultimate, 459)).toBe(true);
-    expect(isJaoUltimateActive(activated.ultimate, 460)).toBe(false);
+    expect(isJaoUltimateActive(activated.ultimate, 111)).toBe(false);
+    expect(isJaoUltimateActive(activated.ultimate, 112)).toBe(true);
+    expect(isJaoUltimateActive(activated.ultimate, 471)).toBe(true);
+    expect(isJaoUltimateActive(activated.ultimate, 472)).toBe(false);
 
     const charge = createJaoECharge({
       ownerEntityId: 1,
       attackInstanceId: 'attack:e:death',
-      startedAtTick: 110,
+      startedAtTick: 120,
       direction: { x: 1, y: 0 },
       ultimate: activated.ultimate
     });
