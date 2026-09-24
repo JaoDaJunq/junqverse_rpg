@@ -142,6 +142,10 @@ export interface PrototypeCombatSnapshot {
   readonly resources: CombatResources;
   readonly ultimate: JaoUltimateState;
   readonly activeAbilityId: string | null;
+  readonly activeAbilityPhase: 'windup' | 'active' | 'recovery' | null;
+  readonly basicDirection: Vec2 | null;
+  readonly qDirection: Vec2 | null;
+  readonly eDirection: Vec2 | null;
   readonly dodgeActive: boolean;
   readonly qDashActive: boolean;
   readonly eCharging: boolean;
@@ -871,6 +875,10 @@ export function createPrototypeCombatSnapshot(
     resources: state.combatant.resources,
     ultimate: state.ultimate,
     activeAbilityId: state.combatant.activeCast?.abilityId ?? null,
+    activeAbilityPhase: state.combatant.activeCast?.phase ?? null,
+    basicDirection: state.basicCastDirection,
+    qDirection: state.qDash?.direction ?? null,
+    eDirection: state.eCharge?.direction ?? null,
     dodgeActive: state.combatant.dodge !== null,
     qDashActive: state.qDash !== null,
     eCharging: state.eCharge !== null,

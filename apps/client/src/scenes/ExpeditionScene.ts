@@ -10,6 +10,7 @@ import {
 } from '../adapters/LocalSession.js';
 import { InputMapper } from '../input/InputMapper.js';
 import { WorldView } from '../presentation/WorldView.js';
+import { CombatFxView } from '../presentation/CombatFxView.js';
 import { Hud } from '../presentation/Hud.js';
 import { createJaoHudSnapshot } from '../presentation/hud-model.js';
 import { DefeatPanel } from '../ui/DefeatPanel.js';
@@ -38,6 +39,7 @@ export class ExpeditionScene extends Phaser.Scene {
   private mapper: InputMapper | null = null;
   private session: LocalSession | null = null;
   private view: WorldView | null = null;
+  private fx: CombatFxView | null = null;
   private hud: Hud | null = null;
   private detachInput: (() => void) | null = null;
   private pauseLabel: Phaser.GameObjects.Text | null = null;
@@ -96,6 +98,12 @@ export class ExpeditionScene extends Phaser.Scene {
       'assets/pixel-crawler/enemy_skeleton_idle.png',
       { frameWidth: 32, frameHeight: 32 }
     );
+
+    this.load.image('vfx-slash', 'assets/vfx/slash_02_a.png');
+    this.load.image('vfx-magic', 'assets/vfx/magic_01_a.png');
+    this.load.image('vfx-spark', 'assets/vfx/spark_03_a.png');
+    this.load.image('vfx-circle', 'assets/vfx/circle_03_a.png');
+    this.load.image('vfx-impact', 'assets/vfx/effect_02_a.png');
   }
 
   public create(): void {
@@ -131,6 +139,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.mapper = mapper;
     this.session = session;
     this.view = view;
+    this.fx = new CombatFxView(this, initial);
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
@@ -221,6 +230,7 @@ export class ExpeditionScene extends Phaser.Scene {
     const snapshot = this.session.advance(delta);
     this.view.render(snapshot);
     this.view.setUltimateActive(snapshot.combat.ultimateActive);
+    this.fx?.render(snapshot);
     this.hud?.render(this.createHudSnapshot(snapshot));
 
     if (
@@ -284,6 +294,9 @@ export class ExpeditionScene extends Phaser.Scene {
     const snapshot = this.session.restart();
     this.view.render(snapshot);
     this.view.setUltimateActive(snapshot.combat.ultimateActive);
+    this.fx?.destroy();
+    this.fx = new CombatFxView(this, snapshot);
+    this.fx.render(snapshot);
     this.hud?.render(this.createHudSnapshot(snapshot));
     this.cameras.main.centerOn(
       snapshot.player.position.x,
@@ -314,6 +327,8 @@ export class ExpeditionScene extends Phaser.Scene {
     this.mapper = null;
     this.view?.destroy();
     this.view = null;
+    this.fx?.destroy();
+    this.fx = null;
     this.hud?.destroy();
     this.hud = null;
     this.pauseLabel = null;

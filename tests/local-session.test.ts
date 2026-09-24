@@ -295,6 +295,7 @@ describe('T017 combat input bridge', () => {
     expect(accepted.combat.resources.cooldowns.jao_q).toBe(360);
     expect(accepted.combat.activeAbilityId).toBe('jao_q');
     expect(accepted.combat.qDashActive).toBe(true);
+    expect(accepted.combat.qDirection).toEqual({ x: 1, y: 0 });
 
     session.advance((1000 / 60) * 11);
     const finished = session.getSnapshot();
@@ -528,6 +529,10 @@ describe('T017 combat input bridge', () => {
     session.advance((1000 / 60) * 12);
     expect(session.getSnapshot().enemies[0]?.health).toBe(70);
     expect(session.getSnapshot().combat.eCharging).toBe(true);
+    expect(session.getSnapshot().combat.eDirection).toEqual({
+      x: 1,
+      y: 0
+    });
 
     session.advance(1000 / 60);
     const released = session.getSnapshot();
