@@ -510,3 +510,51 @@ Branch: `agent/t017-combat-gate`
 Head antes deste handoff: `31201fd77c28ad348c8dff6dbcee08a14a8edb43`
 T017: REVIEW.
 T018/T019/T020 já estão integradas à branch via sincronização com main.
+
+
+---
+
+# Implementação V3.1 — laboratório configurável
+
+Estado: IMPLEMENTADO / CI VERDE
+
+Commits principais:
+- `13a05f7bee23411c213469864aed83e8d5788e85` — seletor, personagem Teste e catálogo configurável;
+- `edc7254ed4a0be28d6b2ee006f38709273cfef91` — catálogo interativo expandido;
+- `158a7ec51a5c69b0cc67fab8cf2d7ca34a1e66d0` — UI usa teclas reais 1/2/3/R.
+
+CI final: `36070313166` PASS.
+
+## Disponível no laboratório
+- seletor `JÃO / TESTE`;
+- Teste usa Orc Rogue temporário;
+- slots visíveis: BÁSICO / 1 / 2 / 3 / R;
+- catálogo de skills do laboratório;
+- catálogo de 7 presets de efeito;
+- efeito configurável individualmente por slot;
+- resumo das associações atuais;
+- botão PREVIEW EFEITO;
+- botão RODAR TODOS;
+- botão RESET VFX;
+- configuração persistida em localStorage;
+- efeitos configurados são usados ao executar a skill correspondente;
+- Jão permanece com apresentação própria e separado do laboratório.
+
+## Presets iniciais
+- Slash Branco;
+- Faísca Azul;
+- Magia Violeta;
+- Anel Ciano;
+- Impacto Dourado;
+- Combo Arcano;
+- Combo Elétrico.
+
+## Observação
+A mecânica do Teste nesta primeira iteração reutiliza os arquétipos já validados do protótipo:
+- básico frontal;
+- dash;
+- pulso radial;
+- cone carregável;
+- estado de poder.
+
+O próximo incremento do laboratório pode adicionar novos comportamentos reais, começando por projétil/orbe, sem alterar o kit oficial do Jão.
