@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { PrototypeSnapshot } from '@junqverse/sim';
+import type { PrototypeHeroId } from '../ui/LabCatalog.js';
 
 export interface WorldBounds {
   readonly width: number;
@@ -33,9 +34,7 @@ function createAnimations(scene: Phaser.Scene): void {
     end: number,
     frameRate: number
   ): void => {
-    if (scene.anims.exists(key)) {
-      return;
-    }
+    if (scene.anims.exists(key)) return;
 
     scene.anims.create({
       key,
@@ -55,10 +54,12 @@ function createAnimations(scene: Phaser.Scene): void {
   create('jao-walk-side', 'jao-walk-side-sheet', 5, 9);
   create('jao-walk-up', 'jao-walk-up-sheet', 5, 9);
   create('eco-idle', 'eco-skeleton-idle-sheet', 3, 6);
+  create('test-idle', 'test-rogue-idle-sheet', 3, 7);
 }
 
 export class WorldView {
   public readonly player: Phaser.GameObjects.Sprite;
+  private readonly heroId: PrototypeHeroId;
   private readonly floor: Phaser.GameObjects.TileSprite;
   private readonly blockerTiles: Phaser.GameObjects.TileSprite[] = [];
   private readonly blockerOutline: Phaser.GameObjects.Graphics;
@@ -70,8 +71,10 @@ export class WorldView {
   public constructor(
     scene: Phaser.Scene,
     initial: PrototypeSnapshot,
-    bounds: WorldBounds
+    bounds: WorldBounds,
+    heroId: PrototypeHeroId = 'jao'
   ) {
+    this.heroId = heroId;
     createAnimations(scene);
 
     this.floor = scene.add.tileSprite(
@@ -129,9 +132,7 @@ export class WorldView {
       const sprite = scene.add.sprite(x, y, texture, frame)
         .setScale(scale)
         .setDepth(depth);
-      if (tint !== undefined) {
-        sprite.setTint(tint);
-      }
+      if (tint !== undefined) sprite.setTint(tint);
       this.decorations.push(shadow, sprite);
     };
 
@@ -139,29 +140,29 @@ export class WorldView {
     addDecoration(1090, 110, 'pixel-rocks', 7, 2.1);
     addDecoration(1080, 650, 'pixel-rocks', 5, 1.8);
     addDecoration(96, 640, 'pixel-rocks', 9, 1.7);
-
     addDecoration(520, 88, 'pixel-dungeon-props', 8, 2);
     addDecoration(688, 88, 'pixel-dungeon-props', 9, 2);
     addDecoration(1040, 312, 'pixel-dungeon-props', 79, 2);
     addDecoration(248, 472, 'pixel-dungeon-props', 80, 2);
-
     addDecoration(904, 160, 'pixel-esoteric', 26, 1.9, -2, 0x93c5fd);
     addDecoration(232, 176, 'pixel-esoteric', 27, 1.9, -2, 0xc4b5fd);
     addDecoration(672, 600, 'pixel-esoteric', 54, 1.9, -2, 0xfacc15);
 
+    const playerTexture = heroId === 'test'
+      ? 'test-rogue-idle-sheet'
+      : 'jao-idle-down-sheet';
+
     this.player = scene.add.sprite(
       initial.player.position.x,
       initial.player.position.y,
-      'jao-idle-down-sheet',
+      playerTexture,
       0
     )
-      .setScale(1.5)
+      .setScale(heroId === 'test' ? 2 : 1.5)
       .setDepth(20)
-      .play('jao-idle-down');
+      .play(heroId === 'test' ? 'test-idle' : 'jao-idle-down');
 
-    this.lastPlayerPosition = {
-      ...initial.player.position
-    };
+    this.lastPlayerPosition = { ...initial.player.position };
 
     for (const enemy of initial.enemies) {
       const body = scene.add.sprite(
@@ -187,19 +188,13 @@ export class WorldView {
         }
       ).setOrigin(0.5).setDepth(30);
 
-      this.enemies.set(enemy.entityId, {
-        body,
-        health
-      });
+      this.enemies.set(enemy.entityId, { body, health });
     }
   }
 
   public setUltimateActive(active: boolean): void {
-    if (active) {
-      this.player.setTint(0x93c5fd);
-    } else {
-      this.player.clearTint();
-    }
+    if (active) this.player.setTint(0x93c5fd);
+    else this.player.clearTint();
   }
 
   public render(snapshot: PrototypeSnapshot): void {
@@ -209,41 +204,45 @@ export class WorldView {
       snapshot.player.position.y - this.lastPlayerPosition.y;
     const moving = Math.hypot(dx, dy) > 0.1;
 
-    if (moving) {
-      if (Math.abs(dx) > Math.abs(dy)) {
-        this.facing = 'side';
+    if (this.heroId === 'test') {
+      if (Math.abs(dx) > 0.1) {
         this.player.setFlipX(dx < 0);
-      } else if (dy < 0) {
-        this.facing = 'up';
-        this.player.setFlipX(false);
-      } else {
-        this.facing = 'down';
-        this.player.setFlipX(false);
       }
-    }
+      if (this.player.anims.currentAnim?.key !== 'test-idle') {
+        this.player.play('test-idle');
+      }
+    } else {
+      if (moving) {
+        if (Math.abs(dx) > Math.abs(dy)) {
+          this.facing = 'side';
+          this.player.setFlipX(dx < 0);
+        } else if (dy < 0) {
+          this.facing = 'up';
+          this.player.setFlipX(false);
+        } else {
+          this.facing = 'down';
+          this.player.setFlipX(false);
+        }
+      }
 
-    const animation = moving
-      ? `jao-walk-${this.facing}`
-      : `jao-idle-${this.facing}`;
+      const animation = moving
+        ? `jao-walk-${this.facing}`
+        : `jao-idle-${this.facing}`;
 
-    if (this.player.anims.currentAnim?.key !== animation) {
-      this.player.play(animation);
+      if (this.player.anims.currentAnim?.key !== animation) {
+        this.player.play(animation);
+      }
     }
 
     this.player.setPosition(
       snapshot.player.position.x,
       snapshot.player.position.y
     );
-
-    this.lastPlayerPosition = {
-      ...snapshot.player.position
-    };
+    this.lastPlayerPosition = { ...snapshot.player.position };
 
     for (const enemy of snapshot.enemies) {
       const visual = this.enemies.get(enemy.entityId);
-      if (!visual) {
-        continue;
-      }
+      if (!visual) continue;
 
       visual.body
         .setPosition(enemy.position.x, enemy.position.y)

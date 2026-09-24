@@ -12,8 +12,21 @@ import { InputMapper } from '../input/InputMapper.js';
 import { WorldView } from '../presentation/WorldView.js';
 import { CombatFxView } from '../presentation/CombatFxView.js';
 import { Hud } from '../presentation/Hud.js';
-import { createJaoHudSnapshot } from '../presentation/hud-model.js';
+import {
+  createJaoHudSnapshot,
+  createTestHudSnapshot
+} from '../presentation/hud-model.js';
 import { DefeatPanel } from '../ui/DefeatPanel.js';
+import {
+  LabPanel,
+  loadLabLoadout,
+  loadPrototypeHeroId,
+  savePrototypeHeroId
+} from '../ui/LabPanel.js';
+import type {
+  LabLoadout,
+  PrototypeHeroId
+} from '../ui/LabCatalog.js';
 
 const WORLD_WIDTH = 1200;
 const WORLD_HEIGHT = 720;
@@ -41,6 +54,9 @@ export class ExpeditionScene extends Phaser.Scene {
   private view: WorldView | null = null;
   private fx: CombatFxView | null = null;
   private hud: Hud | null = null;
+  private labPanel: LabPanel | null = null;
+  private heroId: PrototypeHeroId = 'jao';
+  private labLoadout: LabLoadout = loadLabLoadout();
   private detachInput: (() => void) | null = null;
   private pauseLabel: Phaser.GameObjects.Text | null = null;
   private defeatPanel: DefeatPanel | null = null;
@@ -113,6 +129,11 @@ export class ExpeditionScene extends Phaser.Scene {
       'assets/pixel-crawler/enemy_skeleton_idle.png',
       { frameWidth: 32, frameHeight: 32 }
     );
+    this.load.spritesheet(
+      'test-rogue-idle-sheet',
+      'assets/pixel-crawler/test_rogue_idle.png',
+      { frameWidth: 32, frameHeight: 32 }
+    );
 
     this.load.image('vfx-slash', 'assets/vfx/slash_02_a.png');
     this.load.image('vfx-magic', 'assets/vfx/magic_01_a.png');
@@ -124,6 +145,8 @@ export class ExpeditionScene extends Phaser.Scene {
   public create(): void {
     this.cleanedUp = false;
     this.defeatTestEnabled = technicalDefeatEnabled();
+    this.heroId = loadPrototypeHeroId();
+    this.labLoadout = loadLabLoadout();
 
     const mapper = new InputMapper();
     const world = createPrototypeWorld(
@@ -146,15 +169,26 @@ export class ExpeditionScene extends Phaser.Scene {
       enemyAttacksEnabled: true
     });
     const initial = session.getSnapshot();
-    const view = new WorldView(this, initial, {
-      width: WORLD_WIDTH,
-      height: WORLD_HEIGHT
-    });
+    const view = new WorldView(
+      this,
+      initial,
+      {
+        width: WORLD_WIDTH,
+        height: WORLD_HEIGHT
+      },
+      this.heroId
+    );
 
     this.mapper = mapper;
     this.session = session;
     this.view = view;
-    this.fx = new CombatFxView(this, initial, view.player);
+    this.fx = new CombatFxView(
+      this,
+      initial,
+      view.player,
+      this.heroId,
+      this.labLoadout
+    );
 
     const camera = this.cameras.main;
     camera.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
@@ -166,10 +200,14 @@ export class ExpeditionScene extends Phaser.Scene {
       ? '\nK testar derrota'
       : '';
 
+    const controlHint = this.heroId === 'test'
+      ? 'LAB TESTE • Mouse Corte • 1 Dash • 2 Nova • 3 Corte Energético • R Sobrecarga'
+      : 'WASD mover • Mouse ataque básico • 1 Passo Relâmpago • 2 Dedução • 3 Corte da Aurora • R Campo Absoluto';
+
     this.add.text(
       16,
       16,
-      `JUNQVERSE • Gate P0 T017\nWASD mover • Mouse ataque básico • 1 Passo Relâmpago • 2 Dedução • 3 Corte da Aurora • R Campo Absoluto • Espaço esquiva • Esc pausar${debugHint}`,
+      `JUNQVERSE • Gate P0 T017\n${controlHint} • Espaço esquiva • Esc pausar${debugHint}`,
       {
         color: '#f9fafb',
         fontFamily: 'system-ui, sans-serif',
@@ -208,6 +246,22 @@ export class ExpeditionScene extends Phaser.Scene {
     if (!app) {
       throw new Error('app root is required for defeat UI');
     }
+
+    this.labPanel = new LabPanel(app, {
+      heroId: this.heroId,
+      loadout: this.labLoadout,
+      onHeroChange: (heroId) => {
+        savePrototypeHeroId(heroId);
+        this.scene.restart();
+      },
+      onLoadoutChange: (loadout) => {
+        this.labLoadout = loadout;
+        this.fx?.setLabLoadout(loadout);
+      },
+      onPreview: (_slot, effectId) => {
+        this.fx?.previewEffect(effectId);
+      }
+    });
 
     this.defeatPanel = new DefeatPanel(app, {
       onTryAgain: this.onTryAgain,
@@ -263,7 +317,11 @@ export class ExpeditionScene extends Phaser.Scene {
       throw new Error('input mapper is required for HUD snapshot');
     }
 
-    return createJaoHudSnapshot({
+    const createSnapshot = this.heroId === 'test'
+      ? createTestHudSnapshot
+      : createJaoHudSnapshot;
+
+    return createSnapshot({
       health: createHealthState(
         snapshot.player.maxHealth,
         0,
@@ -311,7 +369,13 @@ export class ExpeditionScene extends Phaser.Scene {
     this.view.render(snapshot);
     this.view.setUltimateActive(snapshot.combat.ultimateActive);
     this.fx?.destroy();
-    this.fx = new CombatFxView(this, snapshot, this.view.player);
+    this.fx = new CombatFxView(
+      this,
+      snapshot,
+      this.view.player,
+      this.heroId,
+      this.labLoadout
+    );
     this.fx.render(snapshot);
     this.hud?.render(this.createHudSnapshot(snapshot));
     this.cameras.main.centerOn(
@@ -347,6 +411,8 @@ export class ExpeditionScene extends Phaser.Scene {
     this.fx = null;
     this.hud?.destroy();
     this.hud = null;
+    this.labPanel?.destroy();
+    this.labPanel = null;
     this.pauseLabel = null;
     this.defeatPanel?.destroy();
     this.defeatPanel = null;

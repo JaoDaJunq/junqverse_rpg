@@ -8,6 +8,13 @@ import {
   type Vec2
 } from '@junqverse/content';
 import type { LocalSessionSnapshot } from '../adapters/LocalSession.js';
+import {
+  DEFAULT_LAB_LOADOUT,
+  type LabEffectId,
+  type LabLoadout,
+  type LabSlotId,
+  type PrototypeHeroId
+} from '../ui/LabCatalog.js';
 
 function normalized(direction: Vec2): Vec2 {
   const length = Math.hypot(direction.x, direction.y);
@@ -44,6 +51,9 @@ export class CombatFxView {
   private readonly scene: Phaser.Scene;
   private readonly telegraphs: Phaser.GameObjects.Graphics;
   private readonly previousHealth = new Map<number, number>();
+  private readonly playerSprite: Phaser.GameObjects.Sprite;
+  private readonly heroId: PrototypeHeroId;
+  private labLoadout: LabLoadout;
   private previousQDash = false;
   private previousECharging = false;
   private previousUltimate = false;
@@ -55,7 +65,6 @@ export class CombatFxView {
     | 'active'
     | 'recovery'
     | null = null;
-  private readonly playerSprite: Phaser.GameObjects.Sprite;
   private lastAfterimageTick = -1;
   private lastUltimatePulseTick = -1;
   private previousPlayerPosition: Vec2;
@@ -63,10 +72,14 @@ export class CombatFxView {
   public constructor(
     scene: Phaser.Scene,
     initial: LocalSessionSnapshot,
-    playerSprite: Phaser.GameObjects.Sprite
+    playerSprite: Phaser.GameObjects.Sprite,
+    heroId: PrototypeHeroId = 'jao',
+    labLoadout: LabLoadout = DEFAULT_LAB_LOADOUT
   ) {
     this.scene = scene;
     this.playerSprite = playerSprite;
+    this.heroId = heroId;
+    this.labLoadout = labLoadout;
     this.telegraphs = scene.add.graphics().setDepth(10);
 
     this.previousPlayerHealth = initial.player.health;
@@ -75,6 +88,18 @@ export class CombatFxView {
     for (const enemy of initial.enemies) {
       this.previousHealth.set(enemy.entityId, enemy.health);
     }
+  }
+
+  public setLabLoadout(loadout: LabLoadout): void {
+    this.labLoadout = loadout;
+  }
+
+  public previewEffect(effectId: LabEffectId): void {
+    this.playEffect(
+      effectId,
+      { x: this.playerSprite.x, y: this.playerSprite.y },
+      { x: this.playerSprite.flipX ? -1 : 1, y: 0 }
+    );
   }
 
   public render(snapshot: LocalSessionSnapshot): void {
@@ -103,6 +128,10 @@ export class CombatFxView {
     this.previousHealth.clear();
   }
 
+  private effect(slot: LabSlotId): LabEffectId {
+    return this.labLoadout.effects[slot];
+  }
+
   private drawPlayerAreas(snapshot: LocalSessionSnapshot): void {
     const origin = snapshot.player.position;
 
@@ -121,7 +150,8 @@ export class CombatFxView {
 
     if (
       snapshot.combat.qDashActive &&
-      snapshot.combat.qDirection !== null
+      snapshot.combat.qDirection !== null &&
+      this.heroId === 'jao'
     ) {
       const direction = normalized(snapshot.combat.qDirection);
       const end = {
@@ -129,9 +159,7 @@ export class CombatFxView {
         y: origin.y + direction.y * JAO_Q_DEFINITION.rangePx
       };
 
-      this.telegraphs.lineStyle(20, 0x38bdf8, 0.14);
-      this.telegraphs.lineBetween(origin.x, origin.y, end.x, end.y);
-      this.telegraphs.lineStyle(2, 0x7dd3fc, 0.85);
+      this.telegraphs.lineStyle(8, 0x38bdf8, 0.10);
       this.telegraphs.lineBetween(origin.x, origin.y, end.x, end.y);
     }
 
@@ -173,9 +201,7 @@ export class CombatFxView {
 
   private drawEnemyTelegraphs(snapshot: LocalSessionSnapshot): void {
     for (const enemy of snapshot.enemies) {
-      if (!enemy.alive || enemy.aiPhase !== 'telegraph') {
-        continue;
-      }
+      if (!enemy.alive || enemy.aiPhase !== 'telegraph') continue;
 
       const radius = enemy.archetype === 'eco_rasteiro'
         ? ECO_RASTEIRO_DEFINITION.attackRangePx
@@ -226,15 +252,12 @@ export class CombatFxView {
   private spawnUltimatePresentation(
     snapshot: LocalSessionSnapshot
   ): void {
-    if (!snapshot.combat.ultimateActive) {
-      return;
-    }
+    if (!snapshot.combat.ultimateActive) return;
 
-    const moved =
-      Math.hypot(
-        snapshot.player.position.x - this.previousPlayerPosition.x,
-        snapshot.player.position.y - this.previousPlayerPosition.y
-      ) > 0.5;
+    const moved = Math.hypot(
+      snapshot.player.position.x - this.previousPlayerPosition.x,
+      snapshot.player.position.y - this.previousPlayerPosition.y
+    ) > 0.5;
 
     if (
       moved &&
@@ -283,40 +306,39 @@ export class CombatFxView {
     const player = snapshot.player.position;
 
     if (combat.qDashActive && !this.previousQDash) {
-      this.spawnBurst(
-        'vfx-spark',
-        player.x,
-        player.y,
-        0x38bdf8,
-        0.075,
-        170
-      );
+      if (this.heroId === 'test') {
+        this.playEffect(
+          this.effect('q'),
+          player,
+          combat.qDirection ?? { x: 1, y: 0 }
+        );
+      } else {
+        this.spawnBurst('vfx-spark', player.x, player.y, 0x38bdf8, 0.075, 170);
+      }
     }
 
     if (
       combat.activeAbilityId === 'jao_w' &&
       this.previousAbility !== 'jao_w'
     ) {
-      this.spawnBurst(
-        'vfx-magic',
-        player.x,
-        player.y,
-        0xa78bfa,
-        0.10,
-        260
-      );
+      if (this.heroId === 'test') {
+        this.playEffect(this.effect('w'), player, { x: 1, y: 0 });
+      } else {
+        this.spawnBurst('vfx-magic', player.x, player.y, 0xa78bfa, 0.10, 260);
+      }
     }
 
-    if (
-      this.previousECharging &&
-      !combat.eCharging
-    ) {
-      this.spawnDirectionalBurst(
-        'vfx-slash',
-        player,
-        this.lastEDirection,
-        0xfacc15
-      );
+    if (this.previousECharging && !combat.eCharging) {
+      if (this.heroId === 'test') {
+        this.playEffect(this.effect('e'), player, this.lastEDirection);
+      } else {
+        this.spawnDirectionalBurst(
+          'vfx-slash',
+          player,
+          this.lastEDirection,
+          0xfacc15
+        );
+      }
     }
 
     if (
@@ -328,31 +350,63 @@ export class CombatFxView {
       ) &&
       combat.basicDirection !== null
     ) {
-      this.spawnDirectionalBurst(
-        'vfx-slash',
-        player,
-        combat.basicDirection,
-        0xe2e8f0
-      );
+      if (this.heroId === 'test') {
+        this.playEffect(
+          this.effect('basic'),
+          player,
+          combat.basicDirection
+        );
+      } else {
+        this.spawnDirectionalBurst(
+          'vfx-slash',
+          player,
+          combat.basicDirection,
+          0xe2e8f0
+        );
+      }
     }
 
     if (combat.ultimateActive && !this.previousUltimate) {
-      this.spawnBurst(
-        'vfx-circle',
-        player.x,
-        player.y,
-        0x60a5fa,
-        0.18,
-        420
-      );
-      this.spawnBurst(
-        'vfx-magic',
-        player.x,
-        player.y,
-        0x93c5fd,
-        0.13,
-        360
-      );
+      if (this.heroId === 'test') {
+        this.playEffect(this.effect('r'), player, { x: 1, y: 0 });
+      } else {
+        this.spawnBurst('vfx-circle', player.x, player.y, 0x60a5fa, 0.18, 420);
+        this.spawnBurst('vfx-magic', player.x, player.y, 0x93c5fd, 0.13, 360);
+      }
+    }
+  }
+
+  private playEffect(
+    effectId: LabEffectId,
+    origin: Vec2,
+    direction: Vec2
+  ): void {
+    switch (effectId) {
+      case 'slash_white':
+        this.spawnDirectionalBurst('vfx-slash', origin, direction, 0xf8fafc);
+        return;
+      case 'spark_blue':
+        this.spawnBurst('vfx-spark', origin.x, origin.y, 0x38bdf8, 0.08, 190);
+        return;
+      case 'magic_violet':
+        this.spawnBurst('vfx-magic', origin.x, origin.y, 0xa78bfa, 0.11, 260);
+        return;
+      case 'circle_cyan':
+        this.spawnBurst('vfx-circle', origin.x, origin.y, 0x22d3ee, 0.16, 340);
+        return;
+      case 'impact_gold':
+        this.spawnBurst('vfx-impact', origin.x, origin.y, 0xfacc15, 0.075, 190);
+        return;
+      case 'arcane_combo':
+        this.spawnBurst('vfx-magic', origin.x, origin.y, 0xa78bfa, 0.11, 300);
+        this.spawnBurst('vfx-circle', origin.x, origin.y, 0x22d3ee, 0.15, 360);
+        this.spawnBurst('vfx-impact', origin.x, origin.y, 0xffffff, 0.045, 170);
+        return;
+      case 'electric_combo':
+        this.spawnBurst('vfx-spark', origin.x, origin.y, 0x38bdf8, 0.08, 220);
+        this.spawnDirectionalBurst('vfx-slash', origin, direction, 0x7dd3fc);
+        this.spawnBurst('vfx-impact', origin.x, origin.y, 0x93c5fd, 0.045, 160);
+        return;
     }
   }
 
@@ -372,10 +426,7 @@ export class CombatFxView {
     for (const enemy of snapshot.enemies) {
       const previous = this.previousHealth.get(enemy.entityId);
 
-      if (
-        previous !== undefined &&
-        enemy.health < previous
-      ) {
+      if (previous !== undefined && enemy.health < previous) {
         this.spawnBurst(
           'vfx-impact',
           enemy.position.x,

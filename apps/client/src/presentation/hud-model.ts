@@ -95,13 +95,19 @@ export function cooldownSeconds(cooldownTicks: number): number {
 
 export function createHudSlots(
   bindings: InputBindings,
-  cooldowns: Readonly<Record<string, number>>
+  cooldowns: Readonly<Record<string, number>>,
+  labels: Readonly<Record<'q' | 'w' | 'e' | 'r', string>> = {
+    q: 'Passo',
+    w: 'Dedução',
+    e: 'Aurora',
+    r: 'Campo'
+  }
 ): readonly CombatHudSlot[] {
   return [
-    { id: 'q', label: 'Passo', key: formatBindingCode(bindings.q), cooldownTicks: cooldowns.jao_q ?? 0 },
-    { id: 'w', label: 'Dedução', key: formatBindingCode(bindings.w), cooldownTicks: cooldowns.jao_w ?? 0 },
-    { id: 'e', label: 'Aurora', key: formatBindingCode(bindings.e), cooldownTicks: cooldowns.jao_e ?? 0 },
-    { id: 'r', label: 'Campo', key: formatBindingCode(bindings.r), cooldownTicks: 0 }
+    { id: 'q', label: labels.q, key: formatBindingCode(bindings.q), cooldownTicks: cooldowns.jao_q ?? 0 },
+    { id: 'w', label: labels.w, key: formatBindingCode(bindings.w), cooldownTicks: cooldowns.jao_w ?? 0 },
+    { id: 'e', label: labels.e, key: formatBindingCode(bindings.e), cooldownTicks: cooldowns.jao_e ?? 0 },
+    { id: 'r', label: labels.r, key: formatBindingCode(bindings.r), cooldownTicks: 0 }
   ];
 }
 
@@ -124,6 +130,40 @@ export function createJaoHudSnapshot(input: {
     dodgeCharges: input.resources.dodgeCharges,
     maxDodgeCharges: 2,
     slots: createHudSlots(input.bindings, input.resources.cooldowns),
+    objective: input.objective ?? null,
+    targetLabel: input.targetLabel ?? null,
+    telegraphProgress: input.telegraphProgress ?? null
+  };
+}
+
+export function createTestHudSnapshot(input: {
+  readonly health: HealthState;
+  readonly resources: CombatResources;
+  readonly ultimate: JaoUltimateState;
+  readonly bindings: InputBindings;
+  readonly objective?: string | null;
+  readonly targetLabel?: string | null;
+  readonly telegraphProgress?: number | null;
+}): CombatHudSnapshot {
+  return {
+    health: input.health.health,
+    maxHealth: input.health.maxHealth,
+    focus: input.resources.focus,
+    maxFocus: 100,
+    ultimateCharge: input.ultimate.charge,
+    maxUltimateCharge: 100,
+    dodgeCharges: input.resources.dodgeCharges,
+    maxDodgeCharges: 2,
+    slots: createHudSlots(
+      input.bindings,
+      input.resources.cooldowns,
+      {
+        q: 'Dash',
+        w: 'Nova',
+        e: 'Corte',
+        r: 'Sobrecarga'
+      }
+    ),
     objective: input.objective ?? null,
     targetLabel: input.targetLabel ?? null,
     telegraphProgress: input.telegraphProgress ?? null
