@@ -783,7 +783,7 @@ export function resolveJaoERelease(input: {
 }
 
 export function createJaoKitState(
-  ultimateCharge = JAO_R_DEFINITION.ultimateCost
+  ultimateCharge = 0
 ): JaoKitState {
   if (
     !Number.isFinite(ultimateCharge) ||
