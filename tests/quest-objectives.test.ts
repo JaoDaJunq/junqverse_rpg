@@ -4,7 +4,8 @@ import {
   applyBasicObjectiveEvent,
   compileBasicObjective,
   createBasicObjectiveState,
-  isBasicObjectiveComplete
+  isBasicObjectiveComplete,
+  stepBasicObjectiveTime
 } from '../packages/sim/src/index.js';
 
 function event(
@@ -315,4 +316,93 @@ describe('T018 basic quest objectives', () => {
       }]
     })).toThrow('at most two levels');
   });
+
+  it('advances survive only with simulation ticks and freezes while paused', () => {
+    const objective = compileBasicObjective({
+      type: 'survive',
+      durationTicks: 120,
+      encounterId: 'enc_survive'
+    });
+    let state = createBasicObjectiveState(objective);
+
+    state = stepBasicObjectiveTime(
+      objective,
+      state,
+      60
+    );
+    expect(state.node.elapsedTicks).toBe(60);
+    expect(isBasicObjectiveComplete(state)).toBe(false);
+
+    const paused = stepBasicObjectiveTime(
+      objective,
+      state,
+      600,
+      true
+    );
+    expect(paused).toBe(state);
+    expect(paused.node.elapsedTicks).toBe(60);
+
+    state = stepBasicObjectiveTime(
+      objective,
+      state,
+      60
+    );
+    expect(state.node.elapsedTicks).toBe(120);
+    expect(isBasicObjectiveComplete(state)).toBe(true);
+
+    const frozenAfterCompletion = stepBasicObjectiveTime(
+      objective,
+      state,
+      100
+    );
+    expect(frozenAfterCompletion).toBe(state);
+  });
+
+  it('advances survive inside all composition without touching event progress', () => {
+    const objective = compileBasicObjective({
+      type: 'all',
+      children: [
+        {
+          type: 'survive',
+          durationTicks: 30,
+          encounterId: 'enc_wave'
+        },
+        {
+          type: 'enter_area',
+          areaId: 'safe_zone'
+        }
+      ]
+    });
+    let state = createBasicObjectiveState(objective);
+
+    state = stepBasicObjectiveTime(
+      objective,
+      state,
+      30
+    );
+    expect(state.node.children[0]?.completed).toBe(true);
+    expect(state.node.children[1]?.completed).toBe(false);
+    expect(isBasicObjectiveComplete(state)).toBe(false);
+
+    state = applyBasicObjectiveEvent(
+      objective,
+      state,
+      event(
+        'event_safe_zone',
+        'area_entered',
+        { areaId: 'safe_zone' }
+      ),
+      'run_1'
+    );
+    expect(isBasicObjectiveComplete(state)).toBe(true);
+  });
+
+  it('rejects zero-duration survive objectives', () => {
+    expect(() => compileBasicObjective({
+      type: 'survive',
+      durationTicks: 0,
+      encounterId: 'enc_invalid'
+    })).toThrow('durationTicks must be positive');
+  });
+
 });
