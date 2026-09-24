@@ -9,6 +9,7 @@ import {
   applyResonancePrimer,
   applyStatus,
   clearJaoTransientBuffsOnDeath,
+  createCombatantState,
   createCombatResources,
   createHealthState,
   createJaoBasicState,
@@ -448,7 +449,7 @@ describe('T013 Jão W E and Campo Absoluto', () => {
 
 
   it('W and E use the generic focus and cooldown acceptance rules', () => {
-    const combatant = (await import('../packages/sim/src/index.js')).createCombatantState(1);
+    const combatant = createCombatantState(1);
 
     const w = tryAcceptAbility(combatant, {
       ability: JAO_W_DEFINITION
@@ -462,7 +463,7 @@ describe('T013 Jão W E and Campo Absoluto', () => {
     expect(w.state.resources.cooldowns.jao_w).toBe(600);
 
     const e = tryAcceptAbility(
-      (await import('../packages/sim/src/index.js')).createCombatantState(2),
+      createCombatantState(2),
       {
         ability: JAO_E_DEFINITION
       },
