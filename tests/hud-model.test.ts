@@ -31,8 +31,8 @@ describe('T016 HUD model', () => {
   it('exposes numeric cooldowns in seconds', () => {
     expect(cooldownSeconds(0)).toBe(0);
     expect(cooldownSeconds(1)).toBe(0.1);
-    expect(cooldownSeconds(60)).toBe(10);
-    expect(cooldownSeconds(61)).toBe(10.2);
+    expect(cooldownSeconds(60)).toBe(1);
+    expect(cooldownSeconds(61)).toBe(1.1);
   });
 
   it('maps actual combat state into the HUD snapshot', () => {
