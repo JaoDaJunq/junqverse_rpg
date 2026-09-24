@@ -260,7 +260,12 @@ export function nextPathDirection(input: {
   readonly blockers: readonly Aabb[];
   readonly grid: GridSpec;
 }): Vec2 {
-  const path = findWorldGridPath(input);
+  const path = findWorldGridPath({
+    start: input.position,
+    goal: input.target,
+    blockers: input.blockers,
+    grid: input.grid
+  });
 
   if (!path || path.length < 2) {
     return { x: 0, y: 0 };
