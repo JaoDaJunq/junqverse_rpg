@@ -60,6 +60,7 @@ export interface JaoCombatTarget {
   readonly health: HealthState;
   readonly status: StatusState;
   readonly invulnerable?: boolean;
+  readonly isBoss?: boolean;
 }
 
 export interface JaoBasicState {
@@ -284,7 +285,7 @@ export function createJaoBasicState(): JaoBasicState {
   return { nextAllowedTick: 0 };
 }
 
-function applyJaoDamage(
+export function applyJaoAttackDamage(
   target: JaoCombatTarget,
   baseDamage: number,
   rank: number,
@@ -363,7 +364,7 @@ export function resolveJaoBasicAttack(
   const hitSet = new Set(cone.targetEntityIds);
   const targets = input.targets.map((target) =>
     hitSet.has(target.entityId)
-      ? applyJaoDamage(
+      ? applyJaoAttackDamage(
           target,
           JAO_BASIC_DEFINITION.baseDamage,
           input.rank,
@@ -490,7 +491,7 @@ export function resolveJaoQDash(
       return target;
     }
 
-    const damaged = applyJaoDamage(
+    const damaged = applyJaoAttackDamage(
       target,
       JAO_Q_DEFINITION.baseDamage,
       input.rank,
