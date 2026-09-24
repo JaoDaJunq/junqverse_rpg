@@ -62,6 +62,34 @@ class OneShotActionInput implements SessionInputSource {
   }
 }
 
+
+class HeldBasicInput implements SessionInputSource {
+  public clears = 0;
+
+  public constructor(
+    private readonly aim: { readonly x: number; readonly y: number }
+  ) {}
+
+  public nextFrame(clientTick: number): InputFrame {
+    return {
+      seq: clientTick,
+      clientTick,
+      moveX: 0,
+      moveY: 0,
+      aimX: this.aim.x,
+      aimY: this.aim.y,
+      basicHeld: true,
+      pressed: [],
+      released: [],
+      interactHeld: false
+    };
+  }
+
+  public clear(): void {
+    this.clears += 1;
+  }
+}
+
 function makeSession(input = new ConstantInput(1, 0)): LocalSession {
   return new LocalSession(
     createPrototypeWorld(
@@ -289,6 +317,55 @@ describe('T017 combat input bridge', () => {
 
     const restarted = session.restart();
     expect(restarted.enemies).toEqual(initial.enemies);
+  });
+
+
+  it('applies held basic attacks to the technical enemy using real cadence', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'basic_attack_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        {
+          enemySpawns: [{
+            archetype: 'eco_rasteiro',
+            position: { x: 150, y: 100 }
+          }]
+        }
+      ),
+      new HeldBasicInput({ x: 150, y: 100 })
+    );
+
+    session.advance(1000 / 60);
+    expect(session.getSnapshot().enemies[0]?.health).toBe(44);
+
+    session.advance((1000 / 60) * 32);
+    expect(session.getSnapshot().enemies[0]?.health).toBe(44);
+
+    session.advance(1000 / 60);
+    expect(session.getSnapshot().enemies[0]?.health).toBe(18);
+  });
+
+  it('does not damage an enemy outside the basic attack range', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'basic_range_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        {
+          enemySpawns: [{
+            archetype: 'eco_rasteiro',
+            position: { x: 220, y: 100 }
+          }]
+        }
+      ),
+      new HeldBasicInput({ x: 220, y: 100 })
+    );
+
+    session.advance(1000 / 60);
+    expect(session.getSnapshot().enemies[0]?.health).toBe(70);
   });
 
 });

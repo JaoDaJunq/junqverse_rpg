@@ -11,10 +11,19 @@ import {
   type CombatantState
 } from './abilities.js';
 import {
+  createJaoBasicState,
+  createJaoPassiveState,
+  resolveJaoBasicAttack,
+  type JaoBasicState,
+  type JaoCombatTarget,
+  type JaoPassiveState
+} from './heroes/jao.js';
+import {
   createJaoUltimateState,
   type JaoUltimateState
 } from './heroes/jao-advanced.js';
 import type { CombatResources } from './resources.js';
+import type { PrototypeWorldState } from './prototype-world.js';
 
 const AIM_EPSILON = 1e-9;
 
@@ -23,6 +32,8 @@ export interface PrototypeCombatCommand {
   readonly qDirection: Vec2 | null;
   readonly wPressed: boolean;
   readonly dodgePressed: boolean;
+  readonly basicHeld: boolean;
+  readonly basicDirection: Vec2 | null;
 }
 
 export interface PrototypeQDashState {
@@ -34,6 +45,8 @@ export interface PrototypeCombatState {
   readonly combatant: CombatantState;
   readonly ultimate: JaoUltimateState;
   readonly qDash: PrototypeQDashState | null;
+  readonly basic: JaoBasicState;
+  readonly passive: JaoPassiveState;
 }
 
 export type PrototypeCombatMovement =
@@ -48,6 +61,14 @@ export type PrototypeCombatMovement =
 export interface PrototypeCombatStepResult {
   readonly state: PrototypeCombatState;
   readonly movement: PrototypeCombatMovement;
+  readonly basicDirection: Vec2 | null;
+}
+
+export interface PrototypeBasicAttackResult {
+  readonly state: PrototypeCombatState;
+  readonly world: PrototypeWorldState;
+  readonly accepted: boolean;
+  readonly hitTargetIds: readonly number[];
 }
 
 export interface PrototypeCombatSnapshot {
@@ -83,6 +104,18 @@ function qDashMovement(direction: Vec2): PrototypeCombatMovement {
   };
 }
 
+function prototypeTargets(
+  world: PrototypeWorldState
+): readonly JaoCombatTarget[] {
+  return world.enemies.map((enemy) => ({
+    entityId: enemy.entityId,
+    position: enemy.position,
+    radius: enemy.radius,
+    health: enemy.health,
+    status: enemy.status
+  }));
+}
+
 export function createPrototypeCombatState(
   playerEntityId: number,
   ultimateCharge = 0
@@ -90,7 +123,9 @@ export function createPrototypeCombatState(
   return {
     combatant: createCombatantState(playerEntityId),
     ultimate: createJaoUltimateState(ultimateCharge),
-    qDash: null
+    qDash: null,
+    basic: createJaoBasicState(),
+    passive: createJaoPassiveState()
   };
 }
 
@@ -114,7 +149,8 @@ export function stepPrototypeCombat(
             }
           : null
       },
-      movement: qDashMovement(state.qDash.direction)
+      movement: qDashMovement(state.qDash.direction),
+      basicDirection: null
     };
   }
 
@@ -131,7 +167,8 @@ export function stepPrototypeCombat(
       },
       movement: dodge.accepted
         ? { kind: 'locked' }
-        : { kind: 'normal' }
+        : { kind: 'normal' },
+      basicDirection: null
     };
   }
 
@@ -165,7 +202,8 @@ export function stepPrototypeCombat(
               }
             : null
         },
-        movement: qDashMovement(direction)
+        movement: qDashMovement(direction),
+        basicDirection: null
       };
     }
 
@@ -174,7 +212,8 @@ export function stepPrototypeCombat(
         ...state,
         combatant
       },
-      movement: { kind: 'normal' }
+      movement: { kind: 'normal' },
+      basicDirection: null
     };
   }
 
@@ -195,16 +234,72 @@ export function stepPrototypeCombat(
       },
       movement: accepted.accepted
         ? { kind: 'locked' }
-        : { kind: 'normal' }
+        : { kind: 'normal' },
+      basicDirection: null
     };
   }
+
+  const canUseBasic =
+    combatant.activeCast === null &&
+    combatant.dodge === null &&
+    command.basicHeld &&
+    command.basicDirection !== null;
 
   return {
     state: {
       ...state,
       combatant
     },
-    movement: { kind: 'normal' }
+    movement: { kind: 'normal' },
+    basicDirection: canUseBasic
+      ? normalizeDirection(command.basicDirection!)
+      : null
+  };
+}
+
+export function resolvePrototypeBasicAttack(
+  state: PrototypeCombatState,
+  world: PrototypeWorldState,
+  direction: Vec2
+): PrototypeBasicAttackResult {
+  const result = resolveJaoBasicAttack({
+    state: state.basic,
+    currentTick: world.tick,
+    ownerEntityId: world.player.entityId,
+    attackInstanceId:
+      `attack:basic:${world.player.entityId}:${world.tick}`,
+    origin: world.player.position,
+    direction: normalizeDirection(direction),
+    rank: 1,
+    blockers: world.blockers,
+    targets: prototypeTargets(world),
+    passive: state.passive
+  });
+
+  const byId = new Map(
+    result.targets.map((target) => [target.entityId, target])
+  );
+
+  return {
+    accepted: result.accepted,
+    hitTargetIds: result.hitTargetIds,
+    state: {
+      ...state,
+      basic: result.state
+    },
+    world: {
+      ...world,
+      enemies: world.enemies.map((enemy) => {
+        const target = byId.get(enemy.entityId);
+        return target
+          ? {
+              ...enemy,
+              health: target.health,
+              status: target.status
+            }
+          : enemy;
+      })
+    }
   };
 }
 

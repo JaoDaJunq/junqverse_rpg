@@ -5,6 +5,7 @@ import {
   createPrototypeCombatSnapshot,
   createPrototypeCombatState,
   createPrototypeSnapshot,
+  resolvePrototypeBasicAttack,
   stepPrototypeCombat,
   stepPrototypeWorld,
   type PrototypeCombatCommand,
@@ -75,17 +76,20 @@ function combatCommandFromFrame(
     y: frame.aimY - state.player.position.y
   };
   const aimLength = Math.hypot(aimDelta.x, aimDelta.y);
+  const aimDirection = aimLength > AIM_EPSILON
+    ? {
+        x: aimDelta.x / aimLength,
+        y: aimDelta.y / aimLength
+      }
+    : null;
 
   return {
     qPressed: frame.pressed.includes('q'),
-    qDirection: aimLength > AIM_EPSILON
-      ? {
-          x: aimDelta.x / aimLength,
-          y: aimDelta.y / aimLength
-        }
-      : null,
+    qDirection: aimDirection,
     wPressed: frame.pressed.includes('w'),
-    dodgePressed: frame.pressed.includes('dodge')
+    dodgePressed: frame.pressed.includes('dodge'),
+    basicHeld: frame.basicHeld,
+    basicDirection: aimDirection
   };
 }
 
@@ -129,9 +133,23 @@ export class LocalSession implements GameSession {
       );
       this.combat = combatStep.state;
 
-      const normalMovement = combatStep.movement.kind === 'normal'
+      let normalMovement = combatStep.movement.kind === 'normal'
         ? { x: frame.moveX, y: frame.moveY }
         : { x: 0, y: 0 };
+
+      if (combatStep.basicDirection !== null) {
+        const basic = resolvePrototypeBasicAttack(
+          this.combat,
+          this.state,
+          combatStep.basicDirection
+        );
+        this.combat = basic.state;
+        this.state = basic.world;
+
+        if (basic.accepted) {
+          normalMovement = { x: 0, y: 0 };
+        }
+      }
 
       this.state = stepPrototypeWorld(
         this.state,
