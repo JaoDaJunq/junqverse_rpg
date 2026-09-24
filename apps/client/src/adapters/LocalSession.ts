@@ -6,6 +6,7 @@ import {
   createPrototypeCombatState,
   createPrototypeSnapshot,
   resolvePrototypeBasicAttack,
+  resolvePrototypeE,
   resolvePrototypeW,
   stepPrototypeCombat,
   stepPrototypeWorld,
@@ -88,6 +89,9 @@ function combatCommandFromFrame(
     qPressed: frame.pressed.includes('q'),
     qDirection: aimDirection,
     wPressed: frame.pressed.includes('w'),
+    ePressed: frame.pressed.includes('e'),
+    eReleased: frame.released.includes('e'),
+    eDirection: aimDirection,
     dodgePressed: frame.pressed.includes('dodge'),
     basicHeld: frame.basicHeld,
     basicDirection: aimDirection
@@ -130,12 +134,16 @@ export class LocalSession implements GameSession {
       const frame = this.input.nextFrame(this.state.tick);
       const combatStep = stepPrototypeCombat(
         this.combat,
-        combatCommandFromFrame(frame, this.state)
+        combatCommandFromFrame(frame, this.state),
+        this.state.tick
       );
       this.combat = combatStep.state;
 
       let normalMovement = combatStep.movement.kind === 'normal'
-        ? { x: frame.moveX, y: frame.moveY }
+        ? {
+            x: frame.moveX * combatStep.movement.multiplier,
+            y: frame.moveY * combatStep.movement.multiplier
+          }
         : { x: 0, y: 0 };
 
       if (combatStep.wActivated) {
@@ -145,6 +153,17 @@ export class LocalSession implements GameSession {
         );
         this.combat = w.state;
         this.state = w.world;
+      }
+
+      if (combatStep.eReleasePlan !== null) {
+        const e = resolvePrototypeE(
+          this.combat,
+          this.state,
+          combatStep.eReleasePlan
+        );
+        this.combat = e.state;
+        this.state = e.world;
+        normalMovement = { x: 0, y: 0 };
       }
 
       if (combatStep.basicDirection !== null) {

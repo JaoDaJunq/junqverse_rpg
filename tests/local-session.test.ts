@@ -90,6 +90,40 @@ class HeldBasicInput implements SessionInputSource {
   }
 }
 
+
+class ChargedEInput implements SessionInputSource {
+  public clears = 0;
+
+  public constructor(
+    private readonly releaseTick: number | null,
+    private readonly aim: { readonly x: number; readonly y: number },
+    private readonly moveX = 0,
+    private readonly moveY = 0
+  ) {}
+
+  public nextFrame(clientTick: number): InputFrame {
+    return {
+      seq: clientTick,
+      clientTick,
+      moveX: this.moveX,
+      moveY: this.moveY,
+      aimX: this.aim.x,
+      aimY: this.aim.y,
+      basicHeld: false,
+      pressed: clientTick === 0 ? ['e'] : [],
+      released:
+        this.releaseTick !== null && clientTick === this.releaseTick
+          ? ['e']
+          : [],
+      interactHeld: false
+    };
+  }
+
+  public clear(): void {
+    this.clears += 1;
+  }
+}
+
 function makeSession(input = new ConstantInput(1, 0)): LocalSession {
   return new LocalSession(
     createPrototypeWorld(
@@ -392,6 +426,78 @@ describe('T017 combat input bridge', () => {
 
     session.advance((1000 / 60) * 179);
     expect(session.getSnapshot().enemies[0]?.vulnerable).toBe(false);
+  });
+
+
+  it('holds an early E release until minimum charge and then deals minimum damage', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'e_min_charge_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        {
+          enemySpawns: [{
+            archetype: 'eco_rasteiro',
+            position: { x: 180, y: 100 }
+          }]
+        }
+      ),
+      new ChargedEInput(5, { x: 180, y: 100 })
+    );
+
+    session.advance((1000 / 60) * 12);
+    expect(session.getSnapshot().enemies[0]?.health).toBe(70);
+    expect(session.getSnapshot().combat.eCharging).toBe(true);
+
+    session.advance(1000 / 60);
+    const released = session.getSnapshot();
+
+    expect(released.enemies[0]?.health).toBe(30);
+    expect(released.combat.resources.focus).toBe(75);
+    expect(released.combat.eCharging).toBe(false);
+  });
+
+  it('releases E automatically at maximum charge', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'e_max_charge_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        {
+          enemySpawns: [{
+            archetype: 'eco_rasteiro',
+            position: { x: 180, y: 100 }
+          }]
+        }
+      ),
+      new ChargedEInput(null, { x: 180, y: 100 })
+    );
+
+    session.advance((1000 / 60) * 61);
+    const snapshot = session.getSnapshot();
+
+    expect(snapshot.enemies[0]?.health).toBe(0);
+    expect(snapshot.enemies[0]?.alive).toBe(false);
+    expect(snapshot.combat.eCharging).toBe(false);
+  });
+
+  it('applies the E movement multiplier while charging', () => {
+    const session = new LocalSession(
+      createPrototypeWorld(
+        'e_movement_test',
+        1,
+        { x: 100, y: 100 },
+        [],
+        { speedPxPerSecond: 180 }
+      ),
+      new ChargedEInput(null, { x: 200, y: 100 }, 1, 0)
+    );
+
+    session.advance(1000 / 30);
+
+    expect(session.getSnapshot().player.position.x).toBeCloseTo(101.5, 6);
   });
 
 });

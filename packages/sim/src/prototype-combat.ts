@@ -1,4 +1,5 @@
 import {
+  JAO_E_DEFINITION,
   JAO_Q_DEFINITION,
   JAO_W_DEFINITION,
   type Vec2
@@ -19,12 +20,22 @@ import {
   type JaoPassiveState
 } from './heroes/jao.js';
 import {
+  createJaoECharge,
   createJaoRevealState,
   createJaoUltimateState,
+  getJaoEMaxChargeTicks,
+  planJaoERelease,
+  resolveJaoERelease,
   resolveJaoW,
+  type JaoEChargeState,
+  type JaoEReleasePlan,
   type JaoRevealState,
   type JaoUltimateState
 } from './heroes/jao-advanced.js';
+import {
+  createResonanceState,
+  type ResonanceState
+} from './resonance.js';
 import type { CombatResources } from './resources.js';
 import type { PrototypeWorldState } from './prototype-world.js';
 
@@ -34,6 +45,9 @@ export interface PrototypeCombatCommand {
   readonly qPressed: boolean;
   readonly qDirection: Vec2 | null;
   readonly wPressed: boolean;
+  readonly ePressed: boolean;
+  readonly eReleased: boolean;
+  readonly eDirection: Vec2 | null;
   readonly dodgePressed: boolean;
   readonly basicHeld: boolean;
   readonly basicDirection: Vec2 | null;
@@ -51,10 +65,16 @@ export interface PrototypeCombatState {
   readonly basic: JaoBasicState;
   readonly passive: JaoPassiveState;
   readonly reveal: JaoRevealState;
+  readonly resonance: ResonanceState;
+  readonly eCharge: JaoEChargeState | null;
+  readonly eReleasePlan: JaoEReleasePlan | null;
 }
 
 export type PrototypeCombatMovement =
-  | { readonly kind: 'normal' }
+  | {
+      readonly kind: 'normal';
+      readonly multiplier: number;
+    }
   | { readonly kind: 'locked' }
   | {
       readonly kind: 'q_dash';
@@ -67,6 +87,7 @@ export interface PrototypeCombatStepResult {
   readonly movement: PrototypeCombatMovement;
   readonly basicDirection: Vec2 | null;
   readonly wActivated: boolean;
+  readonly eReleasePlan: JaoEReleasePlan | null;
 }
 
 export interface PrototypeBasicAttackResult {
@@ -82,12 +103,23 @@ export interface PrototypeWResult {
   readonly revealedEnemyIds: readonly number[];
 }
 
+export interface PrototypeEResult {
+  readonly state: PrototypeCombatState;
+  readonly world: PrototypeWorldState;
+  readonly hitTargetIds: readonly number[];
+}
+
 export interface PrototypeCombatSnapshot {
   readonly resources: CombatResources;
   readonly ultimate: JaoUltimateState;
   readonly activeAbilityId: string | null;
   readonly dodgeActive: boolean;
   readonly qDashActive: boolean;
+  readonly eCharging: boolean;
+}
+
+function normalMovement(multiplier = 1): PrototypeCombatMovement {
+  return { kind: 'normal', multiplier };
 }
 
 function normalizeDirection(direction: Vec2): Vec2 {
@@ -150,6 +182,24 @@ function updateWorldTargets(
   };
 }
 
+function moveEToRecovery(combatant: CombatantState): CombatantState {
+  const cast = combatant.activeCast;
+  if (cast === null || cast.abilityId !== JAO_E_DEFINITION.id) {
+    return combatant;
+  }
+
+  return {
+    ...combatant,
+    activeCast: cast.recoveryTicks > 0
+      ? {
+          ...cast,
+          phase: 'recovery',
+          phaseTicksRemaining: cast.recoveryTicks
+        }
+      : null
+  };
+}
+
 export function createPrototypeCombatState(
   playerEntityId: number,
   ultimateCharge = 0
@@ -160,14 +210,22 @@ export function createPrototypeCombatState(
     qDash: null,
     basic: createJaoBasicState(),
     passive: createJaoPassiveState(),
-    reveal: createJaoRevealState()
+    reveal: createJaoRevealState(),
+    resonance: createResonanceState(),
+    eCharge: null,
+    eReleasePlan: null
   };
 }
 
 export function stepPrototypeCombat(
   state: PrototypeCombatState,
-  command: PrototypeCombatCommand
+  command: PrototypeCombatCommand,
+  currentTick: number
 ): PrototypeCombatStepResult {
+  if (!Number.isInteger(currentTick) || currentTick < 0) {
+    throw new RangeError('currentTick must be a non-negative integer');
+  }
+
   const previousCast = state.combatant.activeCast;
   let combatant = stepCombatant(state.combatant);
   const wActivated =
@@ -175,6 +233,84 @@ export function stepPrototypeCombat(
     previousCast.phase === 'windup' &&
     combatant.activeCast?.abilityId === JAO_W_DEFINITION.id &&
     combatant.activeCast.phase === 'active';
+
+  let eCharge = state.eCharge;
+  let eReleasePlan = state.eReleasePlan;
+
+  if (eCharge !== null) {
+    if (command.dodgePressed) {
+      const dodge = tryStartDodge(combatant, { stunned: false });
+      if (dodge.accepted) {
+        return {
+          state: {
+            ...state,
+            combatant: dodge.state,
+            eCharge: null,
+            eReleasePlan: null
+          },
+          movement: { kind: 'locked' },
+          basicDirection: null,
+          wActivated,
+          eReleasePlan: null
+        };
+      }
+    }
+
+    const reachedAutomaticRelease =
+      previousCast?.abilityId === JAO_E_DEFINITION.id &&
+      previousCast.phase === 'active' &&
+      previousCast.phaseTicksRemaining === 1 &&
+      combatant.activeCast?.phase === 'recovery';
+
+    if (eReleasePlan === null && command.eReleased) {
+      eReleasePlan = planJaoERelease({
+        charge: eCharge,
+        requestedReleaseTick: currentTick
+      });
+    }
+
+    if (eReleasePlan === null && reachedAutomaticRelease) {
+      eReleasePlan = planJaoERelease({
+        charge: eCharge,
+        requestedReleaseTick: currentTick
+      });
+    }
+
+    if (
+      eReleasePlan !== null &&
+      currentTick >= eReleasePlan.releaseTick
+    ) {
+      combatant = moveEToRecovery(combatant);
+
+      return {
+        state: {
+          ...state,
+          combatant,
+          eCharge,
+          eReleasePlan
+        },
+        movement: { kind: 'locked' },
+        basicDirection: null,
+        wActivated,
+        eReleasePlan
+      };
+    }
+
+    return {
+      state: {
+        ...state,
+        combatant,
+        eCharge,
+        eReleasePlan
+      },
+      movement: normalMovement(
+        JAO_E_DEFINITION.movementMultiplierWhileCharging
+      ),
+      basicDirection: null,
+      wActivated,
+      eReleasePlan: null
+    };
+  }
 
   if (state.qDash !== null) {
     const remaining = state.qDash.ticksRemaining - 1;
@@ -192,7 +328,8 @@ export function stepPrototypeCombat(
       },
       movement: qDashMovement(state.qDash.direction),
       basicDirection: null,
-      wActivated
+      wActivated,
+      eReleasePlan: null
     };
   }
 
@@ -209,9 +346,10 @@ export function stepPrototypeCombat(
       },
       movement: dodge.accepted
         ? { kind: 'locked' }
-        : { kind: 'normal' },
+        : normalMovement(),
       basicDirection: null,
-      wActivated
+      wActivated,
+      eReleasePlan: null
     };
   }
 
@@ -247,7 +385,8 @@ export function stepPrototypeCombat(
         },
         movement: qDashMovement(direction),
         basicDirection: null,
-        wActivated
+        wActivated,
+        eReleasePlan: null
       };
     }
 
@@ -256,9 +395,10 @@ export function stepPrototypeCombat(
         ...state,
         combatant
       },
-      movement: { kind: 'normal' },
+      movement: normalMovement(),
       basicDirection: null,
-      wActivated
+      wActivated,
+      eReleasePlan: null
     };
   }
 
@@ -279,9 +419,71 @@ export function stepPrototypeCombat(
       },
       movement: accepted.accepted
         ? { kind: 'locked' }
-        : { kind: 'normal' },
+        : normalMovement(),
       basicDirection: null,
-      wActivated
+      wActivated,
+      eReleasePlan: null
+    };
+  }
+
+  if (command.ePressed) {
+    const direction = command.eDirection === null
+      ? null
+      : normalizeDirection(command.eDirection);
+    const maxChargeTicks = getJaoEMaxChargeTicks(
+      state.ultimate,
+      currentTick
+    );
+    const accepted = tryAcceptAbility(
+      combatant,
+      {
+        ability: JAO_E_DEFINITION,
+        activeTicks: maxChargeTicks
+      },
+      {
+        targetValid: direction !== null,
+        stunned: false
+      }
+    );
+
+    if (
+      accepted.accepted &&
+      accepted.attackInstanceId !== null &&
+      direction !== null
+    ) {
+      eCharge = createJaoECharge({
+        ownerEntityId: accepted.state.entityId,
+        attackInstanceId: accepted.attackInstanceId,
+        startedAtTick: currentTick,
+        direction,
+        ultimate: state.ultimate
+      });
+
+      return {
+        state: {
+          ...state,
+          combatant: accepted.state,
+          eCharge,
+          eReleasePlan: null
+        },
+        movement: normalMovement(
+          JAO_E_DEFINITION.movementMultiplierWhileCharging
+        ),
+        basicDirection: null,
+        wActivated,
+        eReleasePlan: null
+      };
+    }
+
+    return {
+      state: {
+        ...state,
+        combatant: accepted.state
+      },
+      movement: normalMovement(),
+      basicDirection: null,
+      wActivated,
+      eReleasePlan: null
     };
   }
 
@@ -296,11 +498,12 @@ export function stepPrototypeCombat(
       ...state,
       combatant
     },
-    movement: { kind: 'normal' },
+    movement: normalMovement(),
     basicDirection: canUseBasic
       ? normalizeDirection(command.basicDirection!)
       : null,
-    wActivated
+    wActivated,
+    eReleasePlan: null
   };
 }
 
@@ -356,6 +559,34 @@ export function resolvePrototypeW(
   };
 }
 
+export function resolvePrototypeE(
+  state: PrototypeCombatState,
+  world: PrototypeWorldState,
+  plan: JaoEReleasePlan
+): PrototypeEResult {
+  const result = resolveJaoERelease({
+    plan,
+    currentTick: world.tick,
+    origin: world.player.position,
+    rank: 1,
+    blockers: world.blockers,
+    targets: prototypeTargets(world),
+    passive: state.passive,
+    resonance: state.resonance
+  });
+
+  return {
+    hitTargetIds: result.hitTargetIds,
+    state: {
+      ...state,
+      resonance: result.resonance,
+      eCharge: null,
+      eReleasePlan: null
+    },
+    world: updateWorldTargets(world, result.targets)
+  };
+}
+
 export function createPrototypeCombatSnapshot(
   state: PrototypeCombatState
 ): PrototypeCombatSnapshot {
@@ -364,6 +595,7 @@ export function createPrototypeCombatSnapshot(
     ultimate: state.ultimate,
     activeAbilityId: state.combatant.activeCast?.abilityId ?? null,
     dodgeActive: state.combatant.dodge !== null,
-    qDashActive: state.qDash !== null
+    qDashActive: state.qDash !== null,
+    eCharging: state.eCharge !== null
   };
 }
