@@ -21,6 +21,8 @@ body {
   display: block;
   max-width: 100vw;
   max-height: 100vh;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 
