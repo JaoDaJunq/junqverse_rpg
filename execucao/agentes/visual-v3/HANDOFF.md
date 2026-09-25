@@ -629,3 +629,21 @@ Evidência automatizada do commit de código `a5d4ded9cfb414133cf9a85d3255404bdc
 - Playwright / preview smoke: PASS.
 
 A validação visual humana do novo tamanho/nitidez ainda é necessária.
+
+
+## Ajuste V3.2.2 — suavização de render
+
+Feedback visual humano:
+- após corrigir o tamanho, o Jão ainda aparentava pixelização excessiva.
+
+Correções aplicadas no código:
+- resolução interna do cliente elevada de `960x540` para `1200x675`;
+- removido o `image-rendering: pixelated/crisp-edges` forçado no canvas;
+- configuração Phaser passou a usar `smoothPixelArt: true`;
+- textura `jao-actions-sheet` usa filtro LINEAR explicitamente;
+- escala do Jão permanece em `1`, sem reintroduzir o problema de personagem gigante;
+- nenhuma alteração em `packages/sim` ou regras de combate.
+
+Observação:
+- foi preparado fora do runtime um atlas 2x derivado das folhas originais para uma futura troca de asset, mas esta rodada corrige primeiro o pipeline de render sem substituir binário por conveniência.
+- validação visual humana continua necessária.
