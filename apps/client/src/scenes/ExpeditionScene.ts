@@ -97,7 +97,7 @@ export class ExpeditionScene extends Phaser.Scene {
     this.load.spritesheet(
       'jao-actions-sheet',
       'assets/jao/jao_actions_atlas.webp',
-      { frameWidth: 88, frameHeight: 64 }
+      { frameWidth: 176, frameHeight: 128 }
     );
     this.load.spritesheet(
       'eco-skeleton-idle-sheet',
