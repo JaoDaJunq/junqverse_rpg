@@ -603,3 +603,29 @@ T017 continua em REVIEW. O playtest humano de 5 minutos ainda é obrigatório.
 - Playwright / preview smoke: PASS.
 
 A validação automatizada não substitui o playtest humano final da T017.
+
+
+## Ajuste V3.2.1 — escala e nitidez
+
+Feedback visual humano inicial:
+- Jão estava grande demais no mapa;
+- canvas redimensionado pelo navegador apresentava aparência borrada/baixa nitidez.
+
+Correções:
+- escala do Jão reduzida de `2.5` para `1`, preservando o tamanho do personagem Teste;
+- `image-rendering: pixelated` + `crisp-edges` aplicado ao canvas;
+- `canvasStyle: image-rendering: pixelated` e `antialiasGL: false` reforçados na configuração Phaser;
+- nenhuma regra de combate ou código de `packages/sim` foi alterado.
+
+Evidência automatizada do commit de código `a5d4ded9cfb414133cf9a85d3255404bdc74294b`:
+- P0 CI `36132230504`: PASS;
+- dependency audit: PASS;
+- typecheck: PASS;
+- lint: PASS;
+- tests: PASS;
+- planning integrity: PASS;
+- content gate: PASS;
+- build: PASS;
+- Playwright / preview smoke: PASS.
+
+A validação visual humana do novo tamanho/nitidez ainda é necessária.
