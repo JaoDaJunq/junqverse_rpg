@@ -8,7 +8,9 @@ const config: Phaser.Types.Core.GameConfig = {
   width: 1200,
   height: 675,
   backgroundColor: '#111827',
-  smoothPixelArt: true,
+  pixelArt: false,
+  antialias: true,
+  antialiasGL: true,
   roundPixels: true,
   scene: [ExpeditionScene],
   scale: {
