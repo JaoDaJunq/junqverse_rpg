@@ -679,3 +679,19 @@ Evidência do commit de código/asset `50f13d3d408c412675b9ff5350f9537849a85055`
 Pendência real:
 - conferir visualmente em hardware real se a nova combinação atlas 2x + escala 0.5 atingiu nitidez/tamanho desejados;
 - T017 continua REVIEW até o playtest humano de 5 minutos.
+
+
+## Ajuste V3.2.4 — movimento reconstruído da fonte
+
+Feedback humano: o atlas 2x anterior ainda apresentava pixelização perceptível.
+
+Correção aplicada:
+- descartado o upscale do atlas intermediário para idle/corrida;
+- idle e corrida agora são reconstruídos diretamente dos PNGs originais enviados pelo MVP;
+- atlas dedicado de movimento preserva amostragem de alta resolução antes da redução em tela;
+- render Phaser usa resolução interna 2x, antialias e filtro LINEAR;
+- ações de combate continuam no atlas já integrado enquanto esta correção visual é validada;
+- nenhuma alteração em packages/sim.
+
+Validação automatizada desta rodada: pendente de CI.
+Validação visual humana: pendente.
