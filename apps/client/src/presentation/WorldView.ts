@@ -131,6 +131,12 @@ export class WorldView {
     this.heroId = heroId;
     createAnimations(scene);
 
+    if (heroId === 'jao') {
+      scene.textures
+        .get('jao-actions-sheet')
+        .setFilter(Phaser.Textures.FilterMode.LINEAR);
+    }
+
     this.floor = scene.add.tileSprite(
       0,
       0,
