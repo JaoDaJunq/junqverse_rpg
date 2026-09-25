@@ -5,13 +5,10 @@ import { ExpeditionScene } from './scenes/ExpeditionScene.js';
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'app',
-  width: 960,
-  height: 540,
+  width: 1200,
+  height: 675,
   backgroundColor: '#111827',
-  canvasStyle: 'image-rendering: pixelated;',
-  pixelArt: true,
-  antialias: false,
-  antialiasGL: false,
+  smoothPixelArt: true,
   roundPixels: true,
   scene: [ExpeditionScene],
   scale: {
