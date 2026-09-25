@@ -10,6 +10,9 @@ export interface WorldBounds {
 type Facing = 'down' | 'up' | 'left' | 'right';
 type SkillFacing = 'down' | 'up' | 'side';
 
+const JAO_MOVEMENT_SCALE = 0.36;
+const JAO_ACTION_SCALE = 0.5;
+
 interface WorldRenderSnapshot extends PrototypeSnapshot {
   readonly combat: PrototypeCombatSnapshot;
 }
@@ -65,15 +68,15 @@ function createAnimations(scene: Phaser.Scene): void {
     });
   };
 
-  create('jao-idle-down', 'jao-actions-sheet', 0, 3, 5, -1);
-  create('jao-idle-up', 'jao-actions-sheet', 4, 7, 5, -1);
-  create('jao-idle-left', 'jao-actions-sheet', 8, 11, 5, -1);
-  create('jao-idle-right', 'jao-actions-sheet', 12, 15, 5, -1);
+  create('jao-idle-down', 'jao-movement-sheet', 0, 3, 5, -1);
+  create('jao-idle-up', 'jao-movement-sheet', 4, 7, 5, -1);
+  create('jao-idle-left', 'jao-movement-sheet', 8, 11, 5, -1);
+  create('jao-idle-right', 'jao-movement-sheet', 12, 15, 5, -1);
 
-  create('jao-run-down', 'jao-actions-sheet', 16, 19, 9, -1);
-  create('jao-run-up', 'jao-actions-sheet', 20, 23, 9, -1);
-  create('jao-run-left', 'jao-actions-sheet', 24, 27, 9, -1);
-  create('jao-run-right', 'jao-actions-sheet', 28, 31, 9, -1);
+  create('jao-run-down', 'jao-movement-sheet', 16, 19, 9, -1);
+  create('jao-run-up', 'jao-movement-sheet', 20, 23, 9, -1);
+  create('jao-run-left', 'jao-movement-sheet', 24, 27, 9, -1);
+  create('jao-run-right', 'jao-movement-sheet', 28, 31, 9, -1);
 
   create('jao-basic-down', 'jao-actions-sheet', 32, 37, 18, 0);
   create('jao-basic-up', 'jao-actions-sheet', 38, 43, 18, 0);
@@ -132,6 +135,9 @@ export class WorldView {
     createAnimations(scene);
 
     if (heroId === 'jao') {
+      scene.textures
+        .get('jao-movement-sheet')
+        .setFilter(Phaser.Textures.FilterMode.LINEAR);
       scene.textures
         .get('jao-actions-sheet')
         .setFilter(Phaser.Textures.FilterMode.LINEAR);
@@ -210,7 +216,7 @@ export class WorldView {
 
     const playerTexture = heroId === 'test'
       ? 'test-rogue-idle-sheet'
-      : 'jao-actions-sheet';
+      : 'jao-movement-sheet';
 
     this.player = scene.add.sprite(
       initial.player.position.x,
@@ -218,8 +224,8 @@ export class WorldView {
       playerTexture,
       0
     )
-      .setScale(heroId === 'test' ? 2 : 0.5)
-      .setOrigin(0.5, heroId === 'test' ? 0.5 : 0.875)
+      .setScale(heroId === 'test' ? 2 : JAO_MOVEMENT_SCALE)
+      .setOrigin(0.5, heroId === 'test' ? 0.5 : 0.96)
       .setDepth(20)
       .play(heroId === 'test' ? 'test-idle' : 'jao-idle-down');
 
@@ -411,7 +417,15 @@ export class WorldView {
   }
 
   private playJaoAnimation(key: string, flipX = false): void {
-    this.player.setFlipX(flipX);
+    const movement =
+      key.startsWith('jao-idle-') ||
+      key.startsWith('jao-run-');
+
+    this.player
+      .setFlipX(flipX)
+      .setScale(movement ? JAO_MOVEMENT_SCALE : JAO_ACTION_SCALE)
+      .setOrigin(0.5, movement ? 0.96 : 0.875);
+
     if (this.player.anims.currentAnim?.key !== key) {
       this.player.play(key);
     }
