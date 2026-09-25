@@ -647,3 +647,35 @@ Correções aplicadas no código:
 Observação:
 - foi preparado fora do runtime um atlas 2x derivado das folhas originais para uma futura troca de asset, mas esta rodada corrige primeiro o pipeline de render sem substituir binário por conveniência.
 - validação visual humana continua necessária.
+
+
+## Ajuste V3.2.3 — atlas 2x e render final
+
+O ajuste V3.2.2 teve uma tentativa intermediária com `smoothPixelArt`, rejeitada pelo TypeScript no CI `36136108872`. Essa configuração não ficou no estado final.
+
+Estado final aplicado:
+- atlas do Jão substituído por versão 2x, lossless, derivada das folhas originais;
+- mesmo arquivo lógico: `apps/client/public/assets/jao/jao_actions_atlas.webp`;
+- célula passou de `88x64` para `176x128`;
+- escala visual do Jão passou de `1` para `0.5`, mantendo aproximadamente o mesmo tamanho na cena com mais informação por frame;
+- resolução interna do cliente: `1200x675`;
+- `pixelArt: false`, `antialias: true` e `antialiasGL: true`;
+- filtro LINEAR aplicado à textura do atlas do Jão;
+- removido o `image-rendering: pixelated/crisp-edges` forçado no canvas;
+- mapeamento dos 146 frames e lógica de combate preservados;
+- nenhuma alteração em `packages/sim`.
+
+Evidência do commit de código/asset `50f13d3d408c412675b9ff5350f9537849a85055`:
+- P0 CI `36136422578`: PASS;
+- dependency audit: PASS;
+- typecheck: PASS;
+- lint: PASS;
+- tests: PASS;
+- planning integrity: PASS;
+- content gate: PASS;
+- build: PASS;
+- Playwright / preview smoke: PASS.
+
+Pendência real:
+- conferir visualmente em hardware real se a nova combinação atlas 2x + escala 0.5 atingiu nitidez/tamanho desejados;
+- T017 continua REVIEW até o playtest humano de 5 minutos.
