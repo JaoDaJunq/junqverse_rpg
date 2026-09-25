@@ -212,7 +212,7 @@ export class WorldView {
       playerTexture,
       0
     )
-      .setScale(heroId === 'test' ? 2 : 2.5)
+      .setScale(heroId === 'test' ? 2 : 1)
       .setOrigin(0.5, heroId === 'test' ? 0.5 : 0.875)
       .setDepth(20)
       .play(heroId === 'test' ? 'test-idle' : 'jao-idle-down');
