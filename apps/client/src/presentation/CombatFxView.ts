@@ -272,6 +272,7 @@ export class CombatFxView {
         this.playerSprite.frame.name
       )
         .setScale(this.playerSprite.scaleX, this.playerSprite.scaleY)
+        .setOrigin(this.playerSprite.originX, this.playerSprite.originY)
         .setFlipX(this.playerSprite.flipX)
         .setDepth(19)
         .setTint(0x60a5fa)
