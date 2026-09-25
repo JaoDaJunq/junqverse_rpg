@@ -558,3 +558,36 @@ A mecânica do Teste nesta primeira iteração reutiliza os arquétipos já vali
 - estado de poder.
 
 O próximo incremento do laboratório pode adicionar novos comportamentos reais, começando por projétil/orbe, sem alterar o kit oficial do Jão.
+
+---
+
+# Implementação V3.2 — sprites oficiais do Jão
+
+Estado: IMPLEMENTADO / VALIDAÇÃO AUTOMATIZADA PENDENTE
+
+Branch: `agent/t017-jao-sprites`
+PR: #26
+
+## Entrega
+- atlas transparente gerado a partir das folhas fornecidas pelo MVP;
+- idle: Down / Up / Left / Right;
+- corrida: Down / Up / Left / Right;
+- ataque básico: Down / Up / Left / Right;
+- Passo Relâmpago: Down / Up / Side, com flip para esquerda;
+- Dedução: Down / Up / Side, com flip para esquerda;
+- Corte da Aurora: charge + release em Down / Up / Side;
+- Campo Absoluto: activation + active loop + exit em Down / Up / Side;
+- transições visuais temporárias duplicadas do Jão foram desativadas; telegraphs continuam ativos;
+- personagem Teste e laboratório permanecem isolados.
+
+## Atlas
+- arquivo: `apps/client/public/assets/jao/jao_actions_atlas.webp`;
+- 146 frames úteis;
+- célula: 88x64;
+- fundo verde removido e transparência preservada.
+
+## Limitação conhecida
+Não foi fornecida uma folha corporal exclusiva de esquiva. A esquiva continua usando o movimento autoritativo existente sem inventar uma animação nova.
+
+## Gate
+T017 continua em REVIEW. O playtest humano de 5 minutos ainda é obrigatório.
