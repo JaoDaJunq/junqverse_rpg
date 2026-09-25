@@ -693,5 +693,8 @@ Correção aplicada:
 - ações de combate continuam no atlas já integrado enquanto esta correção visual é validada;
 - nenhuma alteração em packages/sim.
 
-Validação automatizada desta rodada: pendente de CI.
-Validação visual humana: pendente.
+Validação automatizada:
+- P0 CI 36139772075: FAIL em typecheck porque `resolution` não existe em `Phaser.Types.Core.GameConfig`; a tentativa de supersampling foi removida.
+- P0 CI 36139874160: PASS em audit, typecheck, lint, testes, planning integrity, content gate, build e Playwright/preview smoke.
+
+Validação visual humana da nova reconstrução: pendente.
