@@ -563,7 +563,7 @@ O próximo incremento do laboratório pode adicionar novos comportamentos reais,
 
 # Implementação V3.2 — sprites oficiais do Jão
 
-Estado: IMPLEMENTADO / VALIDAÇÃO AUTOMATIZADA PENDENTE
+Estado: IMPLEMENTADO / CI VERDE
 
 Branch: `agent/t017-jao-sprites`
 PR: #26
@@ -591,3 +591,15 @@ Não foi fornecida uma folha corporal exclusiva de esquiva. A esquiva continua u
 
 ## Gate
 T017 continua em REVIEW. O playtest humano de 5 minutos ainda é obrigatório.
+
+## Evidência automatizada V3.2
+- CI `36093130320`: PASS;
+- typecheck: PASS;
+- lint: PASS;
+- testes: PASS;
+- planning integrity: PASS;
+- content gate: PASS;
+- build: PASS;
+- Playwright / preview smoke: PASS.
+
+A validação automatizada não substitui o playtest humano final da T017.
