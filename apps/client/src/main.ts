@@ -9,7 +9,6 @@ const config: Phaser.Types.Core.GameConfig = {
   width: 1200,
   height: 675,
   backgroundColor: '#111827',
-  resolution: 2,
   pixelArt: false,
   antialias: true,
   antialiasGL: true,
