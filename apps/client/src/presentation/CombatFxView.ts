@@ -302,6 +302,8 @@ export class CombatFxView {
   }
 
   private spawnTransitions(snapshot: LocalSessionSnapshot): void {
+    if (this.heroId === 'jao') return;
+
     const combat = snapshot.combat;
     const player = snapshot.player.position;
 
