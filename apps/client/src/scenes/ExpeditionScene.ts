@@ -10,6 +10,7 @@ import {
 } from '../adapters/LocalSession.js';
 import { InputMapper } from '../input/InputMapper.js';
 import { WorldView } from '../presentation/WorldView.js';
+import { getJaoMovementAtlasUrl } from '../assets/jaoMovementAtlas.js';
 import { CombatFxView } from '../presentation/CombatFxView.js';
 import { Hud } from '../presentation/Hud.js';
 import {
@@ -94,6 +95,11 @@ export class ExpeditionScene extends Phaser.Scene {
       { frameWidth: 16, frameHeight: 16 }
     );
 
+    this.load.spritesheet(
+      'jao-movement-sheet',
+      getJaoMovementAtlasUrl(),
+      { frameWidth: 176, frameHeight: 128 }
+    );
     this.load.spritesheet(
       'jao-actions-sheet',
       'assets/jao/jao_actions_atlas.webp',
