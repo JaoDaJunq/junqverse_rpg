@@ -272,6 +272,7 @@ export class CombatFxView {
         this.playerSprite.frame.name
       )
         .setScale(this.playerSprite.scaleX, this.playerSprite.scaleY)
+        .setOrigin(this.playerSprite.originX, this.playerSprite.originY)
         .setFlipX(this.playerSprite.flipX)
         .setDepth(19)
         .setTint(0x60a5fa)
@@ -302,6 +303,8 @@ export class CombatFxView {
   }
 
   private spawnTransitions(snapshot: LocalSessionSnapshot): void {
+    if (this.heroId === 'jao') return;
+
     const combat = snapshot.combat;
     const player = snapshot.player.position;
 

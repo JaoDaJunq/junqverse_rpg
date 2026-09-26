@@ -1,16 +1,18 @@
 import './ui/styles.css';
 import Phaser from 'phaser';
 import { ExpeditionScene } from './scenes/ExpeditionScene.js';
+import { prepareJaoMovementAtlas } from './assets/jaoMovementAtlas.js';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'app',
-  width: 960,
-  height: 540,
+  width: 1200,
+  height: 675,
   backgroundColor: '#111827',
-  pixelArt: true,
-  antialias: false,
-  roundPixels: true,
+  pixelArt: false,
+  antialias: true,
+  antialiasGL: true,
+  roundPixels: false,
   scene: [ExpeditionScene],
   scale: {
     mode: Phaser.Scale.FIT,
@@ -18,4 +20,11 @@ const config: Phaser.Types.Core.GameConfig = {
   }
 };
 
-new Phaser.Game(config);
+async function bootstrap(): Promise<void> {
+  await prepareJaoMovementAtlas();
+  new Phaser.Game(config);
+}
+
+void bootstrap().catch((error: unknown) => {
+  console.error('Falha ao iniciar JUNQVERSE:', error);
+});

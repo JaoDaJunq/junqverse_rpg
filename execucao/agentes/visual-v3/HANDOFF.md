@@ -558,3 +558,143 @@ A mecânica do Teste nesta primeira iteração reutiliza os arquétipos já vali
 - estado de poder.
 
 O próximo incremento do laboratório pode adicionar novos comportamentos reais, começando por projétil/orbe, sem alterar o kit oficial do Jão.
+
+---
+
+# Implementação V3.2 — sprites oficiais do Jão
+
+Estado: IMPLEMENTADO / CI VERDE
+
+Branch: `agent/t017-jao-sprites`
+PR: #26
+
+## Entrega
+- atlas transparente gerado a partir das folhas fornecidas pelo MVP;
+- idle: Down / Up / Left / Right;
+- corrida: Down / Up / Left / Right;
+- ataque básico: Down / Up / Left / Right;
+- Passo Relâmpago: Down / Up / Side, com flip para esquerda;
+- Dedução: Down / Up / Side, com flip para esquerda;
+- Corte da Aurora: charge + release em Down / Up / Side;
+- Campo Absoluto: activation + active loop + exit em Down / Up / Side;
+- transições visuais temporárias duplicadas do Jão foram desativadas; telegraphs continuam ativos;
+- personagem Teste e laboratório permanecem isolados.
+
+## Atlas
+- arquivo: `apps/client/public/assets/jao/jao_actions_atlas.webp`;
+- 146 frames úteis;
+- célula: 88x64;
+- fundo verde removido e transparência preservada.
+
+## Limitação conhecida
+Não foi fornecida uma folha corporal exclusiva de esquiva. A esquiva continua usando o movimento autoritativo existente sem inventar uma animação nova.
+
+## Gate
+T017 continua em REVIEW. O playtest humano de 5 minutos ainda é obrigatório.
+
+## Evidência automatizada V3.2
+- CI `36093130320`: PASS;
+- typecheck: PASS;
+- lint: PASS;
+- testes: PASS;
+- planning integrity: PASS;
+- content gate: PASS;
+- build: PASS;
+- Playwright / preview smoke: PASS.
+
+A validação automatizada não substitui o playtest humano final da T017.
+
+
+## Ajuste V3.2.1 — escala e nitidez
+
+Feedback visual humano inicial:
+- Jão estava grande demais no mapa;
+- canvas redimensionado pelo navegador apresentava aparência borrada/baixa nitidez.
+
+Correções:
+- escala do Jão reduzida de `2.5` para `1`, preservando o tamanho do personagem Teste;
+- `image-rendering: pixelated` + `crisp-edges` aplicado ao canvas;
+- `canvasStyle: image-rendering: pixelated` e `antialiasGL: false` reforçados na configuração Phaser;
+- nenhuma regra de combate ou código de `packages/sim` foi alterado.
+
+Evidência automatizada do commit de código `a5d4ded9cfb414133cf9a85d3255404bdc74294b`:
+- P0 CI `36132230504`: PASS;
+- dependency audit: PASS;
+- typecheck: PASS;
+- lint: PASS;
+- tests: PASS;
+- planning integrity: PASS;
+- content gate: PASS;
+- build: PASS;
+- Playwright / preview smoke: PASS.
+
+A validação visual humana do novo tamanho/nitidez ainda é necessária.
+
+
+## Ajuste V3.2.2 — suavização de render
+
+Feedback visual humano:
+- após corrigir o tamanho, o Jão ainda aparentava pixelização excessiva.
+
+Correções aplicadas no código:
+- resolução interna do cliente elevada de `960x540` para `1200x675`;
+- removido o `image-rendering: pixelated/crisp-edges` forçado no canvas;
+- configuração Phaser passou a usar `smoothPixelArt: true`;
+- textura `jao-actions-sheet` usa filtro LINEAR explicitamente;
+- escala do Jão permanece em `1`, sem reintroduzir o problema de personagem gigante;
+- nenhuma alteração em `packages/sim` ou regras de combate.
+
+Observação:
+- foi preparado fora do runtime um atlas 2x derivado das folhas originais para uma futura troca de asset, mas esta rodada corrige primeiro o pipeline de render sem substituir binário por conveniência.
+- validação visual humana continua necessária.
+
+
+## Ajuste V3.2.3 — atlas 2x e render final
+
+O ajuste V3.2.2 teve uma tentativa intermediária com `smoothPixelArt`, rejeitada pelo TypeScript no CI `36136108872`. Essa configuração não ficou no estado final.
+
+Estado final aplicado:
+- atlas do Jão substituído por versão 2x, lossless, derivada das folhas originais;
+- mesmo arquivo lógico: `apps/client/public/assets/jao/jao_actions_atlas.webp`;
+- célula passou de `88x64` para `176x128`;
+- escala visual do Jão passou de `1` para `0.5`, mantendo aproximadamente o mesmo tamanho na cena com mais informação por frame;
+- resolução interna do cliente: `1200x675`;
+- `pixelArt: false`, `antialias: true` e `antialiasGL: true`;
+- filtro LINEAR aplicado à textura do atlas do Jão;
+- removido o `image-rendering: pixelated/crisp-edges` forçado no canvas;
+- mapeamento dos 146 frames e lógica de combate preservados;
+- nenhuma alteração em `packages/sim`.
+
+Evidência do commit de código/asset `50f13d3d408c412675b9ff5350f9537849a85055`:
+- P0 CI `36136422578`: PASS;
+- dependency audit: PASS;
+- typecheck: PASS;
+- lint: PASS;
+- tests: PASS;
+- planning integrity: PASS;
+- content gate: PASS;
+- build: PASS;
+- Playwright / preview smoke: PASS.
+
+Pendência real:
+- conferir visualmente em hardware real se a nova combinação atlas 2x + escala 0.5 atingiu nitidez/tamanho desejados;
+- T017 continua REVIEW até o playtest humano de 5 minutos.
+
+
+## Ajuste V3.2.4 — movimento reconstruído da fonte
+
+Feedback humano: o atlas 2x anterior ainda apresentava pixelização perceptível.
+
+Correção aplicada:
+- descartado o upscale do atlas intermediário para idle/corrida;
+- idle e corrida agora são reconstruídos diretamente dos PNGs originais enviados pelo MVP;
+- atlas dedicado de movimento preserva amostragem de alta resolução antes da redução em tela;
+- render Phaser usa resolução interna 2x, antialias e filtro LINEAR;
+- ações de combate continuam no atlas já integrado enquanto esta correção visual é validada;
+- nenhuma alteração em packages/sim.
+
+Validação automatizada:
+- P0 CI 36139772075: FAIL em typecheck porque `resolution` não existe em `Phaser.Types.Core.GameConfig`; a tentativa de supersampling foi removida.
+- P0 CI 36139874160: PASS em audit, typecheck, lint, testes, planning integrity, content gate, build e Playwright/preview smoke.
+
+Validação visual humana da nova reconstrução: pendente.

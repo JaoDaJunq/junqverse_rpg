@@ -10,6 +10,7 @@ import {
 } from '../adapters/LocalSession.js';
 import { InputMapper } from '../input/InputMapper.js';
 import { WorldView } from '../presentation/WorldView.js';
+import { getJaoMovementAtlasUrl } from '../assets/jaoMovementAtlas.js';
 import { CombatFxView } from '../presentation/CombatFxView.js';
 import { Hud } from '../presentation/Hud.js';
 import {
@@ -95,34 +96,14 @@ export class ExpeditionScene extends Phaser.Scene {
     );
 
     this.load.spritesheet(
-      'jao-idle-down-sheet',
-      'assets/pixel-crawler/player_idle_down.png',
-      { frameWidth: 64, frameHeight: 64 }
+      'jao-movement-sheet',
+      getJaoMovementAtlasUrl(),
+      { frameWidth: 176, frameHeight: 128 }
     );
     this.load.spritesheet(
-      'jao-idle-side-sheet',
-      'assets/pixel-crawler/player_idle_side.png',
-      { frameWidth: 64, frameHeight: 64 }
-    );
-    this.load.spritesheet(
-      'jao-idle-up-sheet',
-      'assets/pixel-crawler/player_idle_up.png',
-      { frameWidth: 64, frameHeight: 64 }
-    );
-    this.load.spritesheet(
-      'jao-walk-down-sheet',
-      'assets/pixel-crawler/player_walk_down.png',
-      { frameWidth: 64, frameHeight: 64 }
-    );
-    this.load.spritesheet(
-      'jao-walk-side-sheet',
-      'assets/pixel-crawler/player_walk_side.png',
-      { frameWidth: 64, frameHeight: 64 }
-    );
-    this.load.spritesheet(
-      'jao-walk-up-sheet',
-      'assets/pixel-crawler/player_walk_up.png',
-      { frameWidth: 64, frameHeight: 64 }
+      'jao-actions-sheet',
+      'assets/jao/jao_actions_atlas.webp',
+      { frameWidth: 176, frameHeight: 128 }
     );
     this.load.spritesheet(
       'eco-skeleton-idle-sheet',
